@@ -18,7 +18,10 @@ jobs:
       # usam Docker, que já vem instalado nos runners do GitHub.
       - run: go test -race ./...
       - name: govulncheck
-        run: go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
+        # v1.1.4 (pedida originalmente) dá panic ao analisar código Go 1.27
+        # (golang.org/x/tools antigo não entende sintaxe nova). v1.8.0 é a
+        # versão estável mais recente e funciona.
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
 
   lint:
     runs-on: ubuntu-latest
@@ -43,7 +46,8 @@ jobs:
       - name: build da imagem
         run: docker build -t passarim-catalog:ci .
       # Trivy procura vulnerabilidades na imagem. Falha em HIGH/CRITICAL.
-      - uses: aquasecurity/trivy-action@0.33.1
+      # a tag real é "v0.33.1" (a brief pedia "0.33.1", sem o "v", que não resolve)
+      - uses: aquasecurity/trivy-action@v0.33.1
         with:
           image-ref: passarim-catalog:ci
           severity: HIGH,CRITICAL
