@@ -1,0 +1,23 @@
+scientific_name: Coragyps atratus
+common_name_pt: Urubu-de-cabeça-preta
+family: Cathartidae
+size_cm: 65
+diet: Carniça e matéria orgânica em decomposição; também come frutos e, ocasionalmente, pequenos animais vivos incapazes de fugir.
+conservation_status: LC
+biomes: [amazonia, mata_atlantica, cerrado, caatinga, pantanal, pampa]
+states: [AM, PA, MT, MS, GO, BA, SP, RJ, PR, RS]
+description: >
+  O urubu-de-cabeça-preta é um abutre de plumagem totalmente negra e cabeça
+  sem penas, residente permanente em praticamente todo o território
+  brasileiro. Vive em áreas abertas, bordas de mata, pastos e também em
+  centros urbanos, onde é fácil avistá-lo em bandos sobrevoando em busca de
+  carcaças. Tem papel ecológico essencial na limpeza do ambiente, preferindo
+  terrenos baixos e sendo raramente visto em regiões montanhosas.
+description_source_url: https://www.wikiaves.com.br/wiki/urubu-preto
+facts:
+  - text: É residente permanente em praticamente todo o Brasil, ocorrendo do sul dos Estados Unidos até o centro do Chile, com preferência por terrenos baixos.
+    source: https://www.wikiaves.com.br/wiki/urubu-preto
+  - text: Tem a menor envergadura entre os urubus das Américas, cerca de 1,43 m de ponta a ponta das asas.
+    source: https://www.wikiaves.com.br/wiki/urubu-preto
+  - text: Os ovos, de cor cinza ou verde-pálida, são incubados por ambos os pais durante 32 a 40 dias, e os filhotes atingem a plumagem de adulto por volta dos 3 meses de idade.
+    source: https://pt.wikipedia.org/wiki/Urubu-de-cabe%C3%A7a-preta

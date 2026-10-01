@@ -1,0 +1,24 @@
+scientific_name: Troglodytes musculus
+common_name_pt: Corruíra
+family: Troglodytidae
+size_cm: 12
+diet: Principalmente insetos e suas larvas; ocasionalmente pequenos vertebrados, como lagartixas, além de sementes e frutos.
+conservation_status: DD
+biomes: [amazonia, mata_atlantica, cerrado, caatinga, pantanal, pampa]
+states: [AM, SP, MG, RJ, PR, RS, BA, GO]
+description: >
+  A corruíra é um pássaro pequeno e discreto, de plumagem parda, encontrado
+  em praticamente todo o território brasileiro, de áreas abertas e
+  semiabertas a quintais e centros urbanos. Alimenta-se sobretudo de
+  insetos, caçando entre arbustos e fendas de muros e árvores. É conhecida
+  por construir ninhos em locais inusitados, como sapatos velhos e caixas
+  de telefone público, e por defender o território com grande agressividade,
+  mesmo sendo bem menor que outras aves.
+description_source_url: https://pt.wikipedia.org/wiki/Troglodytes_musculus
+facts:
+  - text: Recebe diversos nomes populares, como corruíra, carruíra, garrincha, cutipuruí e cambaxirra, derivados de palavras de origem tupi.
+    source: https://pt.wikipedia.org/wiki/Troglodytes_musculus
+  - text: Constrói ninhos em cavidades as mais variadas, incluindo sapatos velhos, caixas de relógio e até telefones públicos abandonados.
+    source: https://pt.wikipedia.org/wiki/Troglodytes_musculus
+  - text: Apesar do tamanho pequeno, ataca ninhos de aves maiores, como sabiás e codornas, não para se alimentar, mas para impedir que outras aves ocupem seu território.
+    source: https://pt.wikipedia.org/wiki/Troglodytes_musculus

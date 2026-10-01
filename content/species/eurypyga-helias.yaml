@@ -1,0 +1,25 @@
+scientific_name: Eurypyga helias
+common_name_pt: Pavãozinho-do-pará
+family: Eurypygidae
+size_cm: 46
+diet: Insetos, crustáceos, pequenos sapos e peixes.
+conservation_status: LC
+biomes: [amazonia, cerrado, pantanal, caatinga]
+states: [AM, PA, AC, RO, RR, AP, MT, MS, GO, MA, PI]
+description: >
+  O pavãozinho-do-pará é uma ave discreta de hábitos solitários, encontrada
+  à beira de igarapés e rios na Amazônia e em áreas úmidas do Centro-Oeste e
+  do Nordeste. Alimenta-se de insetos, pequenos sapos, crustáceos e peixes
+  capturados nas margens. Quando ameaçada, abre as asas e a cauda de uma só
+  vez, revelando grandes manchas coloridas em formato de olho que assustam
+  possíveis predadores. É o símbolo oficial do estado do Pará.
+description_source_url: https://pt.wikipedia.org/wiki/Pav%C3%A3ozinho-do-par%C3%A1
+facts:
+  - text: É a ave símbolo oficial do estado do Pará.
+    source: https://pt.wikipedia.org/wiki/Pav%C3%A3ozinho-do-par%C3%A1
+  - text: Quando se sente ameaçada, abre de repente as asas e a cauda, revelando grandes manchas coloridas em formato de olho, um dos meios mais eficazes para afugentar predadores.
+    source: https://pt.wikipedia.org/wiki/Pav%C3%A3ozinho-do-par%C3%A1
+  - text: É a única espécie de sua família e de seu gênero, o que a torna taxonomicamente única entre as aves.
+    source: https://pt.wikipedia.org/wiki/Pav%C3%A3ozinho-do-par%C3%A1
+  - text: Comunidades indígenas historicamente retiravam um osso chamado "mocó" da ave para usar como talismã xamânico.
+    source: https://pt.wikipedia.org/wiki/Pav%C3%A3ozinho-do-par%C3%A1

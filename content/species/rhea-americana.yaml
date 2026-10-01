@@ -1,0 +1,26 @@
+scientific_name: Rhea americana
+common_name_pt: Ema
+family: Rheidae
+size_cm: 170
+diet: Onívora; come frutos, sementes, insetos, folhas e pequenos animais, como cobras e roedores.
+conservation_status: NT
+biomes: [cerrado, caatinga, pantanal, pampa]
+states: [GO, MT, MS, MA, PI, TO, RS]
+description: >
+  A ema é a maior ave das Américas, podendo atingir 1,70 m de comprimento e
+  pesar até 36 kg, mas não voa: usa as asas apenas para se equilibrar
+  enquanto corre em alta velocidade. Vive em bandos em campos abertos do
+  Cerrado, Pantanal e Pampa, onde se alimenta de frutos, sementes, insetos e
+  pequenos animais. Uma curiosidade marcante é que os machos são os
+  responsáveis por incubar os ovos e cuidar dos filhotes, que podem vir de
+  várias fêmeas diferentes.
+description_source_url: https://pt.wikipedia.org/wiki/Rhea_americana
+facts:
+  - text: É a maior e mais pesada ave do continente americano, podendo pesar até 36 kg, mas usa as asas apenas para manter o equilíbrio enquanto corre.
+    source: https://pt.wikipedia.org/wiki/Rhea_americana
+  - text: Os machos são os únicos responsáveis pela incubação dos ovos e pelo cuidado dos filhotes, que podem pertencer a várias fêmeas diferentes.
+    source: https://pt.wikipedia.org/wiki/Rhea_americana
+  - text: Durante a época reprodutiva, o macho emite um urro forte e bissilábico, lembrando um bramido, usado para atrair as fêmeas.
+    source: https://pt.wikipedia.org/wiki/Rhea_americana
+  - text: Dezenas de emas vivem soltas nos jardins do Palácio da Alvorada, residência oficial da Presidência da República em Brasília.
+    source: https://pt.wikipedia.org/wiki/Rhea_americana

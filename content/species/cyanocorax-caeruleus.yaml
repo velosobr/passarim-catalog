@@ -1,0 +1,24 @@
+scientific_name: Cyanocorax caeruleus
+common_name_pt: Gralha-azul
+family: Corvidae
+size_cm: 40
+diet: Insetos, frutos e pequenos invertebrados.
+conservation_status: NT
+biomes: [mata_atlantica]
+states: [RJ, SP, PR, SC, RS]
+description: >
+  A gralha-azul é uma ave de plumagem azulada e inteligência notável,
+  vivendo em grupos hierárquicos de 4 a 15 indivíduos que se comunicam com
+  pelo menos 14 vocalizações distintas. Ocorre na Mata Atlântica, do sul do
+  Rio de Janeiro ao Rio Grande do Sul, sendo mais frequente nas matas baixas
+  da Serra do Mar do que propriamente nos pinhais de araucária, apesar da
+  associação popular com essas árvores. É a principal dispersora das
+  sementes de araucária na natureza.
+description_source_url: https://pt.wikipedia.org/wiki/Gralha-azul
+facts:
+  - text: É a principal dispersora da araucária, enterrando os pinhões no solo e em troncos caídos, criando condições ideais para o nascimento de novas árvores.
+    source: https://pt.wikipedia.org/wiki/Gralha-azul
+  - text: Está entre as aves mais inteligentes, com pelo menos 14 vocalizações distintas usadas para se comunicar em grupos hierárquicos de 4 a 15 indivíduos.
+    source: https://pt.wikipedia.org/wiki/Gralha-azul
+  - text: É o símbolo oficial do estado do Paraná desde 1984, e dá nome ao mascote do Paraná Clube e ao principal prêmio de teatro do estado.
+    source: https://pt.wikipedia.org/wiki/Gralha-azul

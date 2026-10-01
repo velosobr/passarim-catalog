@@ -1,0 +1,23 @@
+scientific_name: Crotophaga ani
+common_name_pt: Anu-preto
+family: Cuculidae
+size_cm: 35
+diet: Artrópodes, como gafanhotos, percevejos e aranhas; pequenos vertebrados, como lagartos, camundongos, peixes, cobras e rãs; além de frutos, bagas e sementes.
+conservation_status: LC
+biomes: [amazonia, mata_atlantica, cerrado, caatinga, pantanal, pampa]
+states: [AM, PA, CE, BA, GO, MS, SP, RS]
+description: >
+  O anu-preto é um pássaro inteiramente negro, de cauda longa e bico alto e
+  curvo, muito comum em campos abertos e bordas de mata por quase todo o
+  Brasil. Caça em grupo, espalhando-se em semicírculo pelo terreno até que
+  um inseto apareça, quando a ave mais próxima o captura. Constrói ninhos
+  coletivos junto de outros casais, que podem reunir mais de 20 ovos de
+  diferentes fêmeas em um único ninho.
+description_source_url: https://pt.wikipedia.org/wiki/Anu-preto
+facts:
+  - text: Embora também façam ninhos individuais, é comum que dois ou três casais se unam para formar um ninho coletivo, que pode reunir 6 a 10 aves e mais de 20 ovos ao mesmo tempo.
+    source: https://pt.wikipedia.org/wiki/Anu-preto
+  - text: Caça em bandos que se espalham em semicírculo pelo terreno, permanecendo parados até que um inseto apareça, quando a ave mais próxima o captura.
+    source: https://pt.wikipedia.org/wiki/Anu-preto
+  - text: Tem um odor corporal forte e característico, que pode atrair morcegos e outros animais carnívoros.
+    source: https://pt.wikipedia.org/wiki/Anu-preto

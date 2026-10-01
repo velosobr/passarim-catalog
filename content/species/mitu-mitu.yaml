@@ -1,0 +1,24 @@
+scientific_name: Mitu mitu
+common_name_pt: Mutum-de-alagoas
+family: Cracidae
+size_cm: 85
+diet: Frutos de árvores da Mata Atlântica nordestina, como o "castelo" (Micropholis spp.); em cativeiro também recebe milho.
+conservation_status: EW
+biomes: [mata_atlantica]
+states: [AL, PE]
+description: >
+  O mutum-de-alagoas é uma ave que hoje só existe em cativeiro: extinta na
+  natureza desde o fim dos anos 1980, por causa do desmatamento da Mata
+  Atlântica nordestina e da caça descontrolada, sobrevive graças a poucos
+  exemplares resgatados em Alagoas e Pernambuco. De plumagem preta com
+  reflexos azulados e bico avermelhado, vivia no chão de florestas úmidas e
+  se alimentava principalmente de frutos. Desde 2017, aves nascidas em
+  cativeiro vêm sendo reintroduzidas em seu habitat de origem, em Alagoas.
+description_source_url: https://en.wikipedia.org/wiki/Alagoas_curassow
+facts:
+  - text: Toda a população atual descende de apenas um macho e duas fêmeas capturados em 1979 pelo criador Pedro Mário Nardelli, um gargalo genético severo para a espécie.
+    source: https://pt.wikipedia.org/wiki/Mutum-de-alagoas
+  - text: De apenas 5 indivíduos em 1979, a população em cativeiro cresceu para mais de 200 aves atualmente, a maior parte nascida no criadouro CRAX.
+    source: https://pt.wikipedia.org/wiki/Mutum-de-alagoas
+  - text: Em 22 de setembro de 2017, um casal nascido em cativeiro foi reintroduzido em seu estado de origem, Alagoas, marcando o primeiro passo rumo à volta à natureza.
+    source: https://pt.wikipedia.org/wiki/Mutum-de-alagoas

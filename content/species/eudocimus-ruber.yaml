@@ -1,0 +1,23 @@
+scientific_name: Eudocimus ruber
+common_name_pt: Guará
+family: Threskiornithidae
+diet: Caranguejos, moluscos bivalves, gastrópodes, vermes aquáticos, insetos, peixes e pequenos répteis.
+conservation_status: LC
+biomes: [amazonia, caatinga, cerrado, mata_atlantica]
+states: [AP, PA, MA, PI, CE, SE, BA, SP, PR, SC]
+description: >
+  O guará é uma ave de brejos e manguezais, famosa pela plumagem
+  vermelho-viva, resultado dos carotenoides presentes nos crustáceos que
+  compõem boa parte de sua dieta. Ocorre principalmente no litoral norte e
+  nordeste do Brasil, com populações isoladas mais ao sul, no Sudeste e no
+  Sul. Vive em colônias reprodutivas bastante sociais, muitas vezes
+  misturadas com outras aves aquáticas, e usa o bico sensível para localizar
+  presas escondidas na lama.
+description_source_url: https://pt.wikipedia.org/wiki/Eudocimus_ruber
+facts:
+  - text: Forma colônias reprodutivas de até 60 indivíduos, muitas vezes misturadas com outras espécies de aves aquáticas.
+    source: https://pt.wikipedia.org/wiki/Guar%C3%A1_(ave)
+  - text: Pode hibridar naturalmente com o íbis-branco-americano (Eudocimus albus) nas áreas onde as duas espécies se sobrepõem, gerando descendentes de plumagem rosada.
+    source: https://pt.wikipedia.org/wiki/Guar%C3%A1_(ave)
+  - text: Usa numerosas cavidades sensoriais na ponta do bico, organizadas como um favo de mel, para localizar presas escondidas na lama.
+    source: https://pt.wikipedia.org/wiki/Eudocimus_ruber

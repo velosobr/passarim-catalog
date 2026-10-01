@@ -1,0 +1,24 @@
+scientific_name: Momotus momota
+common_name_pt: Udu-de-coroa-azul
+family: Momotidae
+size_cm: 43
+diet: Insetos e pequenos vertebrados, como lagartos, além de frutos; costuma seguir correições de formigas para capturar presas que fogem delas.
+conservation_status: LC
+biomes: [amazonia, cerrado, mata_atlantica]
+states: [AP, AM, PA, TO, MT, GO, SP, PR, CE, AL]
+description: >
+  O udu-de-coroa-azul é uma ave de plumagem verde-oliva com uma faixa azul
+  na coroa da cabeça e uma cauda longa terminada em formato de raquete. Vive
+  em matas e cerrados, do norte ao sul do Brasil, onde costuma passar
+  despercebido apesar do tamanho, permanecendo quieto entre a vegetação
+  densa. Caça insetos e pequenos vertebrados, e também se alimenta de
+  frutos, muitas vezes acompanhando correições de formigas para capturar
+  presas que fogem delas.
+description_source_url: https://www.wikiaves.com.br/wiki/udu-de-coroa-azul
+facts:
+  - text: Apesar do tamanho avantajado, é difícil de avistar na mata densa, mostrando pouco medo de humanos quando encontrado e podendo até pousar em varais perto de áreas florestadas.
+    source: https://pt.wikipedia.org/wiki/Udu-de-coroa-azul
+  - text: Seu canto lembra o som de uma coruja, o que ajuda a diferenciá-lo de outras aves da mata pela vocalização.
+    source: https://pt.wikipedia.org/wiki/Udu-de-coroa-azul
+  - text: A subespécie do Nordeste, mais rara, vem perdendo espaço devido à redução da Mata Atlântica em sua área de ocorrência.
+    source: https://www.wikiaves.com.br/wiki/udu-de-coroa-azul

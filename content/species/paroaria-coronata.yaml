@@ -1,0 +1,24 @@
+scientific_name: Paroaria coronata
+common_name_pt: Cardeal
+family: Thraupidae
+size_cm: 18
+diet: Grãos e pequenos artrópodes.
+conservation_status: LC
+biomes: [cerrado, pampa, mata_atlantica]
+states: [MT, MS, PR, RS, SP]
+description: >
+  O cardeal, também chamado de cardeal-de-topete-vermelho, é reconhecido
+  pelo topete eriçado e vermelho-vivo que cobre a cabeça e invade o peito,
+  presente em machos e fêmeas. Vive em campos com vegetação mais alta,
+  bordas de arrozais e de matas no Centro-Oeste e no Sul do Brasil, tendo
+  também uma população introduzida em São Paulo. Suporta bem variações de
+  temperatura e é protegido por lei, não podendo ser mantido em cativeiro
+  sem autorização do Ibama.
+description_source_url: https://pt.wikipedia.org/wiki/Paroaria_coronata
+facts:
+  - text: O topete eriçado de um vermelho intenso invade também o peito, sendo igual em machos e fêmeas.
+    source: https://pt.wikipedia.org/wiki/Paroaria_coronata
+  - text: É proibido mantê-lo em cativeiro sem autorização do Ibama, por ser considerado fauna silvestre brasileira protegida.
+    source: https://pt.wikipedia.org/wiki/Paroaria_coronata
+  - text: Durante a nidificação, o macho e a fêmea se revezam na incubação dos ovos por cerca de 15 dias, e ambos alimentam os filhotes por mais 2 a 3 semanas após deixarem o ninho.
+    source: https://pt.wikipedia.org/wiki/Paroaria_coronata

@@ -1,0 +1,23 @@
+scientific_name: Tyrannus savana
+common_name_pt: Tesourinha
+family: Tyrannidae
+size_cm: 40
+diet: Insetívora; captura insetos no ar durante voos acrobáticos e também consome frutos.
+conservation_status: LC
+biomes: [cerrado, pampa, amazonia]
+states: [RS, SC, PR, GO, MT, AM, PA]
+description: >
+  A tesourinha é uma ave inconfundível pela cauda bifurcada e muito longa,
+  que lhe dá o nome popular. Vive em campos, cerrados e áreas de cultura,
+  reproduzindo-se no sul e em outras regiões do Brasil e migrando aos
+  milhares para a Amazônia durante o inverno austral. Apesar do tamanho
+  pequeno, é tão destemida que consegue afugentar predadores muito maiores,
+  como o carcará, voando ao redor deles em defesa do ninho.
+description_source_url: https://pt.wikipedia.org/wiki/Tyrannus_savana
+facts:
+  - text: Realiza acrobacias aéreas, deixando-se cair em espiral com a cauda aberta, numa posição de asas que lembra um paraquedas.
+    source: https://pt.wikipedia.org/wiki/Tyrannus_savana
+  - text: Apesar de muito menor, é tão brava que consegue afugentar predadores bem maiores, como o carcará.
+    source: https://pt.wikipedia.org/wiki/Tyrannus_savana
+  - text: Migra aos milhares para a região amazônica durante o inverno austral, desaparecendo do sul do Brasil nesses meses.
+    source: https://www.wikiaves.com.br/wiki/tesourinha

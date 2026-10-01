@@ -1,0 +1,24 @@
+scientific_name: Cyanopsitta spixii
+common_name_pt: Ararinha-azul
+family: Psittacidae
+size_cm: 57
+diet: Principalmente sementes de pinhão-bravo e faveleira, além de vagens, frutos e polpa de outras plantas da Caatinga.
+conservation_status: EW
+biomes: [caatinga]
+states: [BA]
+description: >
+  A ararinha-azul é um papagaio pequeno de plumagem inteiramente azul,
+  originário da Caatinga do submédio São Francisco, na Bahia. Dependia quase
+  totalmente de árvores caraibeiras para se alimentar e nidificar, o que a
+  tornou extremamente vulnerável ao desmatamento e à captura ilegal para o
+  tráfico de animais. O último indivíduo livre desapareceu por volta de
+  2000, e a espécie só sobreviveu em cativeiro por mais de duas décadas, até
+  o início de um programa de reintrodução na Caatinga a partir de 2022.
+description_source_url: https://pt.wikipedia.org/wiki/Ararinha-azul
+facts:
+  - text: Ficou mundialmente conhecida após protagonizar o filme de animação "Rio" (2011), embora a história a situe erroneamente na Amazônia, quando na verdade a espécie sempre viveu na Caatinga.
+    source: https://pt.wikipedia.org/wiki/Ararinha-azul
+  - text: Dependia quase exclusivamente de árvores caraibeiras para nidificar, uma relação ecológica tão estreita que tornou a espécie extremamente vulnerável à perda de habitat.
+    source: https://pt.wikipedia.org/wiki/Ararinha-azul
+  - text: Reintroduzida na Caatinga baiana a partir de 2022, teve os primeiros filhotes nascidos soltos na natureza em 2023, mas em novembro de 2025 todos os indivíduos em vida livre precisaram ser recapturados após a detecção de um circovírus letal.
+    source: https://pt.wikipedia.org/wiki/Ararinha-azul

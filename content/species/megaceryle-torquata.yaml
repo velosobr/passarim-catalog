@@ -1,0 +1,24 @@
+scientific_name: Megaceryle torquata
+common_name_pt: Martim-pescador-grande
+family: Alcedinidae
+size_cm: 40
+diet: Principalmente peixes; eventualmente também caça invertebrados, caranguejos e crustáceos.
+conservation_status: LC
+biomes: [amazonia, cerrado, mata_atlantica, pantanal]
+states: [AM, PA, MT, MS, GO, CE, SP, RJ]
+description: >
+  O martim-pescador-grande é o maior martim-pescador das Américas, com o
+  macho de peito castanho-enferrujado e a fêmea com uma faixa
+  cinza-azulada, o que permite diferenciar os sexos à distância. Vive junto
+  a rios, lagoas, açudes e manguezais em praticamente todo o território
+  brasileiro, preferindo águas abertas e caudalosas. Antes de se
+  reproduzirem, os machos costumam oferecer peixes às fêmeas como parte do
+  ritual de corte.
+description_source_url: https://pt.wikipedia.org/wiki/Martim-pescador-grande
+facts:
+  - text: Machos exibem plumas castanho-enferrujadas no peito, enquanto as fêmeas têm uma faixa cinza-azulada, o que permite identificar o sexo da ave a olho nu.
+    source: https://pt.wikipedia.org/wiki/Martim-pescador-grande
+  - text: Antes da reprodução, os machos oferecem peixes às fêmeas como parte do ritual de corte.
+    source: https://pt.wikipedia.org/wiki/Martim-pescador-grande
+  - text: Prefere áreas abertas com rios caudalosos e grandes lagoas, não se adaptando bem a lagos represados de hidrelétricas do Sul e do Sudeste.
+    source: https://www.wikiaves.com.br/wiki/martim-pescador-grande

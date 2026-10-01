@@ -1,0 +1,23 @@
+scientific_name: Brotogeris tirica
+common_name_pt: Periquito-rico
+family: Psittacidae
+size_cm: 21
+diet: Frutos, flores e néctar de diversas plantas, como paineira, jerivá, manga, jabuticaba, goiaba, laranja e mamão, além de sementes de girassol.
+conservation_status: LC
+biomes: [mata_atlantica]
+states: [AL, PE, BA, RJ, SP, PR, RS]
+description: >
+  O periquito-rico é um periquito verde, pequeno e barulhento, típico da
+  Mata Atlântica do leste do Brasil, do Nordeste até o Rio Grande do Sul.
+  Vive em bandos que se alimentam em copas de árvores frutíferas, tanto em
+  matas quanto em parques e jardins urbanos. Forma casais que permanecem
+  juntos por toda a vida, e quando ameaçado prefere ficar imóvel e em
+  silêncio, confundindo-se com a vegetação, em vez de fugir voando.
+description_source_url: https://www.wikiaves.com.br/wiki/periquito-rico
+facts:
+  - text: Imita com perfeição a vocalização de outras espécies de aves.
+    source: https://pt.wikipedia.org/wiki/Periquito-rico
+  - text: Forma casais que permanecem unidos por toda a vida, com os parceiros arrumando as penas um do outro como parte do ritual de vínculo.
+    source: https://pt.wikipedia.org/wiki/Periquito-rico
+  - text: Pode viver em média 20 anos e atinge a maturidade sexual entre 1 e 2 anos de idade.
+    source: https://pt.wikipedia.org/wiki/Periquito-rico

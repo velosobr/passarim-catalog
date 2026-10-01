@@ -1,0 +1,25 @@
+scientific_name: Tigrisoma lineatum
+common_name_pt: Socó-boi
+family: Ardeidae
+size_cm: 71
+diet: Peixes, crustáceos, besouros aquáticos e larvas e adultos de libélula, além de gafanhotos.
+conservation_status: LC
+biomes: [amazonia, mata_atlantica]
+states: [AM, PA, SP, RJ, MG]
+description: >
+  O socó-boi é uma garça de plumagem rajada em tons de castanho, o que a
+  deixa quase invisível entre a vegetação de brejos e áreas alagadas. Ocorre
+  principalmente na região amazônica e no sudeste do Brasil, com hábitos
+  solitários e crepusculares, caçando sobretudo ao amanhecer e ao entardecer.
+  Fica curvada e imóvel à espreita da presa em poças rasas, e leva cerca de
+  cinco anos para que o jovem adquira a plumagem completa de adulto.
+description_source_url: https://pt.wikipedia.org/wiki/Soc%C3%B3-boi
+facts:
+  - text: Leva aproximadamente cinco anos para que o jovem adquira sua plumagem adulta completa.
+    source: https://pt.wikipedia.org/wiki/Soc%C3%B3-boi
+  - text: Tem hábitos crepusculares, sendo mais ativo ao entardecer e ao amanhecer, quando fica curvado e imóvel em poças rasas à espera da presa.
+    source: https://pt.wikipedia.org/wiki/Soc%C3%B3-boi
+  - text: É uma espécie solitária, que caça individualmente em suas áreas úmidas.
+    source: https://pt.wikipedia.org/wiki/Soc%C3%B3-boi
+  - text: Foi documentado pela primeira vez em 1780 pelo naturalista francês Buffon, a partir de um espécime coletado na Guiana Francesa.
+    source: https://pt.wikipedia.org/wiki/Soc%C3%B3-boi

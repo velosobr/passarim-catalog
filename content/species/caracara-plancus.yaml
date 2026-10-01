@@ -1,0 +1,23 @@
+scientific_name: Caracara plancus
+common_name_pt: Carcará
+family: Falconidae
+size_cm: 55
+diet: Onívoro oportunista; caça lagartos, cobras, rãs e pequenos vertebrados, rouba filhotes de outras aves e também consome carniça e restos de origem humana.
+conservation_status: LC
+biomes: [amazonia, mata_atlantica, cerrado, caatinga, pantanal, pampa]
+states: [MT, MS, GO, BA, PE, SP, RJ, PR, RS]
+description: >
+  O carcará é uma ave de rapina de hábitos terrestres, com longas pernas
+  adaptadas para caminhar e correr no chão em busca de alimento. É onívoro e
+  pouco seletivo, caçando pequenos animais, roubando ninhos de outras aves e
+  se alimentando de carniça à beira de estradas. Ocorre em quase todo o
+  Brasil, com maiores populações no sudeste e nordeste, beneficiando-se da
+  conversão de matas em pastagens e sendo comum também em centros urbanos.
+description_source_url: https://www.wikiaves.com.br/wiki/carcara
+facts:
+  - text: Seu nome em português vem do tupi antigo "karakará", provavelmente de origem onomatopaica, inspirado no som de sua vocalização.
+    source: https://pt.wikipedia.org/wiki/Carcar%C3%A1
+  - text: Passa grande parte do tempo caminhando no chão graças às pernas longas adaptadas à marcha, mas também é um excelente voador.
+    source: https://pt.wikipedia.org/wiki/Carcar%C3%A1
+  - text: Foi adotado em 2006 como símbolo da Agência Brasileira de Inteligência (ABIN).
+    source: https://pt.wikipedia.org/wiki/Carcar%C3%A1

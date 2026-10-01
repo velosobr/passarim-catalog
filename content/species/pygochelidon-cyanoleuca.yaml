@@ -1,0 +1,23 @@
+scientific_name: Pygochelidon cyanoleuca
+common_name_pt: Andorinha-pequena-de-casa
+family: Hirundinidae
+size_cm: 12
+diet: Insetos capturados em pleno voo; já foi registrada se alimentando em enxames de cupins e formigas aladas.
+conservation_status: LC
+biomes: [amazonia, mata_atlantica, cerrado, caatinga, pantanal, pampa]
+states: [AM, BA, GO, MG, SP, RJ, PR, RS]
+description: >
+  A andorinha-pequena-de-casa é uma ave de parte superior azul-escura e
+  parte inferior branca, bastante comum em praticamente todo o Brasil, do
+  nível do mar a mais de 4 mil metros de altitude. Vive em áreas abertas,
+  cidades, fazendas e clareiras de floresta, sendo uma presença constante no
+  dia a dia das pessoas. Os casais costumam reutilizar o mesmo ninho em anos
+  seguintes e podem criar dois ninhadas por temporada.
+description_source_url: https://pt.wikipedia.org/wiki/Andorinha-pequena-de-casa
+facts:
+  - text: Uma família de andorinhas precisa de cerca de 1.500 insetos por dia para criar os filhotes, consumindo mais de 200 mil insetos em apenas 20 dias de criação.
+    source: https://pt.wikipedia.org/wiki/Andorinha-pequena-de-casa
+  - text: Ao contrário de outras andorinhas que migram centenas de quilômetros, costuma fazer deslocamentos mais curtos e pode permanecer o ano todo em locais com boas condições.
+    source: https://pt.wikipedia.org/wiki/Andorinha-pequena-de-casa
+  - text: Casais migrantes costumam retornar e reutilizar o mesmo ninho em anos seguintes, criando até duas ninhadas por temporada.
+    source: https://pt.wikipedia.org/wiki/Andorinha-pequena-de-casa

@@ -1,0 +1,24 @@
+scientific_name: Columbina talpacoti
+common_name_pt: Rolinha-roxa
+family: Columbidae
+size_cm: 17
+diet: Grãos e sementes catados no chão; frequenta comedouros com milho moído e outras sementes.
+conservation_status: LC
+biomes: [cerrado, mata_atlantica]
+states: [SP, MG, GO, DF, PR]
+description: >
+  A rolinha-roxa é uma pomba pequena e comum, com o macho de penas
+  avermelhadas e cabeça cinza-azulada, enquanto a fêmea é inteiramente
+  parda. Originalmente habitante de cerrados e campos, tornou-se uma das
+  primeiras aves nativas a se adaptar bem às cidades brasileiras, sendo hoje
+  a espécie silvestre mais comum em muitos centros urbanos do Sudeste e do
+  Centro-Oeste. É bastante territorialista e briga com as asas para defender
+  o espaço e a comida.
+description_source_url: https://www.wikiaves.com.br/wiki/rolinha-roxa
+facts:
+  - text: Foi uma das primeiras espécies nativas do Brasil a se adaptar bem ao ambiente urbano, sendo hoje mais numerosa em áreas alteradas pelo homem do que em seu habitat original de cerrados e campos.
+    source: https://pt.wikipedia.org/wiki/Rolinha-roxa
+  - text: É bastante territorialista, disputando alimento e defendendo seu espaço com pancadas das asas contra outras rolinhas.
+    source: https://pt.wikipedia.org/wiki/Rolinha-roxa
+  - text: Em várias cidades brasileiras, vem sendo gradualmente substituída pela pomba-de-bando (Zenaida auriculata).
+    source: https://pt.wikipedia.org/wiki/Rolinha-roxa

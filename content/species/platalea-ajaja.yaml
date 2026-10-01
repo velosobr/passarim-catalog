@@ -1,0 +1,23 @@
+scientific_name: Platalea ajaja
+common_name_pt: Colhereiro
+family: Threskiornithidae
+size_cm: 81
+diet: Peixes e crustáceos, capturados ao varrer o bico achatado de um lado para o outro dentro da água rasa.
+conservation_status: LC
+biomes: [pantanal]
+states: [MS, MT, MG]
+description: >
+  O colhereiro é uma ave aquática facilmente reconhecida pela plumagem
+  rosada e pelo bico achatado em formato de colher, usado para filtrar
+  peixes e crustáceos na água rasa de brejos, lagoas e manguezais. Vive em
+  bandos ou sozinho, sendo comum em áreas úmidas do Pantanal. Quanto mais
+  crustáceos come, mais intenso fica o tom rosado das penas, o que torna a
+  espécie um indicador da qualidade ambiental dos locais onde se alimenta.
+description_source_url: https://pt.wikipedia.org/wiki/Platalea_ajaja
+facts:
+  - text: O nome popular vem do tupi "aiaiá" e se refere ao bico em formato de colher, que a ave movimenta de um lado para o outro dentro da água para sentir e capturar presas.
+    source: https://pt.wikipedia.org/wiki/Platalea_ajaja
+  - text: A intensidade do tom rosado das penas varia conforme a quantidade de crustáceos na dieta, servindo como indicador da qualidade do ambiente onde a ave vive.
+    source: https://pt.wikipedia.org/wiki/Colhereiro
+  - text: Forma colônias de reprodução, pondo entre 2 e 3 ovos por postura, e os filhotes só alçam voo cerca de 6 semanas depois de nascer.
+    source: https://www.infoescola.com/aves/colhereiro/
