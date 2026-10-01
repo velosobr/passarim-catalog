@@ -2,23 +2,24 @@ scientific_name: Amazona aestiva
 common_name_pt: Papagaio-verdadeiro
 family: Psittacidae
 size_cm: 37
-diet: Castanhas, frutos silvestres e sementes, principalmente de leguminosas.
+diet: Sementes, frutos e folhas.
 conservation_status: NT
-biomes: [amazonia, mata_atlantica]
-states: [AM, PA, MT, BA, RJ, SP]
+biomes: [caatinga, cerrado, pantanal]
+states: [PI, PE, BA, SP, MG, RJ, SC, RS]
 description: >
   O papagaio-verdadeiro é um psitacídeo de plumagem predominantemente verde,
-  com testa amarela e manchas vermelhas e azuis nas asas. Vive em matas e
-  áreas de transição, alimentando-se de castanhas, frutos e sementes de
-  leguminosas. É um dos papagaios mais populares como animal de estimação no
-  Brasil, o que também o tornou alvo histórico de captura ilegal para o
+  com cabeça amarela, azul-esverdeado na fronte e nas bochechas, e ombros
+  vermelhos. Ocorre no interior do Brasil, do Nordeste ao Sul, habitando
+  florestas úmidas, savanas, matas de galeria e áreas cultivadas com
+  árvores. É um dos papagaios mais populares como animal de estimação no
+  país, o que também o tornou alvo histórico de captura ilegal para o
   tráfico de aves silvestres, contribuindo para seu status de quase
   ameaçada.
 description_source_url: https://pt.wikipedia.org/wiki/Papagaio-verdadeiro
 facts:
-  - text: Tem um quociente de inteligência comparável ao de crianças humanas de 3 a 5 anos, o que facilita o aprendizado de repetir palavras quando criado em cativeiro.
-    source: https://pt.wikipedia.org/wiki/Papagaio-verdadeiro
-  - text: Pode viver até 80 anos, uma das maiores expectativas de vida entre as aves mantidas como animais de estimação.
-    source: https://pt.wikipedia.org/wiki/Papagaio-verdadeiro
-  - text: Desde os anos 1990, tornou-se cada vez mais comum nas ruas e parques de São Paulo, resultado de aves fugidas ou soltas do cativeiro que formaram populações urbanas.
-    source: https://pt.wikipedia.org/wiki/Papagaio-verdadeiro
+  - text: Costuma nidificar em buracos de rochas erodidas, barrancos ou ocos de árvores; os filhotes passam cerca de dois meses no ninho e a espécie só atinge a maturidade por volta dos cinco anos de idade.
+    source: https://www.wikiaves.com.br/wiki/papagaio-verdadeiro
+  - text: O casal costuma voar tão próximo que parece formar uma única ave de quatro asas, e à noite os indivíduos se reúnem em bandos para dormir.
+    source: https://www.wikiaves.com.br/wiki/papagaio-verdadeiro
+  - text: Tem se tornado cada vez mais comum em áreas urbanas de cidades como São Paulo e Rio de Janeiro.
+    source: https://www.wikiaves.com.br/wiki/papagaio-verdadeiro

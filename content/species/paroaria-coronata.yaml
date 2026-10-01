@@ -7,18 +7,21 @@ conservation_status: LC
 biomes: [cerrado, pampa, mata_atlantica]
 states: [MT, MS, PR, RS, SP]
 description: >
-  O cardeal, também chamado de cardeal-de-topete-vermelho, é reconhecido
-  pelo topete eriçado e vermelho-vivo que cobre a cabeça e invade o peito,
-  presente em machos e fêmeas. Vive em campos com vegetação mais alta,
-  bordas de arrozais e de matas no Centro-Oeste e no Sul do Brasil, tendo
-  também uma população introduzida em São Paulo. Suporta bem variações de
-  temperatura e é protegido por lei, não podendo ser mantido em cativeiro
-  sem autorização do Ibama.
-description_source_url: https://pt.wikipedia.org/wiki/Paroaria_coronata
+  O cardeal, também chamado de cardeal-de-topete-vermelho, galo-de-campina
+  ou guiratirica, é um pássaro de grande beleza, tanto na plumagem quanto
+  no canto — o que faz dele um dos mais caçados para cativeiro. Vive em
+  bordas de arrozais, campos com vegetação alta e bordas de mata no
+  Centro-Oeste e no Sul do Brasil, com uma população introduzida na região
+  Sudeste, principalmente em São Paulo. Não há diferença visível entre
+  macho e fêmea; os filhotes nascem pardacentos, com o topete em tom
+  ferrugíneo.
+description_source_url: https://www.wikiaves.com.br/wiki/cardeal
 facts:
-  - text: O topete eriçado de um vermelho intenso invade também o peito, sendo igual em machos e fêmeas.
-    source: https://pt.wikipedia.org/wiki/Paroaria_coronata
-  - text: É proibido mantê-lo em cativeiro sem autorização do Ibama, por ser considerado fauna silvestre brasileira protegida.
-    source: https://pt.wikipedia.org/wiki/Paroaria_coronata
-  - text: Durante a nidificação, o macho e a fêmea se revezam na incubação dos ovos por cerca de 15 dias, e ambos alimentam os filhotes por mais 2 a 3 semanas após deixarem o ninho.
-    source: https://pt.wikipedia.org/wiki/Paroaria_coronata
+  - text: Não apresenta dimorfismo sexual (macho e fêmea são iguais); os filhotes nascem com plumagem pardacenta e o topete em tom ferrugíneo.
+    source: https://www.wikiaves.com.br/wiki/cardeal
+  - text: É uma ave de grande beleza física e sonora, o que faz dela um dos pássaros mais caçados para criação em cativeiro.
+    source: https://www.wikiaves.com.br/wiki/cardeal
+  - text: É territorialista no período reprodutivo. Cada ninhada tem de 2 a 3 ovos, com até 4 ninhadas por temporada, e os filhotes nascem cerca de 13 dias após a postura.
+    source: https://www.wikiaves.com.br/wiki/cardeal
+  - text: Ocorre naturalmente em Mato Grosso, Mato Grosso do Sul, Paraná e Rio Grande do Sul, e foi introduzido na região Sudeste, principalmente em São Paulo; fora do Brasil, mantém populações estabelecidas no Havaí, em Porto Rico e no Chile.
+    source: https://www.wikiaves.com.br/wiki/cardeal
