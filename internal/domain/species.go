@@ -114,6 +114,28 @@ func NormalizeForSearch(s string) string {
 	return strings.ToLower(strings.TrimSpace(out))
 }
 
+// NormalizeSearchText vai além de NormalizeForSearch: também troca hífen,
+// pontuação e espaços repetidos por UM espaço só. É usada SÓ na busca (a
+// coluna search_text e a query do usuário), nunca no sort_name — assim
+// "bem te vi" e "joao de barro" encontram "Bem-te-vi" e "João-de-barro".
+func NormalizeSearchText(s string) string {
+	base := NormalizeForSearch(s)
+	var b strings.Builder
+	prevSpace := true // começa "true" para já descartar espaços no início
+	for _, r := range base {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			b.WriteRune(r)
+			prevSpace = false
+			continue
+		}
+		if !prevSpace {
+			b.WriteRune(' ')
+			prevSpace = true
+		}
+	}
+	return strings.TrimRight(b.String(), " ")
+}
+
 // Credit guarda a autoria exigida pelas licenças Creative Commons.
 type Credit struct {
 	Author    string
@@ -156,6 +178,12 @@ type SpeciesSummary struct {
 	CommonNamePt       string
 	ThumbnailKey       string
 	ConservationStatus ConservationStatus
+	// SortName é o sort_name GRAVADO no banco (não recalculado). O cursor de
+	// paginação precisa encodar exatamente o valor com o qual o SQL comparou
+	// (ORDER BY sort_name, id) — se a aplicação recalculasse a partir de
+	// CommonNamePt e o valor gravado tivesse ficado diferente por qualquer
+	// motivo, a página 2 repetiria ou pularia itens (Review Focus #2).
+	SortName string
 }
 
 // Species é a versão completa, usada na tela de detalhe.

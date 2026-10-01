@@ -305,7 +305,7 @@ func (q *Queries) ListMedia(ctx context.Context, speciesID string) ([]Medium, er
 }
 
 const listSpecies = `-- name: ListSpecies :many
-SELECT s.id, s.scientific_name, s.common_name_pt, s.conservation_status,
+SELECT s.id, s.scientific_name, s.common_name_pt, s.conservation_status, s.sort_name,
        COALESCE((SELECT m.thumb_key FROM media m
                  WHERE m.species_id = s.id AND m.kind = 'photo'
                  ORDER BY m.position LIMIT 1), '')::text AS thumbnail_key
@@ -335,6 +335,7 @@ type ListSpeciesRow struct {
 	ScientificName     string
 	CommonNamePt       string
 	ConservationStatus string
+	SortName           string
 	ThumbnailKey       string
 }
 
@@ -361,6 +362,7 @@ func (q *Queries) ListSpecies(ctx context.Context, arg ListSpeciesParams) ([]Lis
 			&i.ScientificName,
 			&i.CommonNamePt,
 			&i.ConservationStatus,
+			&i.SortName,
 			&i.ThumbnailKey,
 		); err != nil {
 			return nil, err

@@ -54,7 +54,7 @@ func (u ListSpecies) Execute(ctx context.Context, in ListSpeciesInput) (ListSpec
 	if len(items) > pageSize {
 		out.Species = items[:pageSize]
 		last := out.Species[pageSize-1]
-		out.NextPageToken = EncodeCursor(Cursor{SortName: domain.NormalizeForSearch(last.CommonNamePt), ID: last.ID})
+		out.NextPageToken = EncodeCursor(Cursor{SortName: last.SortName, ID: last.ID})
 	}
 	return out, nil
 }
@@ -67,7 +67,7 @@ func buildFilter(in ListSpeciesInput) (ListFilter, int, error) {
 	if utf8.RuneCountInString(query) > MaxQueryLen {
 		return f, 0, &domain.InvalidArgumentError{Field: "query", Reason: fmt.Sprintf("máximo de %d caracteres", MaxQueryLen)}
 	}
-	f.Query = domain.NormalizeForSearch(query)
+	f.Query = domain.NormalizeSearchText(query)
 
 	if in.Biome != "" {
 		b, err := domain.ParseBiome(in.Biome)

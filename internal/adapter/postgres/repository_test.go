@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 
@@ -79,6 +80,7 @@ func TestRepository(t *testing.T) {
 		sp("Pitangus sulphuratus", "Bem-te-vi", []domain.Biome{domain.BiomeCerrado}, "SP"),
 		sp("Ramphastos toco", "Tucano-toco", []domain.Biome{domain.BiomePantanal}, "MS"),
 		sp("Fakeus percentus", "Ave 100% teste", nil),
+		sp("Furnarius rufus", "João-de-barro", []domain.Biome{domain.BiomeCerrado}, "MG"),
 	)
 
 	t.Run("lista ordenada por nome sem acento", func(t *testing.T) {
@@ -86,7 +88,7 @@ func TestRepository(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		want := []string{"fakeus-percentus", "pitangus-sulphuratus", "turdus-rufiventris", "ramphastos-toco"}
+		want := []string{"fakeus-percentus", "pitangus-sulphuratus", "furnarius-rufus", "turdus-rufiventris", "ramphastos-toco"}
 		if !equal(ids(got), want) {
 			t.Fatalf("ordem = %v, want %v", ids(got), want)
 		}
@@ -104,13 +106,44 @@ func TestRepository(t *testing.T) {
 
 	// Review Focus #2
 	t.Run("TestListSpecies_WildcardsAreLiteral", func(t *testing.T) {
+		// Desde o Review Focus #1, search_text é normalizado com
+		// domain.NormalizeSearchText, que troca pontuação (incluindo '%' e
+		// '_') por espaço ao GRAVAR. Logo nenhum search_text contém esses
+		// caracteres literalmente — mas escapeLike continua garantindo que,
+		// se alguém mandar '%'/'_' direto pro repositório (bypassando a
+		// normalização, como este teste faz), são tratados como texto
+		// literal (zero resultados) e NUNCA como curinga do LIKE (que
+		// devolveria todas as linhas).
 		got, _ := repo.ListSpecies(ctx, usecase.ListFilter{Query: "%", Limit: 10})
-		if !equal(ids(got), []string{"fakeus-percentus"}) {
-			t.Fatalf("'%%' deveria achar só o nome com %% literal, veio %v", ids(got))
+		if len(got) != 0 {
+			t.Fatalf("'%%' deveria ser literal (sem resultados), veio %v", ids(got))
 		}
 		got, _ = repo.ListSpecies(ctx, usecase.ListFilter{Query: "_", Limit: 10})
 		if len(got) != 0 {
 			t.Fatalf("'_' deveria ser literal e não achar nada, veio %v", ids(got))
+		}
+	})
+
+	// Review Focus #1 da revisão final: hífen e espaço duplo não podem
+	// impedir a busca por "bem te vi" ou "joao de barro".
+	t.Run("TestListSpecies_SearchIgnoresHyphensAndRepeatedSpaces", func(t *testing.T) {
+		for _, q := range []string{"bem te vi", "bem-te-vi", "bem  te  vi"} {
+			got, _ := repo.ListSpecies(ctx, usecase.ListFilter{Query: domain.NormalizeSearchText(q), Limit: 10})
+			if !equal(ids(got), []string{"pitangus-sulphuratus"}) {
+				t.Errorf("busca %q = %v", q, ids(got))
+			}
+		}
+		for _, q := range []string{"sabia laranjeira", "sabia  laranjeira"} {
+			got, _ := repo.ListSpecies(ctx, usecase.ListFilter{Query: domain.NormalizeSearchText(q), Limit: 10})
+			if !equal(ids(got), []string{"turdus-rufiventris"}) {
+				t.Errorf("busca %q = %v", q, ids(got))
+			}
+		}
+		for _, q := range []string{"joao de barro", "joao-de-barro"} {
+			got, _ := repo.ListSpecies(ctx, usecase.ListFilter{Query: domain.NormalizeSearchText(q), Limit: 10})
+			if !equal(ids(got), []string{"furnarius-rufus"}) {
+				t.Errorf("busca %q = %v", q, ids(got))
+			}
 		}
 	})
 
@@ -124,7 +157,7 @@ func TestRepository(t *testing.T) {
 	t.Run("cursor continua depois do último item", func(t *testing.T) {
 		after := &usecase.Cursor{SortName: domain.NormalizeForSearch("Bem-te-vi"), ID: "pitangus-sulphuratus"}
 		got, _ := repo.ListSpecies(ctx, usecase.ListFilter{After: after, Limit: 10})
-		if !equal(ids(got), []string{"turdus-rufiventris", "ramphastos-toco"}) {
+		if !equal(ids(got), []string{"furnarius-rufus", "turdus-rufiventris", "ramphastos-toco"}) {
 			t.Fatalf("depois do bem-te-vi = %v", ids(got))
 		}
 	})
@@ -154,7 +187,7 @@ func TestRepository(t *testing.T) {
 	t.Run("contagens", func(t *testing.T) {
 		b, _ := repo.CountByBiome(ctx)
 		s, _ := repo.CountByState(ctx)
-		if b[domain.BiomeCerrado] != 2 || b[domain.BiomePantanal] != 1 || s["SP"] != 2 || s["MS"] != 1 {
+		if b[domain.BiomeCerrado] != 3 || b[domain.BiomePantanal] != 1 || s["SP"] != 2 || s["MS"] != 1 {
 			t.Fatalf("biomas=%v estados=%v", b, s)
 		}
 	})
@@ -182,6 +215,77 @@ func TestRepository(t *testing.T) {
 			t.Fatalf("campos curados não foram atualizados: %+v", s)
 		}
 	})
+}
+
+// Review Focus #2 da revisão final: o cursor de paginação precisa vir do
+// sort_name DEVOLVIDO pelo banco, não de um recálculo de
+// domain.NormalizeForSearch(common_name_pt) feito pela aplicação. Esta
+// espécie tem seu sort_name forçado, via SQL direto, para um valor que
+// diverge do que o recálculo daria — simulando uma divergência histórica
+// (ex.: dado gravado por uma versão antiga da normalização).
+func TestListSpecies_CursorPaginatesUsingStoredSortNameNotRecomputed(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	all := []domain.Species{
+		sp("Turdus rufiventris", "Sabiá-laranjeira", []domain.Biome{domain.BiomeMataAtlantica}, "SP"),
+		sp("Pitangus sulphuratus", "Bem-te-vi", []domain.Biome{domain.BiomeCerrado}, "SP"),
+		sp("Ramphastos toco", "Tucano-toco", []domain.Biome{domain.BiomePantanal}, "MS"),
+		sp("Furnarius rufus", "João-de-barro", []domain.Biome{domain.BiomeCerrado}, "MG"),
+		sp("Fakeus percentus", "Ave 100% teste", nil),
+	}
+	seed(t, repo, all...)
+
+	divergent := "0-sort-name-divergente"
+	if _, err := pool.Exec(ctx, `UPDATE species SET sort_name = $1 WHERE id = 'turdus-rufiventris'`, divergent); err != nil {
+		t.Fatal(err)
+	}
+
+	uc := usecase.ListSpecies{Repo: repo}
+	seen := map[string]bool{}
+	token := ""
+	for page := 0; page < 10; page++ {
+		out, err := uc.Execute(ctx, usecase.ListSpeciesInput{PageSize: 1, PageToken: token})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, s := range out.Species {
+			if seen[s.ID] {
+				t.Fatalf("espécie repetida entre páginas: %s", s.ID)
+			}
+			seen[s.ID] = true
+		}
+		if out.NextPageToken == "" {
+			break
+		}
+		token = out.NextPageToken
+	}
+	if len(seen) != len(all) {
+		t.Fatalf("viu %d espécies (%v), want %d: a divergência no sort_name causou pulo/repetição", len(seen), seen, len(all))
+	}
+}
+
+// Review Focus #5 da revisão final (ADR-0013 do passarim-docs):
+// (species_id, kind, position) é a chave natural de "media" — a migration
+// 0002 adiciona um índice ÚNICO para que o banco recuse uma segunda linha
+// na mesma posição em vez de aceitar uma segunda linha silenciosamente.
+func TestMedia_DuplicatePositionIsRejected(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", []domain.Biome{domain.BiomeMataAtlantica}, "SP"))
+
+	insert := `INSERT INTO media (species_id, kind, position, thumb_key, medium_key, large_key, width, height, author, license, source, source_url)
+		VALUES ('turdus-rufiventris', 'photo', 0, 't.webp', 'm.webp', 'l.webp', 10, 10, 'Autor', 'CC-BY', 'inaturalist', 'https://inaturalist.org/1')`
+	if _, err := pool.Exec(ctx, insert); err != nil {
+		t.Fatalf("primeira inserção deveria funcionar: %v", err)
+	}
+	_, err := pool.Exec(ctx, insert) // mesma (species_id, kind, position)
+	if err == nil {
+		t.Fatal("segunda mídia na mesma (species_id, kind, position) deveria ser rejeitada")
+	}
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) || pgErr.Code != "23505" {
+		t.Fatalf("esperava violação de unicidade (23505), veio %v", err)
+	}
 }
 
 func equal(a, b []string) bool {

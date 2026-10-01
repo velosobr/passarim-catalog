@@ -1,7 +1,7 @@
 -- name: ListSpecies :many
 -- Lista resumida com busca, filtros e paginação por cursor.
 -- Cada filtro é opcional: "(parâmetro IS NULL OR condição)".
-SELECT s.id, s.scientific_name, s.common_name_pt, s.conservation_status,
+SELECT s.id, s.scientific_name, s.common_name_pt, s.conservation_status, s.sort_name,
        COALESCE((SELECT m.thumb_key FROM media m
                  WHERE m.species_id = s.id AND m.kind = 'photo'
                  ORDER BY m.position LIMIT 1), '')::text AS thumbnail_key

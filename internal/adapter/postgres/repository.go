@@ -75,6 +75,7 @@ func (r *Repository) ListSpecies(ctx context.Context, f usecase.ListFilter) ([]d
 		out[i] = domain.SpeciesSummary{
 			ID: row.ID, ScientificName: row.ScientificName, CommonNamePt: row.CommonNamePt,
 			ThumbnailKey: row.ThumbnailKey, ConservationStatus: domain.ConservationStatus(row.ConservationStatus),
+			SortName: row.SortName,
 		}
 	}
 	return out, nil
@@ -190,7 +191,7 @@ func (r *Repository) UpsertCurated(ctx context.Context, s domain.Species) error 
 		DescriptionAuthor: s.DescriptionCredit.Author, DescriptionLicense: s.DescriptionCredit.License,
 		DescriptionSource: s.DescriptionCredit.Source, DescriptionSourceUrl: s.DescriptionCredit.SourceURL,
 		SortName:   domain.NormalizeForSearch(s.CommonNamePt),
-		SearchText: domain.NormalizeForSearch(s.CommonNamePt + " " + s.ScientificName),
+		SearchText: domain.NormalizeSearchText(s.CommonNamePt + " " + s.ScientificName),
 	}
 	if s.SizeCm != nil {
 		params.SizeCm = pgtype.Int4{Int32: toInt32(*s.SizeCm), Valid: true}

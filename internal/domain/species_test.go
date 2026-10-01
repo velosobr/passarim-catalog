@@ -34,6 +34,26 @@ func TestNormalizeForSearch(t *testing.T) {
 	}
 }
 
+// Review Focus #1 da revisão final: hífen e espaços repetidos não podem
+// impedir a busca ("bem te vi" precisa achar "Bem-te-vi").
+func TestNormalizeSearchText(t *testing.T) {
+	cases := map[string]string{
+		"Bem-te-vi":            "bem te vi",
+		"Sabiá-laranjeira":     "sabia laranjeira",
+		"Sabiá  laranjeira":    "sabia laranjeira", // espaço duplo
+		"João-de-barro":        "joao de barro",
+		"joao de barro":        "joao de barro",
+		"  Tiê-sangue!  ":      "tie sangue",
+		"Ave 100% teste":       "ave 100 teste",
+		"Pitangus sulphuratus": "pitangus sulphuratus",
+	}
+	for in, want := range cases {
+		if got := domain.NormalizeSearchText(in); got != want {
+			t.Errorf("NormalizeSearchText(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestParseBiome(t *testing.T) {
 	if b, err := domain.ParseBiome("pantanal"); err != nil || b != domain.BiomePantanal {
 		t.Fatalf("ParseBiome(pantanal) = %v, %v", b, err)
