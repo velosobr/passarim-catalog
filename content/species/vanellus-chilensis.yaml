@@ -1,0 +1,21 @@
+scientific_name: Vanellus chilensis
+common_name_pt: Quero-quero
+family: Charadriidae
+size_cm: 35
+diet: Insetos e outros pequenos invertebrados capturados no solo.
+conservation_status: LC
+biomes: [amazonia, cerrado, mata_atlantica, caatinga, pantanal, pampa]
+states: [RS, SC, PR, SP, RJ, MG, GO, MS, BA, PA]
+description: >
+  O quero-quero é uma ave inconfundível pelo grito estridente que parece
+  repetir seu próprio nome e pelo comportamento extremamente territorial,
+  atacando em voos rasantes qualquer intruso que se aproxime do ninho,
+  incluindo pessoas. Ocorre em praticamente todo o Brasil, em campos,
+  várzeas, praias, brejos e até aeroportos e campos de futebol.
+  Alimenta-se de insetos e outros pequenos invertebrados do solo.
+description_source_url: https://pt.wikipedia.org/wiki/Quero-quero
+facts:
+  - text: É a ave-símbolo do Rio Grande do Sul e também do Uruguai, aparecendo em lendas, músicas e na literatura popular desses lugares.
+    source: https://pt.wikipedia.org/wiki/Quero-quero
+  - text: Durante uma única estação reprodutiva, um casal pode produzir até três ninhadas, embora apenas cerca de 20% dos filhotes sobrevivam até a fase adulta.
+    source: https://pt.wikipedia.org/wiki/Quero-quero

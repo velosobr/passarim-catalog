@@ -1,0 +1,21 @@
+scientific_name: Ardea alba
+common_name_pt: Garça-branca-grande
+family: Ardeidae
+size_cm: 90
+diet: Principalmente peixes e sapos, além de pequenos répteis, mamíferos e crustáceos.
+conservation_status: LC
+biomes: [pantanal, mata_atlantica, amazonia, caatinga]
+states: [MS, MT, SP, RJ, ES, BA, PE, PA, AM]
+description: >
+  A garça-branca-grande é uma ave aquática toda branca, de pescoço longo e
+  flexível em forma de S, encontrada junto a rios, lagoas e áreas alagadas
+  por quase todo o Brasil, com destaque para o Pantanal e o litoral. Caça
+  parada ou caminhando lentamente na água rasa, à espreita de peixes, sapos
+  e pequenos répteis, que captura com uma bicada rápida do pescoço. Durante
+  a reprodução, desenvolve longas penas ornamentais nas costas.
+description_source_url: https://pt.wikipedia.org/wiki/Gar%C3%A7a-branca-grande
+facts:
+  - text: No final do século 19, milhões de indivíduos foram mortos pela indústria de chapéus, que usava suas penas ornamentais, mas a espécie se recuperou com esforços de conservação.
+    source: https://www.wikiaves.com.br/wiki/garca-branca-grande
+  - text: A espécie é retratada na cédula brasileira de 5 reais, em reconhecimento à sua importância cultural e ambiental.
+    source: https://pt.wikipedia.org/wiki/Gar%C3%A7a-branca-grande

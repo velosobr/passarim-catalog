@@ -1,0 +1,21 @@
+scientific_name: Jabiru mycteria
+common_name_pt: Tuiuiú
+family: Ciconiidae
+size_cm: 140
+diet: Peixes, moluscos, répteis, insetos e pequenos mamíferos, caçados em águas rasas.
+conservation_status: LC
+biomes: [pantanal, amazonia]
+states: [MS, MT, AM, PA]
+description: >
+  O tuiuiú, também chamado de jaburu, é a maior ave voadora do Pantanal e
+  símbolo da região, reconhecido pelo pescoço nu e preto com uma bolsa
+  vermelha na base da garganta. Alimenta-se principalmente de peixes,
+  moluscos, répteis e pequenos mamíferos, caçando em águas rasas de brejos
+  e rios. Constrói ninhos enormes, usados por vários anos, muitas vezes em
+  colônias ao lado de outras aves aquáticas.
+description_source_url: https://pt.wikipedia.org/wiki/Tuiui%C3%BA
+facts:
+  - text: Apresenta dimorfismo sexual perceptível, com as fêmeas costumando ser de 20 a 25% menores e mais leves que os machos.
+    source: https://pt.wikipedia.org/wiki/Tuiui%C3%BA
+  - text: Constrói ninhos em grupos de até seis casais, às vezes ao lado de garças e outras aves aquáticas, com a fêmea pondo de 2 a 5 ovos brancos.
+    source: https://pt.wikipedia.org/wiki/Tuiui%C3%BA

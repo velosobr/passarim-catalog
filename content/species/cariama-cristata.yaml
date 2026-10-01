@@ -1,0 +1,21 @@
+scientific_name: Cariama cristata
+common_name_pt: Seriema
+family: Cariamidae
+size_cm: 80
+diet: Onívora, come insetos, serpentes, lagartos, anfíbios, filhotes de outras aves e pequenos roedores, além de alguma matéria vegetal.
+conservation_status: LC
+biomes: [cerrado, caatinga]
+states: [BA, PI, MG, SP, GO, MT, PR, RS]
+description: >
+  A seriema é uma ave terrestre de pernas e pescoço longos, mais vista
+  caminhando pelo campo do que voando, apesar de ser capaz de voar quando
+  ameaçada. É comum em áreas abertas de Cerrado e Caatinga, pastagens e
+  bordas de mata do Nordeste, Sudeste, Centro-Oeste e Sul do Brasil. Tem
+  hábitos onívoros, comendo desde insetos e lagartos até pequenos roedores
+  e filhotes de outras aves.
+description_source_url: https://pt.wikipedia.org/wiki/Seriema
+facts:
+  - text: É uma das maiores aves terrestres dos Neotrópicos, ficando atrás apenas da ema em tamanho.
+    source: https://pt.wikipedia.org/wiki/Seriema
+  - text: Possui uma crista de penas na testa que é única entre as aves neotropicais, não encontrada em espécies semelhantes.
+    source: https://pt.wikipedia.org/wiki/Seriema

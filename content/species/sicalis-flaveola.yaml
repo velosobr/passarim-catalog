@@ -1,0 +1,19 @@
+scientific_name: Sicalis flaveola
+common_name_pt: Canário-da-terra
+family: Thraupidae
+diet: Sementes de gramíneas, como alpiste e painço, complementadas com insetos.
+conservation_status: LC
+biomes: [amazonia, caatinga, cerrado, mata_atlantica, pampa]
+states: [MA, PI, CE, MG, SP, RJ, RS, AM]
+description: >
+  O canário-da-terra-verdadeiro é um passarinho amarelo-dourado com tons
+  alaranjados na cabeça, muito popular no Brasil por seu canto. Ocorre em
+  praticamente todo o território nacional, de áreas abertas a quintais e
+  jardins urbanos. Alimenta-se principalmente de sementes de gramíneas,
+  como alpiste e painço, complementando a dieta com pequenos insetos.
+description_source_url: https://pt.wikipedia.org/wiki/Can%C3%A1rio-da-terra
+facts:
+  - text: Os filhotes nascem cinzentos, independentemente do sexo; só por volta dos 9 meses os machos adquirem a coloração amarela e avermelhada característica.
+    source: https://pt.wikipedia.org/wiki/Can%C3%A1rio-da-terra
+  - text: As fêmeas podem realizar até 4 posturas por ano, com 4 a 6 ovos cada, totalizando cerca de 20 filhotes em uma única temporada.
+    source: https://pt.wikipedia.org/wiki/Can%C3%A1rio-da-terra

@@ -1,0 +1,23 @@
+scientific_name: Ramphastos toco
+common_name_pt: Tucano-toco
+family: Ramphastidae
+size_cm: 56
+diet: Insetos, lagartos, ovos e filhotes de outras aves, e principalmente frutos caídos no chão.
+conservation_status: LC
+biomes: [cerrado, mata_atlantica, amazonia]
+states: [PI, GO, TO, MT, MG, RJ, SC, RS]
+description: >
+  O tucano-toco é a maior espécie de tucano do Brasil, reconhecido pelo
+  enorme bico amarelo-alaranjado, leve por ser formado por uma estrutura
+  óssea em formato de favo de mel. Vive em bordas de mata, cerrados e matas
+  de galeria, descendo ao chão para comer frutos caídos. Também captura
+  insetos, lagartos e ovos de outras aves. O bico, além de ajudar na
+  alimentação, funciona como dissipador natural de calor do corpo.
+description_source_url: https://pt.wikipedia.org/wiki/Tucano-toco
+facts:
+  - text: O bico pode medir até 22 cm e é formado por um tecido ósseo esponjoso, em formato de favo de mel, o que o torna leve e não atrapalha o voo.
+    source: https://pt.wikipedia.org/wiki/Tucano-toco
+  - text: Pesquisas mostraram que o bico funciona como um dissipador natural de calor, graças aos muitos vasos sanguíneos em contato com o ambiente.
+    source: https://pt.wikipedia.org/wiki/Tucano-toco
+  - text: Apesar de não estar ameaçado, já foi capturado e traficado para outros países para venda como animal de estimação, o que reduziu populações locais.
+    source: https://pt.wikipedia.org/wiki/Tucano-toco

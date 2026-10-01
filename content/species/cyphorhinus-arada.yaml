@@ -1,0 +1,21 @@
+scientific_name: Cyphorhinus arada
+common_name_pt: Uirapuru-verdadeiro
+family: Troglodytidae
+size_cm: 13
+diet: Principalmente insetos, complementados com frutas.
+conservation_status: LC
+biomes: [amazonia]
+states: [AM, PA, AC, RO]
+description: >
+  O uirapuru-verdadeiro é uma ave pequena e discreta da Amazônia, famosa
+  não pela aparência, mas pelo canto considerado um dos mais belos entre
+  as aves brasileiras. Vive no sub-bosque de florestas úmidas e de várzea,
+  cantando por poucos dias ao ano, principalmente ao amanhecer e ao
+  anoitecer. Alimenta-se sobretudo de insetos, complementando a dieta com
+  frutas.
+description_source_url: https://pt.wikipedia.org/wiki/Uirapuru-verdadeiro
+facts:
+  - text: Canta apenas cerca de 15 dias por ano, em performances de 10 a 15 minutos, e já foram registrados sete cantos diferentes da espécie.
+    source: https://pt.wikipedia.org/wiki/Uirapuru-verdadeiro
+  - text: Inspirou o compositor Villa-Lobos, que em 1917 criou o poema sinfônico "Uirapuru" baseado em folclore brasileiro sobre a ave.
+    source: https://pt.wikipedia.org/wiki/Uirapuru-verdadeiro

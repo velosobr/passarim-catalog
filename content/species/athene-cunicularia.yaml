@@ -1,0 +1,21 @@
+scientific_name: Athene cunicularia
+common_name_pt: Coruja-buraqueira
+family: Strigidae
+size_cm: 25
+diet: Insetos, pequenos roedores, anfíbios e outros vertebrados de pequeno porte.
+conservation_status: LC
+biomes: [mata_atlantica, cerrado, caatinga, pantanal, pampa]
+states: [SP, RJ, MG, PR, SC, RS, GO, MS, BA, DF]
+description: >
+  A coruja-buraqueira é uma coruja pequena e de pernas compridas, com um
+  hábito incomum entre corujas: ser facilmente avistada durante o dia,
+  muitas vezes empoleirada à entrada da toca onde vive. Ocorre em quase
+  todo o Brasil, exceto na Amazônia, habitando campos, pastos, restingas e
+  até aeroportos e terrenos baldios em áreas urbanas. Alimenta-se de
+  insetos, pequenos roedores, anfíbios e outros vertebrados pequenos.
+description_source_url: https://pt.wikipedia.org/wiki/Coruja-buraqueira
+facts:
+  - text: Tem o hábito peculiar de ficar apoiada sobre uma perna só, comportamento não observado em outras espécies de coruja.
+    source: https://pt.wikipedia.org/wiki/Coruja-buraqueira
+  - text: Os filhotes, quando ameaçados dentro da toca, emitem um som que imita o chocalho de uma cascavel para afugentar predadores.
+    source: https://pt.wikipedia.org/wiki/Coruja-buraqueira

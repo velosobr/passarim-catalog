@@ -1,0 +1,23 @@
+scientific_name: Guaruba guarouba
+common_name_pt: Ararajuba
+family: Psittacidae
+size_cm: 34
+diet: Frutas, flores, brotos e sementes de diversas plantas, como caju, açaí, anani e murici.
+conservation_status: VU
+biomes: [amazonia]
+states: [MA, AM, PA, RO, MT]
+description: >
+  A ararajuba é um papagaio inteiramente amarelo-dourado, com as asas
+  verdes, considerado um dos psitacídeos mais vistosos do Brasil. Vive
+  exclusivamente na Amazônia, principalmente entre o oeste do Maranhão e o
+  nordeste do Pará, nas florestas ao redor do rio Tocantins e do baixo
+  Xingu. Alimenta-se de frutas, flores, brotos e sementes de diversas
+  plantas, sem grande especialização alimentar.
+description_source_url: https://pt.wikipedia.org/wiki/Guaruba_guarouba
+facts:
+  - text: Diferente da maioria dos papagaios, outros indivíduos do bando ajudam o casal reprodutor a cuidar dos filhotes recém-nascidos.
+    source: https://pt.wikipedia.org/wiki/Guaruba_guarouba
+  - text: Nidifica em túneis profundos, de até 2 metros, escavados em árvores grandes, o que a deixa vulnerável ao desmatamento e à indústria madeireira.
+    source: https://pt.wikipedia.org/wiki/Guaruba_guarouba
+  - text: É popular entre povos indígenas da região, que até hoje usam suas penas como moeda de troca em algumas tribos.
+    source: https://pt.wikipedia.org/wiki/Guaruba_guarouba

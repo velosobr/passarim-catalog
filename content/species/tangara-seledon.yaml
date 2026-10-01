@@ -1,0 +1,21 @@
+scientific_name: Tangara seledon
+common_name_pt: Saíra-sete-cores
+family: Thraupidae
+size_cm: 14
+diet: Frutos de palmeira, goiaba, mamão e outras frutas, além de insetos e suas larvas.
+conservation_status: LC
+biomes: [mata_atlantica]
+states: [BA, ES, RJ, SP, PR, SC, RS, MG]
+description: >
+  A saíra-sete-cores é um passarinho pequeno e extremamente colorido, com
+  tons de turquesa, amarelo-alaranjado e azul que lhe garantem uma das
+  plumagens mais vistosas da Mata Atlântica. Ocorre do leste da Bahia até o
+  Rio Grande do Sul, em matas, restingas e capoeiras. Alimenta-se de
+  frutos de palmeiras, goiaba, mamão e outras frutas, além de insetos e
+  suas larvas.
+description_source_url: https://pt.wikipedia.org/wiki/Sa%C3%ADra-sete-cores
+facts:
+  - text: Seu nome científico significa "dançarino verde claro", numa referência ao colorido da plumagem.
+    source: https://pt.wikipedia.org/wiki/Sa%C3%ADra-sete-cores
+  - text: O casal é monogâmico e constrói o ninho juntos, em formato de tigela, com os filhotes deixando o ninho entre 14 e 18 dias após a eclosão.
+    source: https://pt.wikipedia.org/wiki/Sa%C3%ADra-sete-cores

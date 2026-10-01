@@ -1,0 +1,20 @@
+scientific_name: Turdus rufiventris
+common_name_pt: Sabiá-laranjeira
+family: Turdidae
+size_cm: 23
+diet: Artrópodes, larvas e minhocas, além de frutos maduros; eventualmente preda pequenos sapos e rãs jovens.
+conservation_status: LC
+biomes: [mata_atlantica, cerrado, caatinga, pantanal, pampa]
+states: [SP, RJ, MG, PR, SC, RS, BA, GO, MS]
+description: >
+  O sabiá-laranjeira é um pássaro de peito alaranjado e dorso pardo-oliva,
+  muito comum em quintais, parques e áreas urbanas por quase todo o Brasil,
+  com exceção da Amazônia. Forrageia no chão à procura de minhocas, insetos
+  e frutas maduras, e é conhecido sobretudo pelo canto melodioso e aflautado
+  que anima as manhãs em diversas regiões do país.
+description_source_url: https://pt.wikipedia.org/wiki/Sabi%C3%A1-laranjeira
+facts:
+  - text: Foi declarado popularmente Ave Nacional do Brasil por decreto em 2002, sendo também símbolo oficial do estado de São Paulo desde 1966.
+    source: https://pt.wikipedia.org/wiki/Sabi%C3%A1-laranjeira
+  - text: O canto aflautado pode durar até dois minutos seguidos e ser ouvido a mais de um quilômetro de distância, e a ave ainda consegue imitar vocalizações de outras espécies.
+    source: https://pt.wikipedia.org/wiki/Sabi%C3%A1-laranjeira

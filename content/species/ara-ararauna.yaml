@@ -1,0 +1,21 @@
+scientific_name: Ara ararauna
+common_name_pt: Arara-canindé
+family: Psittacidae
+size_cm: 90
+diet: Sementes e frutos, como buriti, cajuzinho, iriri, gabiroba e castanha-do-pará, partidos com a força do bico.
+conservation_status: LC
+biomes: [amazonia, cerrado, pantanal]
+states: [PA, AM, MT, MS, TO, MA, GO]
+description: >
+  A arara-canindé tem plumagem azul nas costas e amarelo-dourada no peito,
+  sendo uma das araras mais conhecidas do Brasil. Habita principalmente a
+  Amazônia e áreas de Cerrado, alimentando-se de sementes e frutos como
+  buriti e castanha-do-pará, que quebra com a força do bico. Além de se
+  destacar pela beleza da plumagem, tem papel importante na dispersão de
+  sementes das florestas onde vive.
+description_source_url: https://pt.wikipedia.org/wiki/Arara-canind%C3%A9
+facts:
+  - text: Participa ativamente da dispersão de sementes de palmeiras como o buriti, contribuindo para o equilíbrio dos ecossistemas onde vive.
+    source: https://pt.wikipedia.org/wiki/Arara-canind%C3%A9
+  - text: Em cativeiro, quando bem cuidada, pode viver até 70 anos, o que a torna uma das aves de estimação mais longevas e procuradas do mundo.
+    source: https://pt.wikipedia.org/wiki/Arara-canind%C3%A9

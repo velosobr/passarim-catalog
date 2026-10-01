@@ -1,0 +1,21 @@
+scientific_name: Thraupis sayaca
+common_name_pt: Sanhaço-cinzento
+family: Thraupidae
+size_cm: 17
+diet: Frutas, flores, folhas, néctar, além de aracnídeos e insetos capturados em voo.
+conservation_status: LC
+biomes: [mata_atlantica, caatinga]
+states: [MA, PE, BA, MG, SP, RJ, PR, SC, RS]
+description: >
+  O sanhaço-cinzento é uma das aves mais comuns do Brasil, com plumagem
+  acinzentada e azulada discreta, facilmente visto em jardins, parques e
+  áreas urbanas. Distribui-se por todo o litoral leste da América do Sul,
+  de São Luís até o sul do continente, sem ocorrer na Amazônia.
+  Alimenta-se de frutas, flores, folhas, néctar e pequenos insetos e
+  aracnídeos, muitas vezes capturados em pleno voo.
+description_source_url: https://pt.wikipedia.org/wiki/Sanha%C3%A7o-cinzento
+facts:
+  - text: Durante o cortejo, o macho agita os ombros para a fêmea, comportamento considerado característico dessa espécie.
+    source: https://pt.wikipedia.org/wiki/Sanha%C3%A7o-cinzento
+  - text: É extremamente adaptável, suportando climas desde úmidos até semiáridos, e já foi registrado vivendo em altitudes superiores a 3 mil metros.
+    source: https://pt.wikipedia.org/wiki/Sanha%C3%A7o-cinzento

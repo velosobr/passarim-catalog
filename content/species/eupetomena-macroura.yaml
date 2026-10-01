@@ -1,0 +1,21 @@
+scientific_name: Eupetomena macroura
+common_name_pt: Beija-flor-tesoura
+family: Trochilidae
+size_cm: 17
+diet: Néctar de flores, com papel importante na polinização, além de pequenos insetos capturados no ar.
+conservation_status: LC
+biomes: [caatinga, cerrado, mata_atlantica]
+states: [BA, PE, CE, GO, MG, SP, RJ, PR, SC]
+description: >
+  O beija-flor-tesoura é facilmente reconhecido pela cauda longa e
+  bifurcada, que lembra uma tesoura aberta em voo, e pela plumagem
+  verde-escura com cabeça e cauda azuladas. É um dos beija-flores mais
+  comuns do Brasil, presente em jardins, parques e áreas abertas de boa
+  parte do país. Alimenta-se principalmente de néctar, mas também captura
+  pequenos insetos no ar, tendo papel relevante na polinização de flores.
+description_source_url: https://pt.wikipedia.org/wiki/Beija-flor-tesoura
+facts:
+  - text: É considerado um dos beija-flores mais agressivos do Brasil, atacando aves e mamíferos bem maiores que ele para defender seu território.
+    source: https://pt.wikipedia.org/wiki/Beija-flor-tesoura
+  - text: A maior parte de sua distribuição está na Caatinga e no Cerrado, mas a espécie vem expandindo sua área ao longo das últimas décadas.
+    source: https://en.wikipedia.org/wiki/Swallow-tailed_hummingbird

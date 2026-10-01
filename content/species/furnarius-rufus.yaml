@@ -1,0 +1,21 @@
+scientific_name: Furnarius rufus
+common_name_pt: João-de-barro
+family: Furnariidae
+size_cm: 20
+diet: Insetos, larvas e aranhas capturados no chão ou em vegetação baixa; ocasionalmente sementes.
+conservation_status: LC
+biomes: [mata_atlantica, cerrado, caatinga, pampa, pantanal]
+states: [PE, GO, MT, SP, RJ, MG, PR, SC, RS, BA]
+description: >
+  O joão-de-barro é famoso por construir, com barro, palha e esterco, um
+  ninho em formato de forno que pode pesar vários quilos e levar semanas
+  para ficar pronto. Ocorre em quase todo o território brasileiro, exceto
+  na Amazônia, adaptando-se bem a postes, muros e árvores em áreas urbanas.
+  Alimenta-se principalmente de insetos, larvas e aranhas, capturados no
+  chão ou em vegetação rasteira.
+description_source_url: https://pt.wikipedia.org/wiki/Jo%C3%A3o-de-barro
+facts:
+  - text: Seu ninho de barro pode levar de 2 a 18 dias para ficar pronto, dependendo da disponibilidade de material no ambiente.
+    source: https://pt.wikipedia.org/wiki/Jo%C3%A3o-de-barro
+  - text: É a ave-símbolo nacional da Argentina desde 1928, onde é conhecida popularmente como "hornero".
+    source: https://pt.wikipedia.org/wiki/Jo%C3%A3o-de-barro

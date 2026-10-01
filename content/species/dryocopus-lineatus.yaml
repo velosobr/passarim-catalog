@@ -1,0 +1,22 @@
+scientific_name: Dryocopus lineatus
+common_name_pt: Pica-pau-de-banda-branca
+family: Picidae
+size_cm: 34
+conservation_status: LC
+biomes: [amazonia, mata_atlantica]
+states: [AM, PA, SP, PR, SC, RS, MG]
+description: >
+  O pica-pau-de-banda-branca é um dos maiores pica-paus do Brasil,
+  reconhecido pelo topete vermelho vistoso e pelas listras brancas nas
+  laterais do pescoço. Ocorre em florestas da Amazônia e também no sudeste
+  do país, onde vive uma subespécie de topete menor. Escava ninhos em
+  árvores mortas e os dois sexos se revezam na incubação dos ovos e no
+  cuidado dos filhotes, que são alimentados por regurgitação.
+description_source_url: https://pt.wikipedia.org/wiki/Pica-pau-de-banda-branca
+facts:
+  - text: Escava seus ninhos em árvores mortas, a alturas que variam de 2 a 27 metros do chão, com a entrada medindo cerca de 9 centímetros de diâmetro.
+    source: https://pt.wikipedia.org/wiki/Pica-pau-de-banda-branca
+  - text: Durante a incubação, o macho cuida sozinho do ninho à noite, enquanto fêmea e macho se revezam em turnos de duas a três horas durante o dia.
+    source: https://pt.wikipedia.org/wiki/Pica-pau-de-banda-branca
+  - text: Mede entre 31,5 e 36 cm de comprimento, uma das maiores espécies de pica-pau encontradas no Brasil.
+    source: https://en.wikipedia.org/wiki/Lineated_woodpecker

@@ -1,0 +1,21 @@
+scientific_name: Anodorhynchus hyacinthinus
+common_name_pt: Arara-azul-grande
+family: Psittacidae
+size_cm: 100
+diet: Sementes duras de palmeiras, como coco-de-urucuri e coco-de-espinho, quebradas com a força do bico.
+conservation_status: VU
+biomes: [pantanal, cerrado, amazonia]
+states: [MS, MT, GO, MA, PI, BA, TO, MG, PA, AM]
+description: >
+  A arara-azul-grande é a maior espécie de arara do mundo, com plumagem
+  azul-cobalto intensa e um anel amarelo ao redor dos olhos e na base do
+  bico. Vive em áreas de palmeiral no Pantanal, Cerrado e Amazônia, onde se
+  alimenta quase exclusivamente de sementes duras de palmeiras, que
+  consegue quebrar graças à força extraordinária do bico. É ameaçada pela
+  perda de habitat e pelo tráfico de animais silvestres.
+description_source_url: https://pt.wikipedia.org/wiki/Arara-azul-grande
+facts:
+  - text: Formam casais monogâmicos que permanecem juntos durante toda a vida, fiéis aos mesmos locais de alimentação e reprodução.
+    source: https://pt.wikipedia.org/wiki/Arara-azul-grande
+  - text: Já foram registradas usando folhas mastigadas ou pedaços de madeira como ferramentas para firmar as sementes enquanto se alimentam.
+    source: https://pt.wikipedia.org/wiki/Arara-azul-grande

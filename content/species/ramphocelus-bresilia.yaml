@@ -1,0 +1,21 @@
+scientific_name: Ramphocelus bresilia
+common_name_pt: Tiê-sangue
+family: Thraupidae
+size_cm: 18
+diet: Frutas como pitanga e banana, frutos de embaúba e fruta-do-sabiá, além de pequenos invertebrados.
+conservation_status: LC
+biomes: [mata_atlantica]
+states: [RN, PE, BA, ES, RJ, SP, PR, SC]
+description: >
+  O tiê-sangue é famoso pelo contraste marcante entre o macho, de plumagem
+  vermelho-vivo com asas e cauda pretas, e a fêmea, de tons
+  pardo-acinzentados com o ventre alaranjado. É endêmico da Mata Atlântica,
+  ocorrendo do Rio Grande do Norte a Santa Catarina, em matas costeiras,
+  manguezais e restingas. Alimenta-se de frutas como pitanga e banana, além
+  de pequenos invertebrados.
+description_source_url: https://pt.wikipedia.org/wiki/Ti%C3%AA-sangue
+facts:
+  - text: No cortejo, o macho levanta a cabeça verticalmente para exibir ao máximo a base brilhante do seu bico.
+    source: https://pt.wikipedia.org/wiki/Ti%C3%AA-sangue
+  - text: Costuma criar filhotes do chupim, uma ave que parasita ninhos alheios, servindo como hospedeiro involuntário dessa espécie.
+    source: https://pt.wikipedia.org/wiki/Ti%C3%AA-sangue

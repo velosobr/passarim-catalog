@@ -1,0 +1,21 @@
+scientific_name: Pitangus sulphuratus
+common_name_pt: Bem-te-vi
+family: Tyrannidae
+size_cm: 23
+diet: Insetos em grande quantidade, além de frutas, flores, pequenas cobras, lagartos, crustáceos, peixes e girinos.
+conservation_status: LC
+biomes: [amazonia, cerrado, mata_atlantica, pantanal, pampa]
+states: [AM, PA, GO, MT, MS, MG, SP, RJ, PR, RS]
+description: >
+  O bem-te-vi é uma ave robusta de cabeça preta com uma risca branca sobre os
+  olhos e peito amarelo vivo, presente em praticamente todo o território
+  brasileiro, de áreas urbanas a bordas de mata. É extremamente versátil na
+  alimentação, capturando insetos no ar, mas também comendo frutas, pequenos
+  lagartos, peixes e até girinos. Seu nome popular vem do canto
+  característico, que lembra as sílabas que dão nome à espécie.
+description_source_url: https://pt.wikipedia.org/wiki/Bem-te-vi
+facts:
+  - text: Ocupa praticamente todos os biomas brasileiros, da Amazônia ao Pampa e ao Pantanal, adaptando-se muito bem a cidades e áreas urbanas.
+    source: https://pt.wikipedia.org/wiki/Bem-te-vi
+  - text: Costuma atacar em voos rasantes aves de rapina, como gaviões, que se aproximam demais do seu território durante a época de reprodução.
+    source: https://pt.wikipedia.org/wiki/Bem-te-vi
