@@ -96,6 +96,14 @@ func (s *Server) toStatus(ctx context.Context, err error) error {
 		return status.Error(codes.NotFound, "espécie não encontrada")
 	case errors.As(err, &inv):
 		return status.Error(codes.InvalidArgument, inv.Error())
+	case errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled):
+		// O BFF chama com timeout de 2s: cliente cancelando ou prazo
+		// expirando é operação normal, não falha do catalog — por isso
+		// vira DEADLINE_EXCEEDED/CANCELLED (não INTERNAL) e é logado em
+		// nível baixo, sem poluir métricas/alertas de erro (WARN/INFO).
+		st := status.FromContextError(err)
+		s.log.WarnContext(ctx, "requisição cancelada ou expirou", "error", err, "code", st.Code(), "request_id", RequestIDFrom(ctx))
+		return st.Err()
 	default:
 		s.log.ErrorContext(ctx, "erro interno", "error", err, "request_id", RequestIDFrom(ctx))
 		return status.Error(codes.Internal, "erro interno")

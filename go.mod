@@ -8,7 +8,7 @@ require (
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.44.0
-	github.com/velosobr/passarim-proto v0.2.0
+	github.com/velosobr/passarim-proto v0.2.1
 	go.yaml.in/yaml/v3 v3.0.5
 	golang.org/x/text v0.42.0
 	google.golang.org/grpc v1.85.0-dev.0.20260825072537-93e31b48545e

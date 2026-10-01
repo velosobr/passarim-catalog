@@ -3,6 +3,7 @@ package grpcadapter_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net"
@@ -109,6 +110,51 @@ func TestErrorsMapToGRPCCodes(t *testing.T) {
 		if tc.code == codes.Internal && status.Convert(err).Message() != "erro interno" {
 			t.Errorf("erro interno vazou detalhes: %q", status.Convert(err).Message())
 		}
+	}
+}
+
+// Review Focus #3 da revisão final: ctx cancelado/expirado (ex.: timeout
+// de 2s do BFF) não pode virar INTERNAL — isso polui as métricas de erro.
+// DeadlineExceeded e Canceled têm códigos gRPC próprios.
+func TestErrorsMapToGRPCCodes_ContextCancellationAndDeadline(t *testing.T) {
+	cases := []struct {
+		name string
+		err  error
+		code codes.Code
+	}{
+		{"deadline exceeded (encapsulado)", fmt.Errorf("listar espécies: %w", context.DeadlineExceeded), codes.DeadlineExceeded},
+		{"canceled (encapsulado)", fmt.Errorf("listar espécies: %w", context.Canceled), codes.Canceled},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{err: tc.err}, fakeFilters{}, quiet))
+			_, err := c.GetSpecies(context.Background(), &catalogv1.GetSpeciesRequest{Id: "x"})
+			if status.Code(err) != tc.code {
+				t.Fatalf("code = %v, want %v", status.Code(err), tc.code)
+			}
+		})
+	}
+}
+
+// levelCapture é um slog.Handler mínimo que só guarda o nível de cada log,
+// para provar que cancelamento/deadline NÃO são logados como ERROR.
+type levelCapture struct{ levels []slog.Level }
+
+func (c *levelCapture) Enabled(context.Context, slog.Level) bool { return true }
+func (c *levelCapture) Handle(_ context.Context, r slog.Record) error {
+	c.levels = append(c.levels, r.Level)
+	return nil
+}
+func (c *levelCapture) WithAttrs([]slog.Attr) slog.Handler { return c }
+func (c *levelCapture) WithGroup(string) slog.Handler      { return c }
+
+func TestErrorsMapToGRPCCodes_ContextCancellationLogsBelowError(t *testing.T) {
+	cap := &levelCapture{}
+	log := slog.New(cap)
+	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{err: fmt.Errorf("x: %w", context.DeadlineExceeded)}, fakeFilters{}, log))
+	_, _ = c.GetSpecies(context.Background(), &catalogv1.GetSpeciesRequest{Id: "x"})
+	if len(cap.levels) != 1 || cap.levels[0] >= slog.LevelError {
+		t.Fatalf("esperava log abaixo de ERROR para deadline/cancelamento, veio %v", cap.levels)
 	}
 }
 
