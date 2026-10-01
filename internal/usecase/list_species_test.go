@@ -96,6 +96,31 @@ func TestListSpecies_InvalidInputs(t *testing.T) {
 	}
 }
 
+// Review Focus #2 da revisão final: o cursor precisa encodar o sort_name
+// DEVOLVIDO pelo repositório (o que o banco realmente gravou e comparou),
+// nunca um recálculo de domain.NormalizeForSearch(CommonNamePt) feito aqui.
+func TestListSpecies_CursorUsesRepositorySortNameNotRecomputed(t *testing.T) {
+	repo := &fakeRepo{
+		species:          birds(2),
+		sortNameOverride: map[string]string{"genus-saa": "zzz-valor-gravado-diferente"},
+	}
+	uc := usecase.ListSpecies{Repo: repo}
+	out, err := uc.Execute(context.Background(), usecase.ListSpeciesInput{PageSize: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out.NextPageToken == "" {
+		t.Fatal("esperava próxima página (repo tem 1 item a mais que a página pedida só pra garantir token): ajuste o teste")
+	}
+	c, err := usecase.DecodeCursor(out.NextPageToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.SortName != "zzz-valor-gravado-diferente" {
+		t.Fatalf("cursor.SortName = %q, deveria ser o valor devolvido pelo repo (não recalculado)", c.SortName)
+	}
+}
+
 func TestListSpecies_RepositoryErrorPropagates(t *testing.T) {
 	boom := errors.New("banco caiu")
 	_, err := usecase.ListSpecies{Repo: &fakeRepo{err: boom}}.Execute(context.Background(), usecase.ListSpeciesInput{})

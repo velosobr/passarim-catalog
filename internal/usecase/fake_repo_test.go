@@ -15,6 +15,11 @@ type fakeRepo struct {
 	species   []domain.Species
 	lastQuery usecase.ListFilter
 	err       error
+	// sortNameOverride simula um sort_name GRAVADO no banco que diverge do
+	// que domain.NormalizeForSearch(CommonNamePt) recalcularia agora —
+	// prova que o cursor vem do valor devolvido pelo repo, não de um
+	// recálculo (Review Focus #2). Chave = ID da espécie.
+	sortNameOverride map[string]string
 }
 
 func (f *fakeRepo) ListSpecies(_ context.Context, q usecase.ListFilter) ([]domain.SpeciesSummary, error) {
@@ -39,7 +44,11 @@ func (f *fakeRepo) ListSpecies(_ context.Context, q usecase.ListFilter) ([]domai
 		if q.Query != "" && !strings.Contains(key, q.Query) {
 			continue
 		}
-		out = append(out, domain.SpeciesSummary{ID: s.ID, CommonNamePt: s.CommonNamePt, ScientificName: s.ScientificName})
+		sortName := key
+		if override, ok := f.sortNameOverride[s.ID]; ok {
+			sortName = override
+		}
+		out = append(out, domain.SpeciesSummary{ID: s.ID, CommonNamePt: s.CommonNamePt, ScientificName: s.ScientificName, SortName: sortName})
 		if len(out) == q.Limit {
 			break
 		}
