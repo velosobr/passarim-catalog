@@ -78,10 +78,10 @@ func (s *Server) ListFilters(ctx context.Context, _ *catalogv1.ListFiltersReques
 	}
 	resp := &catalogv1.ListFiltersResponse{}
 	for _, b := range f.Biomes {
-		resp.Biomes = append(resp.Biomes, &catalogv1.BiomeCount{Biome: biomeToProto[b.Biome], SpeciesCount: int32(b.Count)})
+		resp.Biomes = append(resp.Biomes, &catalogv1.BiomeCount{Biome: biomeToProto[b.Biome], SpeciesCount: toInt32(b.Count)})
 	}
 	for _, st := range f.States {
-		resp.States = append(resp.States, &catalogv1.StateCount{State: st.State, SpeciesCount: int32(st.Count)})
+		resp.States = append(resp.States, &catalogv1.StateCount{State: st.State, SpeciesCount: toInt32(st.Count)})
 	}
 	return resp, nil
 }

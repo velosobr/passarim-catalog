@@ -1,0 +1,11 @@
+# golangci-lint roda dezenas de verificadores de uma vez.
+version: "2"
+linters:
+  enable:
+    - gosec      # problemas de segurança (OWASP)
+    - errorlint  # uso correto de errors.Is/As
+    - bodyclose  # respostas HTTP fechadas
+    - misspell
+  exclusions:
+    paths:
+      - internal/adapter/postgres/sqlcgen   # código gerado

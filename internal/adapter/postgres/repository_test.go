@@ -2,6 +2,7 @@ package postgres_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -145,7 +146,7 @@ func TestRepository(t *testing.T) {
 	})
 
 	t.Run("id inexistente", func(t *testing.T) {
-		if _, err := repo.GetSpecies(ctx, "nao-existe"); err != domain.ErrNotFound {
+		if _, err := repo.GetSpecies(ctx, "nao-existe"); !errors.Is(err, domain.ErrNotFound) {
 			t.Fatalf("esperava ErrNotFound, veio %v", err)
 		}
 	})
@@ -188,7 +189,7 @@ func equal(a, b []string) bool {
 		return false
 	}
 	for i := range a {
-		if a[i] != b[i] {
+		if a[i] != b[i] { //nolint:gosec // falso positivo G602: len(a)==len(b) já checado acima, b[i] nunca excede os limites
 			return false
 		}
 	}

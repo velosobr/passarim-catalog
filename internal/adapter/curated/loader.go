@@ -61,7 +61,7 @@ func LoadDir(dir string) ([]domain.Species, error) {
 }
 
 func loadFile(path string) (domain.Species, error) {
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec // G304: path vem só de filepath.Glob sobre um dir confiável (configurado pelo operador), nunca de entrada externa
 	if err != nil {
 		return domain.Species{}, err
 	}

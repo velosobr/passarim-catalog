@@ -1,10 +1,26 @@
 package grpcadapter
 
 import (
+	"math"
+
 	catalogv1 "github.com/velosobr/passarim-proto/gen/go/passarim/catalog/v1"
 
 	"github.com/velosobr/passarim-catalog/internal/domain"
 )
+
+// toInt32 converte um int para int32 saturando nos limites do int32 em vez
+// de dar overflow silencioso (gosec G115). Os valores convertidos aqui vêm
+// de conteúdo curado (tamanho em cm, dimensões de foto, duração de áudio,
+// contagem de ocorrências), então a saturação nunca deve ocorrer na prática.
+func toInt32(v int) int32 {
+	if v > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	if v < math.MinInt32 {
+		return math.MinInt32
+	}
+	return int32(v)
+}
 
 // Tabelas de tradução entre o mundo do domínio (strings) e o do proto (enums).
 var biomeToProto = map[domain.Biome]catalogv1.Biome{
@@ -51,7 +67,7 @@ func speciesToProto(s domain.Species) *catalogv1.Species {
 		DescriptionCredit: creditToProto(s.DescriptionCredit), States: s.States, Diet: s.Diet,
 	}
 	if s.SizeCm != nil {
-		v := int32(*s.SizeCm)
+		v := toInt32(*s.SizeCm)
 		out.SizeCm = &v
 	}
 	for _, f := range s.Facts {
@@ -62,13 +78,13 @@ func speciesToProto(s domain.Species) *catalogv1.Species {
 	}
 	for _, p := range s.Photos {
 		out.Photos = append(out.Photos, &catalogv1.Photo{ThumbKey: p.ThumbKey, MediumKey: p.MediumKey, LargeKey: p.LargeKey,
-			Width: int32(p.Width), Height: int32(p.Height), Credit: creditToProto(p.Credit)})
+			Width: toInt32(p.Width), Height: toInt32(p.Height), Credit: creditToProto(p.Credit)})
 	}
 	if s.Audio != nil {
-		out.Audio = &catalogv1.Audio{Key: s.Audio.Key, DurationMs: int32(s.Audio.DurationMs), Credit: creditToProto(s.Audio.Credit)}
+		out.Audio = &catalogv1.Audio{Key: s.Audio.Key, DurationMs: toInt32(s.Audio.DurationMs), Credit: creditToProto(s.Audio.Credit)}
 	}
 	for _, c := range s.Clusters {
-		out.Clusters = append(out.Clusters, &catalogv1.OccurrenceCluster{Lat: c.Lat, Lng: c.Lng, Count: int32(c.Count), Precision: c.Precision})
+		out.Clusters = append(out.Clusters, &catalogv1.OccurrenceCluster{Lat: c.Lat, Lng: c.Lng, Count: toInt32(c.Count), Precision: c.Precision})
 	}
 	return out
 }

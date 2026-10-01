@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -14,6 +15,20 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/domain"
 	"github.com/velosobr/passarim-catalog/internal/usecase"
 )
+
+// toInt32 converte um int para int32 saturando nos limites do int32 em vez
+// de dar overflow silencioso (gosec G115). Limit e SizeCm já são pequenos e
+// validados (ver usecase.buildFilter e domain.Species.Validate), então a
+// saturação nunca deve ocorrer na prática.
+func toInt32(v int) int32 {
+	if v > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	if v < math.MinInt32 {
+		return math.MinInt32
+	}
+	return int32(v)
+}
 
 // Repository implementa usecase.SpeciesRepository com PostgreSQL.
 type Repository struct {
@@ -41,7 +56,7 @@ func (r *Repository) ListSpecies(ctx context.Context, f usecase.ListFilter) ([]d
 	params := sqlcgen.ListSpeciesParams{
 		Query: text(escapeLike(f.Query)),
 		State: text(f.State),
-		Lim:   int32(f.Limit),
+		Lim:   toInt32(f.Limit),
 	}
 	if f.Biome != "" {
 		params.Biome = sqlcgen.NullBiome{Biome: sqlcgen.Biome(f.Biome), Valid: true}
@@ -178,7 +193,7 @@ func (r *Repository) UpsertCurated(ctx context.Context, s domain.Species) error 
 		SearchText: domain.NormalizeForSearch(s.CommonNamePt + " " + s.ScientificName),
 	}
 	if s.SizeCm != nil {
-		params.SizeCm = pgtype.Int4{Int32: int32(*s.SizeCm), Valid: true}
+		params.SizeCm = pgtype.Int4{Int32: toInt32(*s.SizeCm), Valid: true}
 	}
 	if s.Diet != nil {
 		params.Diet = pgtype.Text{String: *s.Diet, Valid: true}
