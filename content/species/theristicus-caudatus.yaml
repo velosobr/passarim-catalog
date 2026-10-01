@@ -2,23 +2,23 @@ scientific_name: Theristicus caudatus
 common_name_pt: Curicaca
 family: Threskiornithidae
 size_cm: 69
-diet: Artrópodes, como centopeias, aranhas, insetos adultos e larvas, além de pequenos lagartos, ratos, caramujos, anfíbios e pequenas serpentes.
+diet: Dieta bastante variada, com destaque para invertebrados como aranhas, centopeias e insetos; também preda pequenos vertebrados, incluindo lagartixas, roedores, rãs, caramujos e cobras de pequeno porte.
 conservation_status: LC
-biomes: [amazonia, caatinga, pantanal]
-states: [PA, CE, MT, MS]
+biomes: [amazonia, pantanal]
+states: [PA, MT, CE, RS]
 description: >
-  A curicaca é uma ave pernalta de pescoço esbranquiçado ou alaranjado,
-  peito alaranjado, dorso verde-acinzentado, partes inferiores escuras e
-  pernas avermelhadas, com um bico longo e curvo típico da família dos
-  íbis. Vive em vegetação aberta próxima a lagoas e campos periodicamente
-  alagados, como na Ilha de Marajó, no Pantanal e no Ceará. Caça artrópodes,
-  pequenos lagartos, roedores, anfíbios e até pequenas serpentes, sendo
-  comum vê-la em bandos barulhentos sobrevoando áreas úmidas.
+  A curicaca é uma ave vistosa da família dos íbis, com bico longo e
+  recurvado e uma combinação de tons alaranjados, acinzentados e escuros no
+  corpo que contrastam com as pernas avermelhadas. Prefere ambientes abertos
+  e úmidos, como campos alagáveis e beiras de lagoas, sendo observada desde
+  a Ilha de Marajó, no Pará, até o Pantanal e áreas do Ceará. Costuma se
+  deslocar em bandos ruidosos, alimentando-se tanto de invertebrados quanto
+  de pequenos animais capturados no solo encharcado.
 description_source_url: https://www.wikiaves.com.br/wiki/curicaca
 facts:
-  - text: O nome popular vem do tupi "kurikaka", numa referência aos hábitos gregários e ao voo potente da ave, encontrada sobretudo em brejos e pântanos.
+  - text: O nome vem do tupi "kurikaka"; já os povos indígenas associavam essa ave ao hábito de viver e se deslocar em bando, cruzando brejos e pantanais em voos fortes e contínuos que ainda hoje chamam atenção de quem a observa.
     source: https://pt.wikipedia.org/wiki/Curicaca
-  - text: É a ave símbolo do município de São José dos Ausentes, no Rio Grande do Sul, por lei municipal de dezembro de 2005.
+  - text: É a ave símbolo do município de São José dos Ausentes, no Rio Grande do Sul, reconhecida por lei municipal em dezembro de 2005.
     source: https://pt.wikipedia.org/wiki/Curicaca
-  - text: Além de artrópodes como centopeias e aranhas, também caça pequenos lagartos, ratos, caramujos, anfíbios e até pequenas serpentes.
-    source: https://www.wikiaves.com.br/wiki/curicaca
+  - text: Foi descrita pela primeira vez por Buffon em 1781 sem receber um nome científico formal; só em 1783 o naturalista Pieter Boddaert a batizou como Scolopax caudatus, nome depois revisto para o gênero atual, Theristicus.
+    source: https://pt.wikipedia.org/wiki/Curicaca
