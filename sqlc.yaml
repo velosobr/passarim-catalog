@@ -1,0 +1,12 @@
+# sqlc lê nossos arquivos .sql e GERA código Go com tipos corretos.
+# Vantagem: escrevemos SQL de verdade e o compilador acusa erros de tipo.
+version: "2"
+sql:
+  - engine: postgresql
+    schema: internal/adapter/postgres/migrations   # ignora os .down.sql
+    queries: internal/adapter/postgres/queries.sql
+    gen:
+      go:
+        package: sqlcgen
+        out: internal/adapter/postgres/sqlcgen
+        sql_package: pgx/v5
