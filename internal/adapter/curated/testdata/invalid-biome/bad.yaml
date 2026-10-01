@@ -1,0 +1,14 @@
+scientific_name: Turdus rufiventris
+common_name_pt: Sabiá-laranjeira
+family: Turdidae
+size_cm: 25
+diet: Frutos, insetos e minhocas
+conservation_status: LC
+biomes: [deserto]
+states: [SP, RJ, MG]
+description: >
+  Ave de peito alaranjado e canto melodioso, comum em parques e quintais.
+description_source_url: https://pt.wikipedia.org/wiki/Sabi%C3%A1-laranjeira
+facts:
+  - text: Foi declarada ave-símbolo do Brasil por decreto em 2002.
+    source: https://pt.wikipedia.org/wiki/Sabi%C3%A1-laranjeira
