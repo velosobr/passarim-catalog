@@ -3,7 +3,7 @@ common_name_pt: Corruíra
 family: Troglodytidae
 size_cm: 12
 diet: Principalmente insetos e suas larvas; ocasionalmente pequenos vertebrados, como lagartixas, além de sementes e frutos.
-conservation_status: DD
+conservation_status: ""
 biomes: [amazonia, mata_atlantica, cerrado, caatinga, pantanal, pampa]
 states: [AM, SP, MG, RJ, PR, RS, BA, GO]
 description: >
@@ -21,4 +21,6 @@ facts:
   - text: Constrói ninhos em cavidades as mais variadas, incluindo sapatos velhos, caixas de relógio e até telefones públicos abandonados.
     source: https://pt.wikipedia.org/wiki/Troglodytes_musculus
   - text: Apesar do tamanho pequeno, ataca ninhos de aves maiores, como sabiás e codornas, não para se alimentar, mas para impedir que outras aves ocupem seu território.
+    source: https://pt.wikipedia.org/wiki/Troglodytes_musculus
+  - text: Por ter sido separada taxonomicamente da espécie norte-americana Troglodytes aedon, ainda consta como "não avaliada" pela IUCN quanto ao risco de extinção.
     source: https://pt.wikipedia.org/wiki/Troglodytes_musculus

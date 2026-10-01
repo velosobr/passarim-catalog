@@ -9,6 +9,14 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/adapter/curated"
 )
 
+// notEvaluated lista espécies cujo conservation_status fica vazio de
+// propósito: foram recentemente separadas taxonomicamente e a IUCN ainda
+// não publicou uma categoria própria para elas (vazio = sem categoria,
+// diferente de "DD - Data Deficient", que é uma categoria formal distinta).
+var notEvaluated = map[string]bool{
+	"troglodytes-musculus": true, // corruíra: separada de Troglodytes aedon, ainda não avaliada pela IUCN.
+}
+
 func TestCuratedContent(t *testing.T) {
 	species, err := curated.LoadDir("species")
 	if err != nil {
@@ -30,7 +38,7 @@ func TestCuratedContent(t *testing.T) {
 		if !strings.HasPrefix(s.DescriptionCredit.SourceURL, "https://") {
 			t.Errorf("%s: description_source_url deve ser https", s.ID)
 		}
-		if s.ConservationStatus == "" {
+		if s.ConservationStatus == "" && !notEvaluated[s.ID] {
 			t.Errorf("%s: conservation_status obrigatório no conteúdo curado", s.ID)
 		}
 		for _, f := range s.Facts {
