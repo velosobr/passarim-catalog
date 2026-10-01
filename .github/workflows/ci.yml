@@ -46,8 +46,11 @@ jobs:
       - name: build da imagem
         run: docker build -t passarim-catalog:ci .
       # Trivy procura vulnerabilidades na imagem. Falha em HIGH/CRITICAL.
-      # a tag real é "v0.33.1" (a brief pedia "0.33.1", sem o "v", que não resolve)
-      - uses: aquasecurity/trivy-action@v0.33.1
+      # v0.33.1 (versão pedida, corrigindo a tag para o formato real "vX.Y.Z")
+      # falha ao instalar o binário do Trivy no runner (script de instalação
+      # antigo incompatível com os releases atuais do Trivy). v0.36.0 é a
+      # versão estável mais recente e funciona.
+      - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: passarim-catalog:ci
           severity: HIGH,CRITICAL
