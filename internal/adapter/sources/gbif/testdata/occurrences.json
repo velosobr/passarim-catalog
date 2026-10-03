@@ -1,0 +1,23 @@
+{
+ "offset": 0,
+ "limit": 3,
+ "endOfRecords": true,
+ "count": 3,
+ "results": [
+  {
+   "decimalLatitude": -23.556523,
+   "decimalLongitude": -46.677076,
+   "stateProvince": "São Paulo"
+  },
+  {
+   "decimalLatitude": -22.472098,
+   "decimalLongitude": -43.292397,
+   "stateProvince": "Rio de Janeiro"
+  },
+  {
+   "decimalLatitude": -22.92477,
+   "decimalLongitude": -43.173239,
+   "stateProvince": "Rio de Janeiro"
+  }
+ ]
+}

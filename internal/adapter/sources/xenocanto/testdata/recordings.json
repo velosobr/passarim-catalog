@@ -1,0 +1,47 @@
+{
+ "numRecordings": "356",
+ "numPages": 8,
+ "page": 1,
+ "recordings": [
+  {
+   "id": "1172942",
+   "file": "https://xeno-canto.org/1172942/download",
+   "lic": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+   "rec": "Mateus Gonçalves Santos",
+   "url": "https://xeno-canto.org/1172942",
+   "length": "1:26",
+   "q": "A",
+   "type": "call"
+  },
+  {
+   "id": "1135373",
+   "file": "https://xeno-canto.org/1135373/download",
+   "lic": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+   "rec": "JAYRSON ARAUJO DE OLIVEIRA",
+   "url": "https://xeno-canto.org/1135373",
+   "length": "0:44",
+   "q": "A",
+   "type": "alarm call, call"
+  },
+  {
+   "id": "1080158",
+   "file": "https://xeno-canto.org/1080158/download",
+   "lic": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+   "rec": "JAYRSON ARAUJO DE OLIVEIRA",
+   "url": "https://xeno-canto.org/1080158",
+   "length": "2:06",
+   "q": "A",
+   "type": "alarm call, call"
+  },
+  {
+   "id": "1070609",
+   "file": "https://xeno-canto.org/1070609/download",
+   "lic": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+   "rec": "JAYRSON ARAUJO DE OLIVEIRA",
+   "url": "https://xeno-canto.org/1070609",
+   "length": "1:35",
+   "q": "A",
+   "type": "alarm call"
+  }
+ ]
+}
