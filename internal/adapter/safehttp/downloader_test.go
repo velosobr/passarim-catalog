@@ -82,10 +82,17 @@ func TestDownloader_BlocksPrivateIPAfterRedirect(t *testing.T) {
 		http.Redirect(w, r, "https://169.254.169.254/latest/meta-data", http.StatusFound)
 	}))
 	defer redirector.Close()
-	d := newTestDownloader(redirector, safehttp.Options{AllowedHosts: []string{host(t, redirector), "169.254.169.254"}, AllowPrivateIPs: false})
+	// AllowPrivateIPs=true: a PRIMEIRA conexão (ao redirector, em 127.0.0.1) é
+	// liberada, então o bloqueio abaixo só pode vir da regra aplicada ao salto.
+	var reasons []string
+	d := newTestDownloader(redirector, safehttp.Options{AllowedHosts: []string{host(t, redirector)}, AllowPrivateIPs: true,
+		Blocked: func(r string) { reasons = append(reasons, r) }})
 	_, _, err := d.Fetch(context.Background(), redirector.URL+"/a.jpg", ingest.DownloadImage)
 	if !errors.Is(err, safehttp.ErrBlocked) {
-		t.Fatalf("redirecionamento para IP de metadados deveria ser bloqueado, veio %v", err)
+		t.Fatalf("redirecionamento para host fora da allowlist deveria ser bloqueado, veio %v", err)
+	}
+	if len(reasons) != 1 || !strings.Contains(reasons[0], "169.254.169.254") {
+		t.Fatalf("o bloqueio deveria vir do destino do redirecionamento: %v", reasons)
 	}
 }
 

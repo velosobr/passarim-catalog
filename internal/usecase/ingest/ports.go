@@ -41,6 +41,9 @@ type JobQueue interface {
 	// sem que outro worker pegue os mesmos.
 	ClaimDue(ctx context.Context, limit int) ([]Job, error)
 	Complete(ctx context.Context, jobID int64) error
+	// Release devolve à fila um job que foi pego mas não chegou a rodar
+	// (ex.: o lote estourou o tempo). Não gasta tentativa.
+	Release(ctx context.Context, jobID int64) error
 	// Fail registra o erro. Se attempts chegou ao máximo, status = failed;
 	// senão volta para pending com next_run_at = agora + retryIn.
 	Fail(ctx context.Context, jobID int64, cause string, retryIn time.Duration, giveUp bool) error

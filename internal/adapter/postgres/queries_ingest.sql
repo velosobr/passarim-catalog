@@ -13,8 +13,23 @@ WHERE status = 'done' AND updated_at < now() - make_interval(secs => sqlc.arg('r
 -- name: RequeueStuckJobs :exec
 -- Se o worker morrer no meio de um job, ele fica "running" para sempre.
 -- Depois de 15 min sem atualização, devolvemos o job para a fila.
-UPDATE ingestion_job SET status = 'pending', updated_at = now()
+-- Conta como tentativa (senão um job que SEMPRE estoura o tempo repetiria para
+-- sempre) e desiste na 5ª (mesmo limite MaxAttempts do Runner).
+UPDATE ingestion_job SET
+    attempts = attempts + 1,
+    status = CASE WHEN attempts + 1 >= 5 THEN 'failed' ELSE 'pending' END,
+    last_error = 'worker parou no meio do job',
+    updated_at = now()
 WHERE status = 'running' AND updated_at < now() - interval '15 minutes';
+
+-- name: ReopenFailedJobs :exec
+-- Uma queda temporária da fonte (ou chave trocada) não pode condenar o job
+-- para sempre: depois de 24 h, jobs 'failed' ganham nova chance.
+UPDATE ingestion_job SET status = 'pending', attempts = 0, next_run_at = now(), updated_at = now()
+WHERE status = 'failed' AND updated_at < now() - interval '24 hours';
+
+-- name: ReleaseJob :exec
+UPDATE ingestion_job SET status = 'pending', updated_at = now() WHERE id = $1 AND status = 'running';
 
 -- name: CountPendingJobs :one
 SELECT count(*)::int FROM ingestion_job WHERE status = 'pending';

@@ -70,3 +70,18 @@ func TestFindPhotos_HTTPErrorIsError(t *testing.T) {
 		t.Fatal("503 deveria virar erro")
 	}
 }
+
+// Revisão final #4: a busca de táxon é "autocomplete"; o nome precisa bater.
+func TestFindPhotos_TaxonWithDifferentNameIsEmpty(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/v1/observations" {
+			t.Error("não deveria buscar observações de outro táxon")
+		}
+		_, _ = w.Write([]byte(`{"results":[{"id":99,"name":"Turdus leucomelas","rank":"species"}]}`))
+	}))
+	defer srv.Close()
+	photos, err := inaturalist.New(srv.URL, "ua", rate.NewLimiter(rate.Inf, 1)).FindPhotos(context.Background(), "Turdus rufiventris", 3)
+	if err != nil || len(photos) != 0 {
+		t.Fatalf("nome diferente deveria dar vazio: %v %v", photos, err)
+	}
+}

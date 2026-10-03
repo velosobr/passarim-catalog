@@ -129,6 +129,9 @@ type fakeQueue struct {
 	jobs      []ingest.Job
 	completed []int64
 	failed    []failCall
+	released  []int64
+	// ctxErrOnFinish guarda ctx.Err() visto por Complete/Fail (deve ser nil).
+	ctxErrOnFinish []error
 }
 
 func (f *fakeQueue) EnqueueMissing(context.Context, []ingest.Source, time.Duration) (int, error) {
@@ -142,12 +145,19 @@ func (f *fakeQueue) ClaimDue(_ context.Context, limit int) ([]ingest.Job, error)
 	return f.jobs, nil
 }
 
-func (f *fakeQueue) Complete(_ context.Context, id int64) error {
+func (f *fakeQueue) Complete(ctx context.Context, id int64) error {
+	f.ctxErrOnFinish = append(f.ctxErrOnFinish, ctx.Err())
 	f.completed = append(f.completed, id)
 	return nil
 }
 
-func (f *fakeQueue) Fail(_ context.Context, id int64, cause string, retryIn time.Duration, giveUp bool) error {
+func (f *fakeQueue) Fail(ctx context.Context, id int64, cause string, retryIn time.Duration, giveUp bool) error {
+	f.ctxErrOnFinish = append(f.ctxErrOnFinish, ctx.Err())
 	f.failed = append(f.failed, failCall{id, cause, retryIn, giveUp})
+	return nil
+}
+
+func (f *fakeQueue) Release(_ context.Context, id int64) error {
+	f.released = append(f.released, id)
 	return nil
 }

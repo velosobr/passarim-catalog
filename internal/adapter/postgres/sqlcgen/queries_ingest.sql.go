@@ -207,13 +207,40 @@ func (q *Queries) InsertMedia(ctx context.Context, arg InsertMediaParams) error 
 	return err
 }
 
+const releaseJob = `-- name: ReleaseJob :exec
+UPDATE ingestion_job SET status = 'pending', updated_at = now() WHERE id = $1 AND status = 'running'
+`
+
+func (q *Queries) ReleaseJob(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, releaseJob, id)
+	return err
+}
+
+const reopenFailedJobs = `-- name: ReopenFailedJobs :exec
+UPDATE ingestion_job SET status = 'pending', attempts = 0, next_run_at = now(), updated_at = now()
+WHERE status = 'failed' AND updated_at < now() - interval '24 hours'
+`
+
+// Uma queda temporária da fonte (ou chave trocada) não pode condenar o job
+// para sempre: depois de 24 h, jobs 'failed' ganham nova chance.
+func (q *Queries) ReopenFailedJobs(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, reopenFailedJobs)
+	return err
+}
+
 const requeueStuckJobs = `-- name: RequeueStuckJobs :exec
-UPDATE ingestion_job SET status = 'pending', updated_at = now()
+UPDATE ingestion_job SET
+    attempts = attempts + 1,
+    status = CASE WHEN attempts + 1 >= 5 THEN 'failed' ELSE 'pending' END,
+    last_error = 'worker parou no meio do job',
+    updated_at = now()
 WHERE status = 'running' AND updated_at < now() - interval '15 minutes'
 `
 
 // Se o worker morrer no meio de um job, ele fica "running" para sempre.
 // Depois de 15 min sem atualização, devolvemos o job para a fila.
+// Conta como tentativa (senão um job que SEMPRE estoura o tempo repetiria para
+// sempre) e desiste na 5ª (mesmo limite MaxAttempts do Runner).
 func (q *Queries) RequeueStuckJobs(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, requeueStuckJobs)
 	return err

@@ -97,3 +97,21 @@ func TestFindOccurrences_HTTPErrorIsError(t *testing.T) {
 		t.Fatal("500 deveria virar erro")
 	}
 }
+
+// Revisão final #4: ao não achar a espécie, o GBIF devolve o GÊNERO (HIGHERRANK).
+func TestFindOccurrences_HigherRankMatchIsEmpty(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/species/match" {
+			t.Errorf("não deveria buscar ocorrências do gênero: %s", r.URL)
+		}
+		if r.URL.Query().Get("class") != "Aves" || r.URL.Query().Get("strict") != "true" {
+			t.Errorf("match deve restringir a Aves e ser estrito: %v", r.URL.Query())
+		}
+		_, _ = w.Write([]byte(`{"usageKey":2490000,"matchType":"HIGHERRANK"}`))
+	}))
+	defer srv.Close()
+	pts, err := gbif.New(srv.URL, limiter()).FindOccurrences(context.Background(), "Turdus inexistens", 900)
+	if err != nil || len(pts) != 0 {
+		t.Fatalf("HIGHERRANK não é a espécie: %v %v", pts, err)
+	}
+}

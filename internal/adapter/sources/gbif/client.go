@@ -53,11 +53,13 @@ type searchResponse struct {
 
 func (c *Client) FindOccurrences(ctx context.Context, scientificName string, max int) ([]domain.Point, error) {
 	var m matchResponse
-	if err := c.getJSON(ctx, "/v1/species/match", url.Values{"name": {scientificName}}, &m); err != nil {
+	if err := c.getJSON(ctx, "/v1/species/match", url.Values{"name": {scientificName}, "class": {"Aves"}, "strict": {"true"}}, &m); err != nil {
 		return nil, err
 	}
-	if m.MatchType == "NONE" || m.UsageKey == 0 {
-		return nil, nil // espécie desconhecida no GBIF não é erro
+	// Só EXACT: quando o nome não existe, o GBIF devolve o GÊNERO (HIGHERRANK)
+	// e o mapa mostraria avistamentos de outras espécies. Desconhecida não é erro.
+	if m.MatchType != "EXACT" || m.UsageKey == 0 {
+		return nil, nil
 	}
 	var points []domain.Point
 	for offset := 0; len(points) < max; offset += pageSize {

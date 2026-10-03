@@ -46,7 +46,8 @@ func New(baseURL, userAgent string, limiter *rate.Limiter) *Client {
 // Só os campos que usamos: o resto da resposta é ignorado.
 type taxaResponse struct {
 	Results []struct {
-		ID int `json:"id"`
+		ID   int    `json:"id"`
+		Name string `json:"name"`
 	} `json:"results"`
 }
 
@@ -70,7 +71,9 @@ func (c *Client) FindPhotos(ctx context.Context, scientificName string, max int)
 	if err := c.getJSON(ctx, "/v1/taxa", url.Values{"q": {scientificName}, "rank": {"species"}, "per_page": {"1"}}, &taxa); err != nil {
 		return nil, err
 	}
-	if len(taxa.Results) == 0 {
+	// A busca de táxon é "autocomplete": o 1º resultado pode ser outra espécie
+	// (taxonomias diferem). Só aceitamos se o nome científico bater.
+	if len(taxa.Results) == 0 || !strings.EqualFold(taxa.Results[0].Name, scientificName) {
 		return nil, nil // espécie desconhecida na fonte não é erro
 	}
 	var obs observationsResponse

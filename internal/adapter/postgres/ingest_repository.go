@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -38,6 +39,9 @@ func (r *IngestRepository) EnqueueMissing(ctx context.Context, sources []ingest.
 	if err := r.q.RescheduleStaleJobs(ctx, refreshAfter.Seconds()); err != nil {
 		return 0, fmt.Errorf("reagendar: %w", err)
 	}
+	if err := r.q.ReopenFailedJobs(ctx); err != nil {
+		return 0, fmt.Errorf("reabrir jobs falhos: %w", err)
+	}
 	if err := r.q.RequeueStuckJobs(ctx); err != nil {
 		return 0, fmt.Errorf("devolver jobs presos: %w", err)
 	}
@@ -62,9 +66,15 @@ func (r *IngestRepository) Complete(ctx context.Context, jobID int64) error {
 	return r.q.CompleteJob(ctx, jobID)
 }
 
+func (r *IngestRepository) Release(ctx context.Context, jobID int64) error {
+	return r.q.ReleaseJob(ctx, jobID)
+}
+
 func (r *IngestRepository) Fail(ctx context.Context, jobID int64, cause string, retryIn time.Duration, giveUp bool) error {
 	if len(cause) > 500 { // a mensagem vai para o banco: limitamos o tamanho
-		cause = cause[:500]
+		// Cortar no meio de um caractere multibyte geraria UTF-8 inválido
+		// (o PostgreSQL rejeita); ToValidUTF8 descarta o pedaço quebrado.
+		cause = strings.ToValidUTF8(cause[:500], "")
 	}
 	return r.q.FailJob(ctx, sqlcgen.FailJobParams{ID: jobID, GiveUp: giveUp, LastError: cause, RetryInSecs: retryIn.Seconds()})
 }
