@@ -1,0 +1,22 @@
+scientific_name: Saltator similis
+common_name_pt: Trinca-ferro
+family: Thraupidae
+size_cm: 20
+diet: Frutos, sementes, brotos e folhas tenras; ocasionalmente insetos.
+conservation_status: LC
+biomes: [mata_atlantica, cerrado, pampa]
+states: [SP, RJ, MG, ES, BA, GO, PR, SC, RS, MS]
+description: >
+  O trinca-ferro, também conhecido como trinca-ferro-verdadeiro, é um
+  pássaro de dorso verde-oliváceo, peito cinzento e garganta clara,
+  contornada por uma faixa escura, com bico curto e grosso de ponta
+  alaranjada. Vive em bordas de mata, capoeiras, matas de galeria e
+  parques, geralmente na copa das árvores, onde costuma ser mais ouvido
+  do que visto. É famoso pelo canto forte e variado, o que o torna um dos
+  pássaros mais cobiçados para criação em cativeiro.
+description_source_url: https://pt.wikipedia.org/wiki/Trinca-ferro
+facts:
+  - text: O canto forte e variado é a marca da espécie, e por isso o trinca-ferro é um dos pássaros silvestres mais visados pelo tráfico de animais no Brasil.
+    source: https://pt.wikipedia.org/wiki/Trinca-ferro
+  - text: O nome popular vem do bico curto e robusto, capaz de quebrar sementes duras; o trinca-ferro também come brotos, folhas e frutos.
+    source: https://pt.wikipedia.org/wiki/Trinca-ferro
