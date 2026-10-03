@@ -57,6 +57,17 @@ func (ns NullBiome) Value() (driver.Value, error) {
 	return string(ns.Biome), nil
 }
 
+type IngestionJob struct {
+	ID        int64
+	SpeciesID string
+	Source    string
+	Status    string
+	Attempts  int32
+	NextRunAt pgtype.Timestamptz
+	LastError string
+	UpdatedAt pgtype.Timestamptz
+}
+
 type Medium struct {
 	ID         int64
 	SpeciesID  string

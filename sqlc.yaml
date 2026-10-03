@@ -4,7 +4,7 @@ version: "2"
 sql:
   - engine: postgresql
     schema: internal/adapter/postgres/migrations   # ignora os .down.sql
-    queries: internal/adapter/postgres/queries.sql
+    queries: [internal/adapter/postgres/queries.sql, internal/adapter/postgres/queries_ingest.sql]
     gen:
       go:
         package: sqlcgen
