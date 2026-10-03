@@ -3,6 +3,7 @@ package ingest_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"time"
 
@@ -79,10 +80,30 @@ func (f fakeAudio) ToAAC(_ context.Context, orig []byte, _ time.Duration) ([]byt
 type fakeStore struct {
 	objects map[string]string // key -> contentType
 	data    map[string][]byte
+	deleted []string
 }
 
 func newFakeStore() *fakeStore {
 	return &fakeStore{objects: map[string]string{}, data: map[string][]byte{}}
+}
+
+func (f *fakeStore) List(_ context.Context, prefix string) ([]string, error) {
+	var keys []string
+	for k := range f.objects {
+		if strings.HasPrefix(k, prefix) {
+			keys = append(keys, k)
+		}
+	}
+	return keys, nil
+}
+
+func (f *fakeStore) Delete(_ context.Context, keys []string) error {
+	f.deleted = append(f.deleted, keys...)
+	for _, k := range keys {
+		delete(f.objects, k)
+		delete(f.data, k)
+	}
+	return nil
 }
 
 func (f *fakeStore) Put(_ context.Context, key, ct string, data []byte) error {
@@ -98,16 +119,23 @@ type fakeRepo struct {
 	photoCalls   int
 	audioCalls   int
 	clusterCalls int
+	replaceErr   error
 }
 
 func (f *fakeRepo) ReplacePhotos(_ context.Context, _ string, p []domain.Photo) error {
 	f.photoCalls++
+	if f.replaceErr != nil {
+		return f.replaceErr
+	}
 	f.photos = p
 	return nil
 }
 
 func (f *fakeRepo) ReplaceAudio(_ context.Context, _ string, a *domain.Audio) error {
 	f.audioCalls++
+	if f.replaceErr != nil {
+		return f.replaceErr
+	}
 	f.audio = a
 	return nil
 }

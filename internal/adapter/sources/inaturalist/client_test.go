@@ -46,6 +46,9 @@ func TestFindPhotos(t *testing.T) {
 		t.Fatalf("got %v %v", photos, err)
 	}
 	p := photos[0]
+	if p.SourceID == "" || p.SourceID == "0" {
+		t.Errorf("SourceID (id da foto no iNaturalist) ausente: %+v", p)
+	}
 	if !strings.Contains(p.URL, "/large.") || strings.Contains(p.URL, "square") {
 		t.Errorf("URL deveria apontar para a versão large: %s", p.URL)
 	}

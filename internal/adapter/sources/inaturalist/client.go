@@ -55,6 +55,7 @@ type observationsResponse struct {
 	Results []struct {
 		URI    string `json:"uri"`
 		Photos []struct {
+			ID          int    `json:"id"`
 			URL         string `json:"url"`
 			LicenseCode string `json:"license_code"`
 			Attribution string `json:"attribution"`
@@ -95,6 +96,7 @@ func (c *Client) FindPhotos(ctx context.Context, scientificName string, max int)
 		}
 		p := o.Photos[0]
 		cand := ingest.PhotoCandidate{
+			SourceID: strconv.Itoa(p.ID),
 			// A API devolve a miniatura quadrada; a versão grande tem o mesmo caminho.
 			URL:     strings.Replace(p.URL, "square.", "large.", 1),
 			PageURL: o.URI, License: p.LicenseCode, Author: p.Attribution,

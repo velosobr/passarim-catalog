@@ -60,16 +60,18 @@ type MediaRepository interface {
 
 // PhotoCandidate é uma foto encontrada na fonte (ainda não baixada).
 type PhotoCandidate struct {
-	URL     string // URL do arquivo em tamanho grande
-	PageURL string // página da observação (crédito)
-	License string // como a fonte informa (ex.: "cc-by-nc")
-	Author  string
-	Width   int
-	Height  int
+	SourceID string // id da foto na fonte; faz parte da chave no storage
+	URL      string // URL do arquivo em tamanho grande
+	PageURL  string // página da observação (crédito)
+	License  string // como a fonte informa (ex.: "cc-by-nc")
+	Author   string
+	Width    int
+	Height   int
 }
 
 // AudioCandidate é uma gravação encontrada na fonte.
 type AudioCandidate struct {
+	SourceID   string // id da gravação na fonte; faz parte da chave no storage
 	URL        string // download do arquivo
 	PageURL    string
 	License    string // URL da licença, como o xeno-canto informa
@@ -122,4 +124,8 @@ type AudioProcessor interface {
 // MediaStore é o object storage (SeaweedFS local / R2 em produção).
 type MediaStore interface {
 	Put(ctx context.Context, key, contentType string, data []byte) error
+	// List devolve as chaves que começam com prefix.
+	List(ctx context.Context, prefix string) ([]string, error)
+	// Delete apaga as chaves dadas (chave inexistente não é erro).
+	Delete(ctx context.Context, keys []string) error
 }

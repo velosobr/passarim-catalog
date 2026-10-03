@@ -58,6 +58,34 @@ func (s *Store) Put(ctx context.Context, key, contentType string, data []byte) e
 	return err
 }
 
+// List devolve as chaves que começam com prefix.
+func (s *Store) List(ctx context.Context, prefix string) ([]string, error) {
+	var keys []string
+	for obj := range s.client.ListObjects(ctx, s.bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: true}) {
+		if obj.Err != nil {
+			return nil, obj.Err
+		}
+		keys = append(keys, obj.Key)
+	}
+	return keys, nil
+}
+
+// Delete apaga várias chaves de uma vez. Chave que não existe não é erro.
+func (s *Store) Delete(ctx context.Context, keys []string) error {
+	in := make(chan minio.ObjectInfo, len(keys))
+	for _, k := range keys {
+		in <- minio.ObjectInfo{Key: k}
+	}
+	close(in)
+	var first error
+	for e := range s.client.RemoveObjects(ctx, s.bucket, in, minio.RemoveObjectsOptions{}) {
+		if first == nil {
+			first = e.Err
+		}
+	}
+	return first
+}
+
 func (s *Store) Get(ctx context.Context, key string) ([]byte, error) {
 	obj, err := s.client.GetObject(ctx, s.bucket, key, minio.GetObjectOptions{})
 	if err != nil {

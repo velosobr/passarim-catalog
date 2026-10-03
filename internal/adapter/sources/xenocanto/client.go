@@ -41,6 +41,7 @@ func New(baseURL, apiKey, userAgent string, limiter *rate.Limiter) *Client {
 
 type response struct {
 	Recordings []struct {
+		ID     string `json:"id"`
 		File   string `json:"file"`
 		Lic    string `json:"lic"`
 		Rec    string `json:"rec"`
@@ -87,7 +88,7 @@ func (c *Client) FindRecordings(ctx context.Context, scientificName string) ([]i
 		if strings.HasPrefix(lic, "//") { // a fonte às vezes omite o esquema
 			lic = "https:" + lic
 		}
-		out = append(out, ingest.AudioCandidate{URL: r.File, PageURL: r.URL, License: lic, Author: r.Rec,
+		out = append(out, ingest.AudioCandidate{SourceID: r.ID, URL: r.File, PageURL: r.URL, License: lic, Author: r.Rec,
 			Quality: r.Q, Type: r.Type, DurationMs: parseLength(r.Length)})
 	}
 	return out, nil

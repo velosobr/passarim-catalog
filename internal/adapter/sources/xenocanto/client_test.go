@@ -36,6 +36,9 @@ func TestFindRecordings(t *testing.T) {
 		t.Fatalf("got %v %v", recs, err)
 	}
 	r := recs[0]
+	if r.SourceID != "1172942" {
+		t.Errorf("SourceID deveria ser o id da gravação, veio %q", r.SourceID)
+	}
 	if r.DurationMs != 86000 {
 		t.Errorf("1:26 deveria virar 86000 ms, veio %d", r.DurationMs)
 	}

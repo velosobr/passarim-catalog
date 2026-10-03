@@ -15,7 +15,7 @@ var sabiaAudio = ingest.Job{ID: 2, SpeciesID: "turdus-rufiventris", ScientificNa
 const ccBYNCSA = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 
 func rec(id, q, typ string, ms int) ingest.AudioCandidate {
-	return ingest.AudioCandidate{URL: "https://xeno-canto.org/" + id + "/download", PageURL: "https://xeno-canto.org/" + id,
+	return ingest.AudioCandidate{SourceID: id, URL: "https://xeno-canto.org/" + id + "/download", PageURL: "https://xeno-canto.org/" + id,
 		License: ccBYNCSA, Author: "Gravador", Quality: q, Type: typ, DurationMs: ms}
 }
 
@@ -43,7 +43,7 @@ func TestIngestAudio_PicksBestRecording(t *testing.T) {
 	if len(dl.requested) != 1 || dl.requested[0] != "https://xeno-canto.org/4/download" {
 		t.Fatalf("deveria escolher a gravação 4 (A song 20 s): %v", dl.requested)
 	}
-	if store.objects["species/turdus-rufiventris/audio-0.aac"] != "audio/aac" {
+	if store.objects["species/turdus-rufiventris/audio-4.aac"] != "audio/aac" {
 		t.Fatalf("objeto de áudio ausente: %v", store.objects)
 	}
 	if repo.audio == nil || repo.audio.DurationMs != 20000 || repo.audio.Credit.Source != "xeno-canto" ||
@@ -105,5 +105,43 @@ func TestIngestAudio_SourceErrorIsError(t *testing.T) {
 	uc := ingest.IngestAudio{Source: fakeAudioSource{err: errors.New("fora do ar")}, Repo: &fakeRepo{}}
 	if err := uc.Run(context.Background(), sabiaAudio); err == nil {
 		t.Fatal("erro da fonte deveria propagar")
+	}
+}
+
+func TestIngestAudio_DeletesOrphanAudioButKeepsPhotos(t *testing.T) {
+	uc, _, store, _ := newAudio([]ingest.AudioCandidate{rec("4", "A", "song", 20000)}, fakeAudio{})
+	store.objects["species/turdus-rufiventris/audio-OLD.aac"] = "x"
+	store.objects["species/turdus-rufiventris/photo-1-thumb.webp"] = "x"
+	if err := uc.Run(context.Background(), sabiaAudio); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := store.objects["species/turdus-rufiventris/audio-OLD.aac"]; ok {
+		t.Fatal("canto antigo órfão deveria ser apagado")
+	}
+	if _, ok := store.objects["species/turdus-rufiventris/photo-1-thumb.webp"]; !ok {
+		t.Fatal("o job de canto não pode apagar fotos")
+	}
+	if _, ok := store.objects["species/turdus-rufiventris/audio-4.aac"]; !ok {
+		t.Fatal("o canto novo não pode ser apagado")
+	}
+}
+
+func TestIngestAudio_NoRecordingsRemovesOldAudio(t *testing.T) {
+	uc, _, store, _ := newAudio(nil, fakeAudio{})
+	store.objects["species/turdus-rufiventris/audio-OLD.aac"] = "x"
+	if err := uc.Run(context.Background(), sabiaAudio); err != nil {
+		t.Fatal(err)
+	}
+	if len(store.objects) != 0 {
+		t.Fatalf("sem canto aceito, o arquivo antigo deve sair: %v", store.objects)
+	}
+}
+
+func TestIngestAudio_SkipsUnsafeSourceID(t *testing.T) {
+	c := rec("1", "A", "song", 20000)
+	c.SourceID = "a/b"
+	uc, dl, _, repo := newAudio([]ingest.AudioCandidate{c}, fakeAudio{})
+	if err := uc.Run(context.Background(), sabiaAudio); err != nil || len(dl.requested) != 0 || repo.audio != nil {
+		t.Fatalf("id inseguro deveria ser descartado: %v %v", err, dl.requested)
 	}
 }

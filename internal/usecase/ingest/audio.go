@@ -49,14 +49,18 @@ func (u IngestAudio) Run(ctx context.Context, job Job) error {
 	var accepted []acceptedAudio
 	for _, c := range cands {
 		lic, err := domain.ParseLicense(c.License)
-		if err != nil || !u.Policy.Accepts(lic) || qualityRank(c.Quality) < 0 {
+		if err != nil || !u.Policy.Accepts(lic) || qualityRank(c.Quality) < 0 || !validSourceID(c.SourceID) {
 			continue
 		}
 		accepted = append(accepted, acceptedAudio{c, lic})
 	}
 	if len(accepted) == 0 {
 		// Ave sem canto aceitável: não é erro, e só o canto é removido (fotos ficam).
-		return u.Repo.ReplaceAudio(ctx, job.SpeciesID, nil)
+		if err := u.Repo.ReplaceAudio(ctx, job.SpeciesID, nil); err != nil {
+			return err
+		}
+		removeOrphans(ctx, u.Store, audioPrefix(job.SpeciesID), nil)
+		return nil
 	}
 
 	// Melhor primeiro: qualidade; depois "song"; depois duração >= 5 s; depois a mais curta.
@@ -81,7 +85,12 @@ func (u IngestAudio) Run(ctx context.Context, job Job) error {
 			lastErr = err // tenta a próxima candidata
 			continue
 		}
-		return u.Repo.ReplaceAudio(ctx, job.SpeciesID, audio)
+		if err := u.Repo.ReplaceAudio(ctx, job.SpeciesID, audio); err != nil {
+			return err
+		}
+		// Só depois de o banco apontar para o canto novo apagamos o antigo.
+		removeOrphans(ctx, u.Store, audioPrefix(job.SpeciesID), map[string]bool{audio.Key: true})
+		return nil
 	}
 	return fmt.Errorf("nenhuma gravação processada: %w", lastErr)
 }
@@ -97,7 +106,7 @@ func (u IngestAudio) processOne(ctx context.Context, job Job, a acceptedAudio) (
 	if err != nil {
 		return nil, err
 	}
-	key := audioKey(job.SpeciesID)
+	key := audioKey(job.SpeciesID, a.cand.SourceID)
 	if err := u.Store.Put(ctx, key, "audio/aac", aac); err != nil {
 		return nil, fmt.Errorf("gravar no storage: %w", err)
 	}

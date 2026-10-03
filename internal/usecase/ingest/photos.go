@@ -33,16 +33,22 @@ func (u IngestPhotos) Run(ctx context.Context, job Job) error {
 
 	// Descartar a licença ANTES de baixar: nem tocamos em arquivos que não podemos usar.
 	var accepted []acceptedPhoto
+	seen := map[string]bool{}
 	for _, c := range cands {
 		lic, err := domain.ParseLicense(c.License)
-		if err != nil || !u.Policy.Accepts(lic) {
+		if err != nil || !u.Policy.Accepts(lic) || !validSourceID(c.SourceID) || seen[c.SourceID] {
 			continue
 		}
+		seen[c.SourceID] = true
 		accepted = append(accepted, acceptedPhoto{c, lic})
 	}
 	if len(accepted) == 0 {
 		// A fonte respondeu e não há nada utilizável: limpar é o resultado correto.
-		return u.Repo.ReplacePhotos(ctx, job.SpeciesID, nil)
+		if err := u.Repo.ReplacePhotos(ctx, job.SpeciesID, nil); err != nil {
+			return err
+		}
+		removeOrphans(ctx, u.Store, photoPrefix(job.SpeciesID), nil)
+		return nil
 	}
 
 	var photos []domain.Photo
@@ -51,7 +57,7 @@ func (u IngestPhotos) Run(ctx context.Context, job Job) error {
 		if len(photos) == u.MaxPhotos {
 			break
 		}
-		photo, err := u.processOne(ctx, job, a, len(photos))
+		photo, err := u.processOne(ctx, job, a)
 		if err != nil {
 			lastErr = err // uma foto ruim não derruba as outras
 			continue
@@ -63,10 +69,19 @@ func (u IngestPhotos) Run(ctx context.Context, job Job) error {
 		// Devolvemos erro (o job tenta de novo) em vez de apagar fotos que já temos.
 		return fmt.Errorf("nenhuma foto processada: %w", lastErr)
 	}
-	return u.Repo.ReplacePhotos(ctx, job.SpeciesID, photos)
+	if err := u.Repo.ReplacePhotos(ctx, job.SpeciesID, photos); err != nil {
+		return err
+	}
+	// Só depois de o banco apontar para as fotos novas apagamos as antigas.
+	keep := map[string]bool{}
+	for _, p := range photos {
+		keep[p.ThumbKey], keep[p.MediumKey], keep[p.LargeKey] = true, true, true
+	}
+	removeOrphans(ctx, u.Store, photoPrefix(job.SpeciesID), keep)
+	return nil
 }
 
-func (u IngestPhotos) processOne(ctx context.Context, job Job, a acceptedPhoto, n int) (domain.Photo, error) {
+func (u IngestPhotos) processOne(ctx context.Context, job Job, a acceptedPhoto) (domain.Photo, error) {
 	data, _, err := u.Downloader.Fetch(ctx, a.cand.URL, DownloadImage)
 	if err != nil {
 		return domain.Photo{}, err
@@ -76,9 +91,9 @@ func (u IngestPhotos) processOne(ctx context.Context, job Job, a acceptedPhoto, 
 		return domain.Photo{}, err
 	}
 	p := domain.Photo{
-		ThumbKey:  photoKey(job.SpeciesID, n, "thumb"),
-		MediumKey: photoKey(job.SpeciesID, n, "medium"),
-		LargeKey:  photoKey(job.SpeciesID, n, "large"),
+		ThumbKey:  photoKey(job.SpeciesID, a.cand.SourceID, "thumb"),
+		MediumKey: photoKey(job.SpeciesID, a.cand.SourceID, "medium"),
+		LargeKey:  photoKey(job.SpeciesID, a.cand.SourceID, "large"),
 		Width:     v.Width, Height: v.Height,
 		Credit: domain.Credit{Author: a.cand.Author, License: string(a.license), Source: "inaturalist", SourceURL: a.cand.PageURL},
 	}
