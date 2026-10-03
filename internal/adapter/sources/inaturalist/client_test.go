@@ -32,7 +32,7 @@ func server(t *testing.T, taxaFile string) *httptest.Server {
 			http.NotFound(w, r)
 			return
 		}
-		b, _ := os.ReadFile(file)
+		b, _ := os.ReadFile(file) //nolint:gosec // caminhos fixos de testdata
 		_, _ = w.Write(b)
 	}))
 }

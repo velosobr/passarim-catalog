@@ -3,7 +3,6 @@ package gbif_test
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -34,7 +33,7 @@ func TestFindOccurrences(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		b, _ := os.ReadFile(file)
+		b, _ := os.ReadFile(file) //nolint:gosec // caminhos fixos de testdata
 		_, _ = w.Write(b)
 	}))
 	defer srv.Close()
@@ -79,7 +78,7 @@ func TestFindOccurrences_PaginatesUntilMax(t *testing.T) {
 func TestFindOccurrences_NoMatchIsEmpty(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v1/species/match" {
-			t.Error(fmt.Sprintf("não deveria buscar ocorrências sem match: %s", r.URL))
+			t.Errorf("não deveria buscar ocorrências sem match: %s", r.URL)
 		}
 		b, _ := os.ReadFile("testdata/match-none.json")
 		_, _ = w.Write(b)

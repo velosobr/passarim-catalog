@@ -3,11 +3,13 @@ package media_test
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
 	"hash/crc32"
 	"image"
 	"image/color"
 	"image/png"
+	"os"
 	"os/exec"
 	"testing"
 	"time"
@@ -18,6 +20,10 @@ import (
 func requireFFmpeg(t *testing.T) {
 	t.Helper()
 	if _, err := exec.LookPath("ffmpeg"); err != nil {
+		// No CI (REQUIRE_FFMPEG=1) pular seria esconder testes: falha de verdade.
+		if os.Getenv("REQUIRE_FFMPEG") == "1" {
+			t.Fatal("ffmpeg não instalado, mas REQUIRE_FFMPEG=1")
+		}
 		t.Skip("ffmpeg não instalado")
 	}
 }
@@ -98,13 +104,12 @@ func TestAudioProcessor_TrimsToAAC(t *testing.T) {
 func pngHeader(w, h uint32) []byte {
 	var buf bytes.Buffer
 	buf.Write([]byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'})
-	ihdr := []byte{'I', 'H', 'D', 'R',
-		byte(w >> 24), byte(w >> 16), byte(w >> 8), byte(w),
-		byte(h >> 24), byte(h >> 16), byte(h >> 8), byte(h),
-		8, 2, 0, 0, 0}
+	ihdr := append([]byte("IHDR"), make([]byte, 13)...)
+	binary.BigEndian.PutUint32(ihdr[4:], w)
+	binary.BigEndian.PutUint32(ihdr[8:], h)
+	copy(ihdr[12:], []byte{8, 2, 0, 0, 0}) // 8 bits, RGB, sem entrelaçamento
 	buf.Write([]byte{0, 0, 0, 13})
 	buf.Write(ihdr)
-	crc := crc32.ChecksumIEEE(ihdr)
-	buf.Write([]byte{byte(crc >> 24), byte(crc >> 16), byte(crc >> 8), byte(crc)})
+	buf.Write(binary.BigEndian.AppendUint32(nil, crc32.ChecksumIEEE(ihdr)))
 	return buf.Bytes()
 }

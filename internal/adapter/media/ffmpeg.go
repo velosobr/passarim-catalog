@@ -42,7 +42,7 @@ func NewFFmpeg(binary string) *FFmpeg { return &FFmpeg{binary: binary} }
 func (f *FFmpeg) Process(ctx context.Context, original []byte) (ingest.PhotoVariants, error) {
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(original))
 	if err != nil {
-		return ingest.PhotoVariants{}, fmt.Errorf("%w: %v", ErrUnsupported, err)
+		return ingest.PhotoVariants{}, fmt.Errorf("%w: %w", ErrUnsupported, err)
 	}
 	if cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width*cfg.Height > MaxPixels {
 		return ingest.PhotoVariants{}, fmt.Errorf("%w: %dx%d", ErrTooLarge, cfg.Width, cfg.Height)

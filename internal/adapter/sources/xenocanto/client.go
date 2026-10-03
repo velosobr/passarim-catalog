@@ -73,7 +73,7 @@ func (c *Client) FindRecordings(ctx context.Context, scientificName string) ([]i
 		}
 		return nil, errors.New("xenocanto: falha de conexão")
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("xenocanto: status %d", resp.StatusCode)
 	}

@@ -10,7 +10,7 @@ import (
 
 func required() map[string]string {
 	return map[string]string{
-		"DATABASE_URL": "postgres://u:p@h/db", "S3_ENDPOINT": "s3:8333", "S3_ACCESS_KEY": "ak",
+		"DATABASE_URL": "postgres://h/db", "S3_ENDPOINT": "s3:8333", "S3_ACCESS_KEY": "ak",
 		"S3_SECRET_KEY": "sk", "XENO_CANTO_API_KEY": "xc",
 	}
 }

@@ -76,8 +76,7 @@ func TestDownloader_BlocksPrivateIP(t *testing.T) {
 
 // Review Focus #1
 func TestDownloader_BlocksPrivateIPAfterRedirect(t *testing.T) {
-	var target *httptest.Server
-	target = imageServer()
+	target := imageServer()
 	defer target.Close()
 	redirector := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "https://169.254.169.254/latest/meta-data", http.StatusFound)

@@ -99,7 +99,7 @@ func (c *Client) getJSON(ctx context.Context, path string, q url.Values, out any
 	if err != nil {
 		return fmt.Errorf("gbif: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("gbif: status %d", resp.StatusCode)
 	}

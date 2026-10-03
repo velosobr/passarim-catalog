@@ -16,7 +16,12 @@ jobs:
         run: go tool sqlc diff
       # -race detecta acesso concorrente perigoso. Os testes de integração
       # usam Docker, que já vem instalado nos runners do GitHub.
+      # ffmpeg: os testes de WebP/AAC precisam dele. REQUIRE_FFMPEG=1 faz esses
+      # testes FALHAREM (em vez de serem pulados) se ele não estiver instalado.
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: go test -race ./...
+        env:
+          REQUIRE_FFMPEG: "1"
       - name: govulncheck
         # v1.1.4 (pedida originalmente) dá panic ao analisar código Go 1.27
         # (golang.org/x/tools antigo não entende sintaxe nova). v1.8.0 é a
@@ -53,6 +58,14 @@ jobs:
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: passarim-catalog:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+      - name: build da imagem do worker
+        run: docker build -f Dockerfile.worker -t passarim-worker:ci .
+      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: passarim-worker:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
           ignore-unfixed: true
