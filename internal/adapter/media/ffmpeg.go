@@ -69,7 +69,8 @@ func (f *FFmpeg) webp(ctx context.Context, in []byte, width int) ([]byte, error)
 	// scale='min(W,iw)':-2 = largura no máximo W (nunca amplia), altura
 	// proporcional e PAR (-2), exigência de vários codificadores.
 	filter := "scale='min(" + strconv.Itoa(width) + ",iw)':-2"
-	return f.run(ctx, in, "-i", "pipe:0", "-vf", filter, "-c:v", "libwebp", "-quality", "80", "-f", "webp", "pipe:1")
+	// O muxer "webp" do ffmpeg 6.x precisa voltar ao cabeçalho para gravar o tamanho do RIFF, o que um pipe não permite; o "image2pipe" grava o arquivo WebP que o libwebp já entrega completo.
+	return f.run(ctx, in, "-i", "pipe:0", "-vf", filter, "-c:v", "libwebp", "-quality", "80", "-f", "image2pipe", "pipe:1")
 }
 
 // ToAAC converte para AAC mono 96 kbps, cortando em maxDuration.

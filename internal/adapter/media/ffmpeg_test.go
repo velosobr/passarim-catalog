@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"math/rand/v2"
 	"os"
 	"os/exec"
 	"testing"
@@ -52,6 +53,35 @@ func TestImageProcessor_CreatesThreeWebPVariants(t *testing.T) {
 	}
 	if v.Width != 1600 || v.Height != 800 {
 		t.Fatalf("large deveria ter 1600x800, veio %dx%d", v.Width, v.Height)
+	}
+}
+
+func noisyPNGOf(w, h int) []byte {
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	_, _ = rand.NewChaCha8([32]byte{1}).Read(img.Pix)
+	var buf bytes.Buffer
+	_ = png.Encode(&buf, img)
+	return buf.Bytes()
+}
+
+func TestImageProcessor_WritesCompleteWebPFiles(t *testing.T) {
+	requireFFmpeg(t)
+	v, err := media.NewFFmpeg("ffmpeg").Process(context.Background(), noisyPNGOf(2000, 1000))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, b := range map[string][]byte{"thumb": v.Thumb, "medium": v.Medium, "large": v.Large} {
+		if got, want := int(binary.LittleEndian.Uint32(b[4:8])), len(b)-8; got != want {
+			t.Errorf("%s: tamanho do RIFF %d, esperado %d", name, got, want)
+		}
+		end := 12
+		for end+8 <= len(b) {
+			size := int(binary.LittleEndian.Uint32(b[end+4 : end+8]))
+			end += 8 + size + size%2
+		}
+		if end != len(b) {
+			t.Errorf("%s: os chunks terminam em %d, o arquivo em %d", name, end, len(b))
+		}
 	}
 }
 
