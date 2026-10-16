@@ -1,4 +1,12 @@
 // Package postgres implementa o repositório de espécies sobre o PostgreSQL.
+//
+// As consultas são SQL escrito à mão (queries.sql e queries_ingest.sql). O
+// sqlc lê esse SQL e as migrations e gera o código Go em sqlcgen/, com uma
+// função e uma struct de parâmetros por consulta. Assim escrevemos SQL de
+// verdade e o compilador do Go ainda confere os tipos. O pgx é o driver do
+// Postgres, e o pgxpool, o pool de conexões dele.
+//
+// Este arquivo tem a espera pelo banco na subida.
 package postgres
 
 import (

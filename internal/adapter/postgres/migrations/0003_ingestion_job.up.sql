@@ -1,4 +1,7 @@
 -- 0003: fila de ingestão. Cada linha = "buscar <fonte> para <espécie>".
+-- O ciclo de um job: pending (esperando) → running (um worker pegou) →
+-- done (deu certo) ou, depois de várias falhas, failed. next_run_at diz
+-- quando ele pode rodar de novo, e é o que faz o backoff funcionar.
 CREATE TABLE ingestion_job (
     id          bigserial PRIMARY KEY,
     species_id  text NOT NULL REFERENCES species (id) ON DELETE CASCADE,

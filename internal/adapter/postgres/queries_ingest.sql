@@ -29,9 +29,11 @@ UPDATE ingestion_job SET status = 'pending', attempts = 0, next_run_at = now(), 
 WHERE status = 'failed' AND updated_at < now() - interval '24 hours';
 
 -- name: ReleaseJob :exec
+-- Devolve à fila um job pego que não chegou a rodar, sem contar tentativa.
 UPDATE ingestion_job SET status = 'pending', updated_at = now() WHERE id = $1 AND status = 'running';
 
 -- name: CountPendingJobs :one
+-- Quantos jobs estão esperando a vez.
 SELECT count(*)::int FROM ingestion_job WHERE status = 'pending';
 
 -- name: ClaimDueJobs :many
@@ -49,9 +51,12 @@ WHERE j.species_id = s.id AND j.id IN (
 RETURNING j.id, j.species_id, s.scientific_name, j.source, j.attempts;
 
 -- name: CompleteJob :exec
+-- Marca o job como concluído e limpa o último erro.
 UPDATE ingestion_job SET status = 'done', last_error = '', updated_at = now() WHERE id = $1;
 
 -- name: FailJob :exec
+-- Registra a falha: com give_up, o job vira 'failed'; senão volta para
+-- 'pending' com a próxima tentativa daqui a retry_in_secs segundos.
 UPDATE ingestion_job SET
     status = CASE WHEN sqlc.arg('give_up')::bool THEN 'failed' ELSE 'pending' END,
     attempts = attempts + 1,
@@ -61,15 +66,19 @@ UPDATE ingestion_job SET
 WHERE id = sqlc.arg('id');
 
 -- name: DeleteMediaByKind :exec
+-- Apaga as fotos (ou o canto) da espécie, antes de gravar as novas.
 DELETE FROM media WHERE species_id = $1 AND kind = $2;
 
 -- name: InsertMedia :exec
+-- Grava uma foto ou um canto, com o crédito.
 INSERT INTO media (species_id, kind, position, thumb_key, medium_key, large_key, audio_key,
                    width, height, duration_ms, author, license, source, source_url)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
 
 -- name: DeleteClusters :exec
+-- Apaga os grupos de avistamentos da espécie.
 DELETE FROM occurrence_cluster WHERE species_id = $1;
 
 -- name: InsertCluster :exec
+-- Grava um grupo de avistamentos.
 INSERT INTO occurrence_cluster (species_id, lat, lng, count, precision) VALUES ($1, $2, $3, $4, $5);

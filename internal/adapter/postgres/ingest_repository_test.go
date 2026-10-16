@@ -1,3 +1,6 @@
+// Testes de integração da fila de jobs e da troca de mídia contra um
+// PostgreSQL de verdade.
+
 package postgres_test
 
 import (
@@ -12,6 +15,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// O ciclo básico da fila: enfileirar, pegar, concluir e falhar com backoff.
 func TestJobQueue(t *testing.T) {
 	repo, pool := newRepo(t)
 	ctx := context.Background()
@@ -67,7 +71,8 @@ func TestJobQueue(t *testing.T) {
 	}
 }
 
-// Review Focus #5
+// Vários workers pegando jobs ao mesmo tempo nunca recebem o mesmo job, graças
+// ao FOR UPDATE SKIP LOCKED.
 func TestJobQueue_ClaimDueSkipsLockedJobs(t *testing.T) {
 	repo, pool := newRepo(t)
 	ctx := context.Background()
@@ -105,7 +110,7 @@ func TestJobQueue_ClaimDueSkipsLockedJobs(t *testing.T) {
 	}
 }
 
-// Review Focus #4
+// Gravar as mesmas fotos duas vezes deixa o banco igual: nada se duplica.
 func TestMediaRepository_ReplaceIsIdempotent(t *testing.T) {
 	repo, pool := newRepo(t)
 	ctx := context.Background()
@@ -147,7 +152,7 @@ func TestMediaRepository_ReplaceIsIdempotent(t *testing.T) {
 	}
 }
 
-// Revisão final #1 (d): a causa é truncada em runes, nunca no meio de um caractere.
+// A causa é truncada em runes, nunca no meio de um caractere.
 func TestJobQueue_FailTruncatesCauseOnRuneBoundary(t *testing.T) {
 	repo, pool := newRepo(t)
 	ctx := context.Background()
@@ -160,7 +165,7 @@ func TestJobQueue_FailTruncatesCauseOnRuneBoundary(t *testing.T) {
 	}
 }
 
-// Revisão final #1 (c): job preso conta como tentativa e eventualmente desiste.
+// Job preso conta como tentativa e eventualmente desiste.
 func TestJobQueue_StuckJobCountsAttemptAndGivesUp(t *testing.T) {
 	repo, pool := newRepo(t)
 	ctx := context.Background()
@@ -178,7 +183,7 @@ func TestJobQueue_StuckJobCountsAttemptAndGivesUp(t *testing.T) {
 	}
 }
 
-// Revisão final #2: jobs 'failed' são reabertos depois de um tempo.
+// Jobs 'failed' são reabertos depois de um tempo.
 func TestJobQueue_FailedJobsAreReopenedAfterADay(t *testing.T) {
 	repo, pool := newRepo(t)
 	ctx := context.Background()
@@ -199,6 +204,7 @@ func TestJobQueue_FailedJobsAreReopenedAfterADay(t *testing.T) {
 	}
 }
 
+// Release devolve o job à fila sem contar uma tentativa.
 func TestJobQueue_ReleaseReturnsJobWithoutSpendingAttempt(t *testing.T) {
 	repo, pool := newRepo(t)
 	ctx := context.Background()

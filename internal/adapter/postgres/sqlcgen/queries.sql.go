@@ -20,6 +20,7 @@ type CountByBiomeRow struct {
 	Total int32
 }
 
+// Quantas espécies há em cada bioma (os filtros do Explorar).
 func (q *Queries) CountByBiome(ctx context.Context) ([]CountByBiomeRow, error) {
 	rows, err := q.db.Query(ctx, countByBiome)
 	if err != nil {
@@ -49,6 +50,7 @@ type CountByStateRow struct {
 	Total int32
 }
 
+// Quantas espécies há em cada UF.
 func (q *Queries) CountByState(ctx context.Context) ([]CountByStateRow, error) {
 	rows, err := q.db.Query(ctx, countByState)
 	if err != nil {
@@ -73,6 +75,7 @@ const deleteBiomes = `-- name: DeleteBiomes :exec
 DELETE FROM species_biome WHERE species_id = $1
 `
 
+// Apaga os biomas da espécie.
 func (q *Queries) DeleteBiomes(ctx context.Context, speciesID string) error {
 	_, err := q.db.Exec(ctx, deleteBiomes, speciesID)
 	return err
@@ -82,6 +85,8 @@ const deleteFacts = `-- name: DeleteFacts :exec
 DELETE FROM species_fact WHERE species_id = $1
 `
 
+// Apaga as curiosidades da espécie, antes de gravar as novas. O seed
+// regrava fatos, biomas e UFs inteiros a cada rodada, numa transação.
 func (q *Queries) DeleteFacts(ctx context.Context, speciesID string) error {
 	_, err := q.db.Exec(ctx, deleteFacts, speciesID)
 	return err
@@ -91,6 +96,7 @@ const deleteStates = `-- name: DeleteStates :exec
 DELETE FROM species_state WHERE species_id = $1
 `
 
+// Apaga as UFs da espécie.
 func (q *Queries) DeleteStates(ctx context.Context, speciesID string) error {
 	_, err := q.db.Exec(ctx, deleteStates, speciesID)
 	return err
@@ -100,6 +106,8 @@ const getSpecies = `-- name: GetSpecies :one
 SELECT id, scientific_name, common_name_pt, family, size_cm, diet, conservation_status, description, description_author, description_license, description_source, description_source_url, is_curated, sort_name, search_text, created_at, updated_at FROM species WHERE id = $1
 `
 
+// A linha da espécie pelo id. As listas (fatos, biomas, UFs, mídia e
+// grupos) vêm das consultas abaixo, uma por tabela.
 func (q *Queries) GetSpecies(ctx context.Context, id string) (Species, error) {
 	row := q.db.QueryRow(ctx, getSpecies, id)
 	var i Species
@@ -134,6 +142,7 @@ type InsertBiomeParams struct {
 	Biome     Biome
 }
 
+// Grava um bioma da espécie.
 func (q *Queries) InsertBiome(ctx context.Context, arg InsertBiomeParams) error {
 	_, err := q.db.Exec(ctx, insertBiome, arg.SpeciesID, arg.Biome)
 	return err
@@ -150,6 +159,7 @@ type InsertFactParams struct {
 	Source    string
 }
 
+// Grava uma curiosidade na posição dada.
 func (q *Queries) InsertFact(ctx context.Context, arg InsertFactParams) error {
 	_, err := q.db.Exec(ctx, insertFact,
 		arg.SpeciesID,
@@ -169,6 +179,7 @@ type InsertStateParams struct {
 	Uf        string
 }
 
+// Grava uma UF da espécie.
 func (q *Queries) InsertState(ctx context.Context, arg InsertStateParams) error {
 	_, err := q.db.Exec(ctx, insertState, arg.SpeciesID, arg.Uf)
 	return err
@@ -178,6 +189,7 @@ const listBiomes = `-- name: ListBiomes :many
 SELECT biome FROM species_biome WHERE species_id = $1 ORDER BY biome
 `
 
+// Os biomas da espécie.
 func (q *Queries) ListBiomes(ctx context.Context, speciesID string) ([]Biome, error) {
 	rows, err := q.db.Query(ctx, listBiomes, speciesID)
 	if err != nil {
@@ -209,6 +221,7 @@ type ListClustersRow struct {
 	Precision float64
 }
 
+// Os grupos de avistamentos do mapa, do maior para o menor.
 func (q *Queries) ListClusters(ctx context.Context, speciesID string) ([]ListClustersRow, error) {
 	rows, err := q.db.Query(ctx, listClusters, speciesID)
 	if err != nil {
@@ -243,6 +256,7 @@ type ListFactsRow struct {
 	Source string
 }
 
+// As curiosidades da espécie, na ordem de exibição.
 func (q *Queries) ListFacts(ctx context.Context, speciesID string) ([]ListFactsRow, error) {
 	rows, err := q.db.Query(ctx, listFacts, speciesID)
 	if err != nil {
@@ -267,6 +281,8 @@ const listMedia = `-- name: ListMedia :many
 SELECT id, species_id, kind, position, thumb_key, medium_key, large_key, audio_key, width, height, duration_ms, author, license, source, source_url, created_at FROM media WHERE species_id = $1 ORDER BY kind, position
 `
 
+// Fotos e canto da espécie, em ordem de tipo e de posição (a foto 0 é a
+// principal).
 func (q *Queries) ListMedia(ctx context.Context, speciesID string) ([]Medium, error) {
 	rows, err := q.db.Query(ctx, listMedia, speciesID)
 	if err != nil {
@@ -379,6 +395,7 @@ const listStates = `-- name: ListStates :many
 SELECT uf::text FROM species_state WHERE species_id = $1 ORDER BY uf
 `
 
+// As UFs da espécie. O "::text" converte o char(2) da coluna em texto.
 func (q *Queries) ListStates(ctx context.Context, speciesID string) ([]string, error) {
 	rows, err := q.db.Query(ctx, listStates, speciesID)
 	if err != nil {

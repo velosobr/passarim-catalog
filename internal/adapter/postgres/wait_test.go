@@ -1,3 +1,5 @@
+// Testes da espera pelo banco, com um ping falso.
+
 package postgres_test
 
 import (
@@ -9,7 +11,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/adapter/postgres"
 )
 
-// Review Focus #6: o banco pode demorar a subir; o catalog deve esperar.
+// O banco pode demorar a subir; o catalog deve esperar.
 func TestWaitForDB_RetriesUntilReady(t *testing.T) {
 	calls := 0
 	ping := func(context.Context) error {
@@ -27,6 +29,8 @@ func TestWaitForDB_RetriesUntilReady(t *testing.T) {
 	}
 }
 
+// Se o banco nunca responde, WaitForDB desiste depois das tentativas e
+// devolve o último erro.
 func TestWaitForDB_GivesUp(t *testing.T) {
 	ping := func(context.Context) error { return errors.New("connection refused") }
 	err := postgres.WaitForDB(context.Background(), ping, 3, time.Millisecond)
