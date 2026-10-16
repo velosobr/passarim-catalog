@@ -22,6 +22,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// Valores fixos da busca no iNaturalist.
 const (
 	brazilPlaceID = "6878" // identificador do Brasil no iNaturalist
 	maxJSONBytes  = 5 << 20

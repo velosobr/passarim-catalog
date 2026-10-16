@@ -15,6 +15,8 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/adapter/sources/xenocanto"
 )
 
+// testKey é uma chave falsa; os testes conferem que ela nunca aparece nos
+// erros.
 const testKey = "segredo-de-teste"
 
 // limiter sem limite de ritmo, para os testes não esperarem.

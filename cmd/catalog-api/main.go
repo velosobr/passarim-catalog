@@ -40,6 +40,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase"
 )
 
+// main cria o logger JSON e decide entre o healthcheck e a API de verdade.
 func main() {
 	// Logs em JSON: fáceis de buscar e filtrar em qualquer ferramenta.
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))

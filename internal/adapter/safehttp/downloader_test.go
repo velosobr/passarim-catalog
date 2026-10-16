@@ -71,6 +71,8 @@ func TestDownloader_BlocksPlainHTTP(t *testing.T) {
 	}
 }
 
+// Um host na allowlist que resolve para um IP interno (loopback) é bloqueado
+// na conexão.
 func TestDownloader_BlocksPrivateIP(t *testing.T) {
 	srv := imageServer() // escuta em 127.0.0.1
 	defer srv.Close()

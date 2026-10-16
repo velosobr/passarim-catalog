@@ -13,8 +13,10 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// sabiaAudio é o job de canto usado nos testes.
 var sabiaAudio = ingest.Job{ID: 2, SpeciesID: "turdus-rufiventris", ScientificName: "Turdus rufiventris", Source: ingest.SourceXenoCanto}
 
+// ccBYNCSA é uma licença aceita, no formato de URL que o xeno-canto usa.
 const ccBYNCSA = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
 
 // rec cria uma gravação candidata com id, qualidade, tipo e duração.
