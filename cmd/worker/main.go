@@ -1,5 +1,11 @@
 // worker: busca fotos, cantos e avistamentos nas fontes externas e grava no
 // catálogo. Como na API, aqui só "ligamos os fios": nenhuma regra de negócio.
+//
+// O worker trabalha em rodadas: pega um lote de jobs da fila (no Postgres),
+// executa cada um com o handler da fonte certa (iNaturalist para fotos,
+// xeno-canto para cantos, GBIF para avistamentos) e volta a esperar. Nada
+// disso acontece quando o app pede uma ave: o app só lê o que o worker já
+// gravou (ADR-0005).
 package main
 
 import (
@@ -32,8 +38,10 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// batchTimeout é o tempo máximo de uma rodada inteira.
 const batchTimeout = 2 * time.Minute
 
+// main sobe o worker e sai com 1 se ele terminar com erro.
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	if err := run(log); err != nil {
@@ -42,6 +50,10 @@ func main() {
 	}
 }
 
+// run monta o worker: configuração, banco (com as migrations), object
+// storage, métricas, o downloader seguro, o ffmpeg e os três handlers da
+// fila; depois sobe o servidor de métricas e roda o laço de rodadas até o
+// sinal de parar.
 func run(log *slog.Logger) error {
 	cfg, err := config.LoadWorker(os.Getenv)
 	if err != nil {
@@ -62,6 +74,8 @@ func run(log *slog.Logger) error {
 	if err := postgres.Migrate(cfg.DatabaseURL); err != nil {
 		return err
 	}
+	// O object storage (SeaweedFS, compatível com S3) guarda os arquivos de
+	// mídia já convertidos (ADR-0012).
 	store, err := s3store.New(ctx, s3store.Config{Endpoint: cfg.S3Endpoint, AccessKey: cfg.S3AccessKey,
 		SecretKey: cfg.S3SecretKey, Bucket: cfg.S3Bucket, UseSSL: cfg.S3UseSSL})
 	if err != nil {
@@ -73,6 +87,8 @@ func run(log *slog.Logger) error {
 	blocked := promauto.NewCounterVec(prometheus.CounterOpts{Name: "passarim_downloads_blocked_total",
 		Help: "Downloads bloqueados pelas regras anti-SSRF."}, []string{"reason"})
 
+	// O downloader só baixa dos hosts conhecidos das fontes e recusa endereços
+	// internos (proteção contra SSRF, veja o pacote safehttp).
 	downloader := safehttp.New(safehttp.Options{
 		AllowedHosts: []string{"inaturalist-open-data.s3.amazonaws.com", "static.inaturalist.org", "xeno-canto.org", "www.xeno-canto.org"},
 		UserAgent:    cfg.UserAgent,
@@ -85,8 +101,14 @@ func run(log *slog.Logger) error {
 	ffmpeg := media.NewFFmpeg(cfg.FFmpegPath)
 	repo := postgres.NewIngestRepository(pool)
 	policy := domain.LicensePolicy{AllowNC: cfg.AllowNC}
+	// Cada fonte tem um rate limiter: no máximo uma chamada por segundo (meio
+	// segundo no GBIF), para respeitar os limites das APIs públicas.
 	oneSec := func() *rate.Limiter { return rate.NewLimiter(rate.Every(time.Second), 1) }
 
+	// O Runner é o laço da fila. RefreshAfter (30 dias) é de quanto em quanto
+	// tempo cada espécie é buscada de novo, e MaxAttempts (5) quantas vezes um
+	// job que falha é tentado antes de desistir. Cada handler recebe as peças
+	// de que precisa: a fonte, o downloader, o conversor, o storage e o banco.
 	runner := ingest.Runner{
 		Queue: repo, BatchSize: cfg.BatchSize, MaxAttempts: 5, RefreshAfter: 30 * 24 * time.Hour,
 		Handlers: map[ingest.Source]ingest.Handler{
@@ -121,6 +143,7 @@ func run(log *slog.Logger) error {
 	}()
 	log.Info("worker no ar", "metrics", cfg.MetricsAddr, "interval", cfg.Interval.String(), "batch", cfg.BatchSize)
 
+	// O laço roda numa goroutine; fechar loopDone avisa que ele terminou.
 	loopDone := make(chan struct{})
 	go func() { defer close(loopDone); loop(ctx, log, runner, cfg) }()
 

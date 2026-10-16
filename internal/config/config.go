@@ -1,6 +1,9 @@
 // Package config lê a configuração das variáveis de ambiente.
 // Padrão "12-factor app": a mesma imagem Docker roda em qualquer ambiente;
 // só as variáveis mudam.
+//
+// Este arquivo é a configuração da API (cmd/catalog-api); worker.go tem a do
+// worker. As duas compartilham os helpers or e boolVar.
 package config
 
 import (
@@ -9,6 +12,9 @@ import (
 	"strconv"
 )
 
+// Config é a configuração da API, já lida e validada. Só DATABASE_URL é
+// obrigatória; o resto tem padrão (gRPC em :50051, métricas em :9091,
+// migrations ligadas, reflection desligada).
 type Config struct {
 	DatabaseURL    string // ex.: postgres://user:senha@host:5432/db?sslmode=disable
 	GRPCAddr       string // onde o gRPC escuta
@@ -38,6 +44,7 @@ func Load(getenv func(string) string) (Config, error) {
 	return c, nil
 }
 
+// or devolve v, ou def quando v está vazio.
 func or(v, def string) string {
 	if v == "" {
 		return def
@@ -45,6 +52,8 @@ func or(v, def string) string {
 	return v
 }
 
+// boolVar lê um booleano. strconv.ParseBool aceita "true", "false", "1",
+// "0", "t", "f" e variações em maiúsculas.
 func boolVar(getenv func(string) string, key string, def bool) (bool, error) {
 	v := getenv(key)
 	if v == "" {

@@ -1,3 +1,5 @@
+// Testes da configuração do worker.
+
 package config_test
 
 import (
@@ -8,6 +10,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/config"
 )
 
+// required devolve um ambiente mínimo válido do worker.
 func required() map[string]string {
 	return map[string]string{
 		"DATABASE_URL": "postgres://h/db", "S3_ENDPOINT": "s3:8333", "S3_ACCESS_KEY": "ak",
@@ -15,6 +18,7 @@ func required() map[string]string {
 	}
 }
 
+// Só com as obrigatórias, os outros campos ganham os padrões.
 func TestLoadWorker_Defaults(t *testing.T) {
 	c, err := config.LoadWorker(env(required()))
 	if err != nil {
@@ -26,6 +30,7 @@ func TestLoadWorker_Defaults(t *testing.T) {
 	}
 }
 
+// Tirando cada obrigatória, o erro cita o nome dela.
 func TestLoadWorker_MissingRequiredNamesTheVariable(t *testing.T) {
 	for _, name := range []string{"DATABASE_URL", "S3_ENDPOINT", "S3_ACCESS_KEY", "S3_SECRET_KEY", "XENO_CANTO_API_KEY"} {
 		m := required()
@@ -36,6 +41,7 @@ func TestLoadWorker_MissingRequiredNamesTheVariable(t *testing.T) {
 	}
 }
 
+// Valores inválidos falham citando a variável.
 func TestLoadWorker_InvalidValues(t *testing.T) {
 	for k, v := range map[string]string{"WORKER_INTERVAL": "abc", "WORKER_BATCH_SIZE": "x", "ALLOW_NC": "talvez", "S3_USE_SSL": "?"} {
 		m := required()
@@ -46,6 +52,7 @@ func TestLoadWorker_InvalidValues(t *testing.T) {
 	}
 }
 
+// As chaves de acesso nunca aparecem nas mensagens de erro.
 func TestLoadWorker_ErrorNeverContainsSecretValues(t *testing.T) {
 	m := required()
 	m["S3_SECRET_KEY"] = "super-secreto"
