@@ -1,3 +1,7 @@
+// Caso de uso das fotos (iNaturalist): buscar candidatas, ficar com as de
+// licença aceita, baixar, converter em três tamanhos, gravar no storage e
+// trocar as fotos da espécie no banco.
+
 package ingest
 
 import (
@@ -9,6 +13,11 @@ import (
 )
 
 // IngestPhotos busca fotos de uma espécie, processa e grava.
+//
+// A ordem das fotos é a que a fonte devolve (as observações mais votadas
+// primeiro), e a primeira processada vira a principal.
+// TODO: a escolha da foto principal ainda não olha o conteúdo da imagem
+// (ninho, ovos, bando); é a curadoria da frente A do PRD da guinada.
 type IngestPhotos struct {
 	Source     PhotoSource
 	Downloader Downloader
@@ -19,11 +28,15 @@ type IngestPhotos struct {
 	MaxPhotos  int
 }
 
+// acceptedPhoto é uma candidata que passou na licença, com a licença já
+// interpretada.
 type acceptedPhoto struct {
 	cand    PhotoCandidate
 	license domain.License
 }
 
+// Run trata um job de fotos. O mapa seen descarta a mesma foto repetida
+// entre observações. Se nada útil sobra, as fotos da espécie são limpas.
 func (u IngestPhotos) Run(ctx context.Context, job Job) error {
 	// Pedimos o dobro: algumas candidatas serão descartadas (licença) ou falharão.
 	cands, err := u.Source.FindPhotos(ctx, job.ScientificName, u.MaxPhotos*2)
@@ -81,6 +94,8 @@ func (u IngestPhotos) Run(ctx context.Context, job Job) error {
 	return nil
 }
 
+// processOne baixa uma foto, gera as variantes e grava as três no storage.
+// O crédito guarda a página da observação, para o app linkar o original.
 func (u IngestPhotos) processOne(ctx context.Context, job Job, a acceptedPhoto) (domain.Photo, error) {
 	data, _, err := u.Downloader.Fetch(ctx, a.cand.URL, DownloadImage)
 	if err != nil {

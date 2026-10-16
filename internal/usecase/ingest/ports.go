@@ -2,6 +2,11 @@
 // mídia e avistamentos em fontes externas e gravar no nosso catálogo.
 // Como no resto do projeto, aqui só há regras e interfaces ("ports");
 // HTTP, ffmpeg, S3 e SQL ficam nos adapters.
+//
+// Este arquivo define as portas da ingestão: a fila de jobs, o repositório
+// de mídia, as três fontes, o downloader, os conversores e o storage. Cada
+// interface descreve só o que o caso de uso precisa, e os testes usam
+// versões falsas de todas elas (fakes_test.go).
 package ingest
 
 import (
@@ -40,6 +45,7 @@ type JobQueue interface {
 	// ClaimDue pega até limit jobs vencidos e os marca como "running",
 	// sem que outro worker pegue os mesmos.
 	ClaimDue(ctx context.Context, limit int) ([]Job, error)
+	// Complete marca o job como concluído com sucesso.
 	Complete(ctx context.Context, jobID int64) error
 	// Release devolve à fila um job que foi pego mas não chegou a rodar
 	// (ex.: o lote estourou o tempo). Não gasta tentativa.
@@ -81,6 +87,8 @@ type AudioCandidate struct {
 	DurationMs int
 }
 
+// As três fontes externas: fotos (iNaturalist), cantos (xeno-canto) e
+// avistamentos (GBIF). Cada uma busca pelo nome científico.
 type PhotoSource interface {
 	FindPhotos(ctx context.Context, scientificName string, max int) ([]PhotoCandidate, error)
 }
@@ -102,6 +110,7 @@ type Downloader interface {
 type DownloadKind int
 
 const (
+	// iota numera as constantes a partir de 0: DownloadImage = 0, DownloadAudio = 1.
 	DownloadImage DownloadKind = iota
 	DownloadAudio
 )
@@ -112,6 +121,7 @@ type PhotoVariants struct {
 	Width, Height        int // dimensões da versão Large
 }
 
+// ImageProcessor gera as três versões WebP de uma foto original.
 type ImageProcessor interface {
 	Process(ctx context.Context, original []byte) (PhotoVariants, error)
 }

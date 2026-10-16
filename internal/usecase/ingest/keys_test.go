@@ -1,7 +1,11 @@
+// Testes das chaves do storage.
+
 package ingest
 
 import "testing"
 
+// As chaves seguem o formato species/<id>/photo-<idNaFonte>-<variante>.webp
+// e species/<id>/audio-<idNaFonte>.aac.
 func TestStorageKeys(t *testing.T) {
 	if got := photoKey("turdus-rufiventris", "98729447", "medium"); got != "species/turdus-rufiventris/photo-98729447-medium.webp" {
 		t.Errorf("photoKey = %q", got)
@@ -11,6 +15,7 @@ func TestStorageKeys(t *testing.T) {
 	}
 }
 
+// Só ids seguros podem virar parte de uma chave.
 func TestValidSourceID(t *testing.T) {
 	for _, ok := range []string{"98729447", "XC123", "a-b_c"} {
 		if !validSourceID(ok) {

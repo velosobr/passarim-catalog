@@ -1,3 +1,5 @@
+// Testes do caso de uso de avistamentos.
+
 package ingest_test
 
 import (
@@ -8,6 +10,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// Os pontos viram grupos, e os grupos substituem os da espécie.
 func TestIngestOccurrences_ClustersAndReplaces(t *testing.T) {
 	repo := &fakeRepo{}
 	uc := ingest.IngestOccurrences{Source: fakeOccSource{points: []domain.Point{
@@ -21,6 +24,7 @@ func TestIngestOccurrences_ClustersAndReplaces(t *testing.T) {
 	}
 }
 
+// Sem pontos, grava lista vazia.
 func TestIngestOccurrences_NoPointsWritesEmpty(t *testing.T) {
 	repo := &fakeRepo{}
 	uc := ingest.IngestOccurrences{Source: fakeOccSource{}, Repo: repo, MaxPoints: 900, CellDeg: 1.0}
