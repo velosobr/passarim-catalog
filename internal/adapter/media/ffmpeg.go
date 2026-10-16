@@ -18,13 +18,16 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// MaxPixels é o maior tamanho de imagem aceito, em pixels (largura × altura).
 const MaxPixels = 40_000_000 // 40 megapixels
 
 var (
+	// Os dois erros de conversão de imagem, para quem chama poder diferenciar.
 	ErrTooLarge    = errors.New("imagem grande demais")
 	ErrUnsupported = errors.New("formato não suportado")
 )
 
+// FFmpeg guarda o caminho do binário do ffmpeg (FFMPEG_PATH).
 type FFmpeg struct {
 	binary string
 }
@@ -34,6 +37,7 @@ var (
 	_ ingest.AudioProcessor = (*FFmpeg)(nil)
 )
 
+// NewFFmpeg cria o conversor.
 func NewFFmpeg(binary string) *FFmpeg { return &FFmpeg{binary: binary} }
 
 // Process gera as 3 variantes WebP. Antes de tudo lê SÓ o cabeçalho da
@@ -65,6 +69,7 @@ func (f *FFmpeg) Process(ctx context.Context, original []byte) (ingest.PhotoVari
 	return v, nil
 }
 
+// webp gera uma versão WebP de largura máxima width, com qualidade 80.
 func (f *FFmpeg) webp(ctx context.Context, in []byte, width int) ([]byte, error) {
 	// scale='min(W,iw)':-2 = largura no máximo W (nunca amplia), altura
 	// proporcional e PAR (-2), exigência de vários codificadores.
@@ -80,6 +85,10 @@ func (f *FFmpeg) ToAAC(ctx context.Context, original []byte, maxDuration time.Du
 	return f.run(ctx, original, "-i", "pipe:0", "-t", secs, "-ac", "1", "-c:a", "aac", "-b:a", "96k", "-f", "adts", "pipe:1")
 }
 
+// run executa o ffmpeg com um prazo de 60 s, mandando o arquivo pela
+// entrada padrão (stdin) e lendo o resultado da saída padrão (stdout), sem
+// arquivos temporários. Em caso de erro, a mensagem do ffmpeg (stderr) vai
+// junto.
 func (f *FFmpeg) run(ctx context.Context, in []byte, args ...string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()

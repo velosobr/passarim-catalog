@@ -1,3 +1,6 @@
+// Testes do conversor com o ffmpeg de verdade. Sem o ffmpeg instalado, os
+// testes que precisam dele são pulados.
+
 package media_test
 
 import (
@@ -18,6 +21,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/adapter/media"
 )
 
+// requireFFmpeg pula o teste quando o ffmpeg não está no PATH.
 func requireFFmpeg(t *testing.T) {
 	t.Helper()
 	if _, err := exec.LookPath("ffmpeg"); err != nil {
@@ -29,6 +33,7 @@ func requireFFmpeg(t *testing.T) {
 	}
 }
 
+// pngOf gera uma imagem PNG lisa do tamanho pedido.
 func pngOf(w, h int) []byte {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	for x := 0; x < w; x++ {
@@ -39,6 +44,7 @@ func pngOf(w, h int) []byte {
 	return buf.Bytes()
 }
 
+// Uma imagem vira três WebP, com as dimensões da grande calculadas.
 func TestImageProcessor_CreatesThreeWebPVariants(t *testing.T) {
 	requireFFmpeg(t)
 	v, err := media.NewFFmpeg("ffmpeg").Process(context.Background(), pngOf(2000, 1000))
@@ -56,6 +62,8 @@ func TestImageProcessor_CreatesThreeWebPVariants(t *testing.T) {
 	}
 }
 
+// noisyPNGOf gera uma PNG com ruído, que comprime mal e produz arquivos
+// maiores (bom para pegar arquivos cortados).
 func noisyPNGOf(w, h int) []byte {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	_, _ = rand.NewChaCha8([32]byte{1}).Read(img.Pix)
@@ -64,6 +72,7 @@ func noisyPNGOf(w, h int) []byte {
 	return buf.Bytes()
 }
 
+// Os WebP gerados são arquivos completos e válidos.
 func TestImageProcessor_WritesCompleteWebPFiles(t *testing.T) {
 	requireFFmpeg(t)
 	v, err := media.NewFFmpeg("ffmpeg").Process(context.Background(), noisyPNGOf(2000, 1000))
@@ -85,6 +94,7 @@ func TestImageProcessor_WritesCompleteWebPFiles(t *testing.T) {
 	}
 }
 
+// Uma imagem menor que 1600 px não é ampliada.
 func TestImageProcessor_DoesNotUpscale(t *testing.T) {
 	requireFFmpeg(t)
 	v, err := media.NewFFmpeg("ffmpeg").Process(context.Background(), pngOf(500, 250))
@@ -93,7 +103,7 @@ func TestImageProcessor_DoesNotUpscale(t *testing.T) {
 	}
 }
 
-// Review Focus #3: rejeitado ANTES de chamar o ffmpeg (não precisa dele).
+// Rejeitado ANTES de chamar o ffmpeg (não precisa dele).
 func TestImageProcessor_RejectsHugeDimensions(t *testing.T) {
 	// Cabeçalho PNG declarando 20000x20000 = 400 MP (o arquivo tem poucos bytes).
 	huge := pngHeader(20000, 20000)
@@ -102,12 +112,14 @@ func TestImageProcessor_RejectsHugeDimensions(t *testing.T) {
 	}
 }
 
+// Bytes que não são imagem são recusados.
 func TestImageProcessor_RejectsNonImage(t *testing.T) {
 	if _, err := media.NewFFmpeg("ffmpeg").Process(context.Background(), []byte("not an image")); !errors.Is(err, media.ErrUnsupported) {
 		t.Fatalf("esperava ErrUnsupported, veio %v", err)
 	}
 }
 
+// O áudio vira AAC e é cortado na duração máxima.
 func TestAudioProcessor_TrimsToAAC(t *testing.T) {
 	requireFFmpeg(t)
 	// Gera 5 s de tom em WAV com o próprio ffmpeg.

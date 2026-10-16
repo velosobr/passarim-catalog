@@ -31,6 +31,7 @@ type speciesFile struct {
 	Facts                []factFile `yaml:"facts"`
 }
 
+// factFile é uma curiosidade no YAML.
 type factFile struct {
 	Text   string `yaml:"text"`
 	Source string `yaml:"source"`
@@ -60,6 +61,8 @@ func LoadDir(dir string) ([]domain.Species, error) {
 	return out, nil
 }
 
+// loadFile lê e valida um arquivo. O nome científico e os textos são
+// limpos de espaços sobrando antes da validação, e o id é derivado do nome.
 func loadFile(path string) (domain.Species, error) {
 	raw, err := os.ReadFile(path) //nolint:gosec // G304: path vem só de filepath.Glob sobre um dir confiável (configurado pelo operador), nunca de entrada externa
 	if err != nil {

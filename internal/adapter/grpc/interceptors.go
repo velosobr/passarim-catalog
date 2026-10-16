@@ -1,3 +1,5 @@
+// Interceptors do servidor gRPC: id da requisição e log de cada chamada.
+
 package grpcadapter
 
 import (
@@ -15,8 +17,11 @@ import (
 // Interceptors são o "middleware" do gRPC: código que roda antes/depois
 // de TODO método, sem repetir em cada um.
 
+// ctxKey é a chave do request_id no contexto; um tipo próprio evita colisão
+// com chaves de outros pacotes.
 type ctxKey struct{}
 
+// requestIDHeader é o metadado gRPC com o id, o mesmo nome que o BFF manda.
 const requestIDHeader = "x-request-id"
 
 // RequestIDFrom devolve o id da requisição guardado no contexto.
@@ -25,6 +30,7 @@ func RequestIDFrom(ctx context.Context) string {
 	return id
 }
 
+// newRequestID sorteia 16 bytes com crypto/rand e os escreve em hexadecimal.
 func newRequestID() string {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b) // crypto/rand não falha em sistemas suportados

@@ -1,3 +1,5 @@
+// Conversões entre os tipos do domínio e as mensagens do proto.
+
 package grpcadapter
 
 import (
@@ -29,6 +31,8 @@ var biomeToProto = map[domain.Biome]catalogv1.Biome{
 	domain.BiomePantanal: catalogv1.Biome_BIOME_PANTANAL, domain.BiomePampa: catalogv1.Biome_BIOME_PAMPA,
 }
 
+// statusToProto traduz o código IUCN no enum do proto. Um status vazio
+// (desconhecido) não está no mapa e vira o valor zero, UNSPECIFIED.
 var statusToProto = map[domain.ConservationStatus]catalogv1.ConservationStatus{
 	domain.StatusLC: catalogv1.ConservationStatus_CONSERVATION_STATUS_LC, domain.StatusNT: catalogv1.ConservationStatus_CONSERVATION_STATUS_NT,
 	domain.StatusVU: catalogv1.ConservationStatus_CONSERVATION_STATUS_VU, domain.StatusEN: catalogv1.ConservationStatus_CONSERVATION_STATUS_EN,
@@ -49,6 +53,9 @@ func biomeFromProto(b catalogv1.Biome) (string, bool) {
 	return "", false
 }
 
+// creditToProto, summaryToProto e speciesToProto montam as mensagens de
+// resposta. Os campos "optional" do proto são ponteiros, por isso SizeCm é
+// convertido para um ponteiro novo de int32.
 func creditToProto(c domain.Credit) *catalogv1.Credit {
 	return &catalogv1.Credit{Author: c.Author, License: c.License, Source: c.Source, SourceUrl: c.SourceURL}
 }

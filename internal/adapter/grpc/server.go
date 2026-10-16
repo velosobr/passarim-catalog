@@ -40,10 +40,13 @@ type Server struct {
 	log     *slog.Logger
 }
 
+// NewServer liga o servidor aos três casos de uso.
 func NewServer(list ListSpeciesUseCase, get GetSpeciesUseCase, filters ListFiltersUseCase, log *slog.Logger) *Server {
 	return &Server{list: list, get: get, filters: filters, log: log}
 }
 
+// ListSpecies converte o pedido gRPC na entrada do caso de uso e a saída de
+// volta. Um bioma com número que o catalog não conhece é recusado na hora.
 func (s *Server) ListSpecies(ctx context.Context, req *catalogv1.ListSpeciesRequest) (*catalogv1.ListSpeciesResponse, error) {
 	biome, ok := biomeFromProto(req.GetBiome())
 	if !ok {
@@ -63,6 +66,7 @@ func (s *Server) ListSpecies(ctx context.Context, req *catalogv1.ListSpeciesRequ
 	return resp, nil
 }
 
+// GetSpecies busca uma espécie pelo id.
 func (s *Server) GetSpecies(ctx context.Context, req *catalogv1.GetSpeciesRequest) (*catalogv1.GetSpeciesResponse, error) {
 	sp, err := s.get.Execute(ctx, req.GetId())
 	if err != nil {
@@ -71,6 +75,7 @@ func (s *Server) GetSpecies(ctx context.Context, req *catalogv1.GetSpeciesReques
 	return &catalogv1.GetSpeciesResponse{Species: speciesToProto(sp)}, nil
 }
 
+// ListFilters devolve as contagens por bioma e por UF.
 func (s *Server) ListFilters(ctx context.Context, _ *catalogv1.ListFiltersRequest) (*catalogv1.ListFiltersResponse, error) {
 	f, err := s.filters.Execute(ctx)
 	if err != nil {
