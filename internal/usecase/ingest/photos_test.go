@@ -12,6 +12,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// sabia é o job de fotos usado nos testes.
 var sabia = ingest.Job{ID: 1, SpeciesID: "turdus-rufiventris", ScientificName: "Turdus rufiventris", Source: ingest.SourceINaturalist}
 
 // cand cria a candidata número n com a licença dada.

@@ -82,8 +82,8 @@ func (f fakeAudio) ToAAC(_ context.Context, orig []byte, _ time.Duration) ([]byt
 	return []byte("aac:" + string(orig)), nil
 }
 
-// fakeStore é um object storage em memória, com contagem do que foi gravado
-// e apagado.
+// fakeStore é um object storage em memória; guarda o que foi gravado e a lista
+// do que foi apagado.
 type fakeStore struct {
 	objects map[string]string // key -> contentType
 	data    map[string][]byte
@@ -121,7 +121,7 @@ func (f *fakeStore) Put(_ context.Context, key, ct string, data []byte) error {
 	return nil
 }
 
-// fakeRepo guarda o último valor gravado de cada tipo e pode falhar.
+// fakeRepo guarda o último valor gravado de cada tipo.
 type fakeRepo struct {
 	photos       []domain.Photo
 	audio        *domain.Audio
@@ -132,7 +132,8 @@ type fakeRepo struct {
 	replaceErr   error
 }
 
-// Os três Replace* guardam o valor recebido (ou devolvem o erro configurado).
+// Os três Replace* contam a chamada e guardam o valor recebido. ReplacePhotos
+// e ReplaceAudio devolvem replaceErr, se configurado; ReplaceClusters nunca falha.
 func (f *fakeRepo) ReplacePhotos(_ context.Context, _ string, p []domain.Photo) error {
 	f.photoCalls++
 	if f.replaceErr != nil {
@@ -165,6 +166,9 @@ type failCall struct {
 	giveUp  bool
 }
 
+// fakeQueue é a fila falsa: ClaimDue devolve os jobs configurados (até o
+// limite), e Complete, Fail e Release só registram o que receberam e com que
+// contexto, para o teste conferir.
 type fakeQueue struct {
 	jobs      []ingest.Job
 	completed []int64

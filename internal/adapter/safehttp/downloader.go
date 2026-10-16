@@ -53,6 +53,7 @@ type Downloader struct {
 	client  *http.Client
 }
 
+// Conferência em tempo de compilação: Downloader implementa ingest.Downloader.
 var _ ingest.Downloader = (*Downloader)(nil)
 
 // allowedTypes são os Content-Types aceitos por tipo de download.

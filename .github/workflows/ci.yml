@@ -29,9 +29,8 @@ jobs:
         env:
           REQUIRE_FFMPEG: "1"
       - name: govulncheck
-        # v1.1.4 (pedida originalmente) dá panic ao analisar código Go 1.27
-        # (golang.org/x/tools antigo não entende sintaxe nova). v1.8.0 é a
-        # versão estável mais recente e funciona.
+        # v1.8.0: versões antigas do govulncheck dão panic ao analisar código Go
+        # 1.27 (o golang.org/x/tools delas não entende a sintaxe nova).
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
 
   # Lint: o golangci-lint junta vários verificadores (.golangci.yml).
@@ -60,10 +59,8 @@ jobs:
       - name: build da imagem
         run: docker build -t passarim-catalog:ci .
       # Trivy procura vulnerabilidades na imagem. Falha em HIGH/CRITICAL.
-      # v0.33.1 (versão pedida, corrigindo a tag para o formato real "vX.Y.Z")
-      # falha ao instalar o binário do Trivy no runner (script de instalação
-      # antigo incompatível com os releases atuais do Trivy). v0.36.0 é a
-      # versão estável mais recente e funciona.
+      # v0.36.0: versões antigas da action falham ao instalar o binário do
+      # Trivy no runner.
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: passarim-catalog:ci

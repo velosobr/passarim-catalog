@@ -85,7 +85,8 @@ func TestDownloader_BlocksPrivateIP(t *testing.T) {
 }
 
 // Um redirecionamento para um endereço interno (aqui, o serviço de
-// metadados da nuvem) é bloqueado: cada salto passa pelas mesmas regras.
+// metadados da nuvem) é bloqueado: cada salto passa pelas mesmas regras de
+// URL, e esse host não está na allowlist (o IP privado está liberado neste teste).
 func TestDownloader_BlocksPrivateIPAfterRedirect(t *testing.T) {
 	target := imageServer()
 	defer target.Close()

@@ -24,8 +24,8 @@ type fakeRepo struct {
 	sortNameOverride map[string]string
 }
 
-// ListSpecies imita o SQL: filtra, ordena por (sort_name, id), começa depois
-// do cursor e corta no limite.
+// ListSpecies imita o SQL: filtra só pela busca (bioma e UF são ignorados),
+// ordena por (sort_name, id), começa depois do cursor e corta no limite.
 func (f *fakeRepo) ListSpecies(_ context.Context, q usecase.ListFilter) ([]domain.SpeciesSummary, error) {
 	f.lastQuery = q
 	if f.err != nil {
@@ -70,7 +70,8 @@ func (f *fakeRepo) GetSpecies(_ context.Context, id string) (domain.Species, err
 	return domain.Species{}, domain.ErrNotFound
 }
 
-// CountByBiome e CountByState contam a partir das espécies guardadas.
+// CountByBiome e CountByState devolvem contagens fixas (não olham f.species),
+// junto com o erro configurado.
 func (f *fakeRepo) CountByBiome(context.Context) (map[domain.Biome]int, error) {
 	return map[domain.Biome]int{domain.BiomePantanal: 2, domain.BiomeAmazonia: 1}, f.err
 }
@@ -79,7 +80,7 @@ func (f *fakeRepo) CountByState(context.Context) (map[string]int, error) {
 	return map[string]int{"SP": 3, "AM": 1}, f.err
 }
 
-// birds cria n espécies "Ave 01", "Ave 02"...
+// birds cria n espécies com nomes "Ave Aa", "Ave Ab"..., já em ordem alfabética.
 func birds(n int) []domain.Species {
 	out := make([]domain.Species, n)
 	for i := range out {

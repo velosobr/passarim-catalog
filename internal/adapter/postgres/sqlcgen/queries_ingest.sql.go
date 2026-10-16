@@ -29,9 +29,11 @@ type ClaimDueJobsRow struct {
 	Attempts       int32
 }
 
-// FOR UPDATE SKIP LOCKED: se outro worker já travou uma linha nesta
-// transação, pulamos ela em vez de esperar. É o padrão clássico de
-// "fila no PostgreSQL" sem dois workers pegarem o mesmo job.
+// FOR UPDATE trava as linhas escolhidas até o fim da transação; SKIP LOCKED
+// faz esta consulta pular as que outro worker já travou, em vez de esperar.
+// É o padrão clássico de "fila no PostgreSQL": dois workers nunca pegam o
+// mesmo job. Os mais atrasados (menor next_run_at) saem primeiro, e o JOIN
+// com species traz o nome científico que a fonte usa na busca.
 func (q *Queries) ClaimDueJobs(ctx context.Context, lim int32) ([]ClaimDueJobsRow, error) {
 	rows, err := q.db.Query(ctx, claimDueJobs, lim)
 	if err != nil {

@@ -37,9 +37,11 @@ UPDATE ingestion_job SET status = 'pending', updated_at = now() WHERE id = $1 AN
 SELECT count(*)::int FROM ingestion_job WHERE status = 'pending';
 
 -- name: ClaimDueJobs :many
--- FOR UPDATE SKIP LOCKED: se outro worker já travou uma linha nesta
--- transação, pulamos ela em vez de esperar. É o padrão clássico de
--- "fila no PostgreSQL" sem dois workers pegarem o mesmo job.
+-- FOR UPDATE trava as linhas escolhidas até o fim da transação; SKIP LOCKED
+-- faz esta consulta pular as que outro worker já travou, em vez de esperar.
+-- É o padrão clássico de "fila no PostgreSQL": dois workers nunca pegam o
+-- mesmo job. Os mais atrasados (menor next_run_at) saem primeiro, e o JOIN
+-- com species traz o nome científico que a fonte usa na busca.
 UPDATE ingestion_job j SET status = 'running', updated_at = now()
 FROM species s
 WHERE j.species_id = s.id AND j.id IN (

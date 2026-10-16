@@ -19,9 +19,9 @@ var notEvaluated = map[string]bool{
 
 // TestCuratedContent carrega todos os YAML de content/species pelo mesmo
 // caminho do seed e confere as regras extras do conteúdo: pelo menos 30
-// espécies; cada uma com 2 ou mais curiosidades, biomas e UFs, descrição de
-// 200 caracteres ou mais com fonte https, e status IUCN (menos as da lista
-// notEvaluated).
+// espécies; cada uma com pelo menos 2 curiosidades (todas com fonte https),
+// pelo menos um bioma e uma UF, descrição de 200 caracteres ou mais com
+// description_source_url https, e status IUCN (menos as da lista notEvaluated).
 func TestCuratedContent(t *testing.T) {
 	species, err := curated.LoadDir("species")
 	if err != nil {

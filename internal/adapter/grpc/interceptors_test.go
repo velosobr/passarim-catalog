@@ -33,7 +33,7 @@ func TestUnaryRequestID_GeneratesWhenMissing(t *testing.T) {
 	}
 }
 
-// Um id com mais de 64 caracteres é trocado por um gerado.
+// Um id com mais de 64 bytes é trocado por um gerado.
 func TestUnaryRequestID_RejectsOversizedID(t *testing.T) {
 	long := string(make([]byte, 200))
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-request-id", long))

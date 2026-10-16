@@ -67,8 +67,10 @@ func (c *Client) FindOccurrences(ctx context.Context, scientificName string, max
 	if err := c.getJSON(ctx, "/v1/species/match", url.Values{"name": {scientificName}, "class": {"Aves"}, "strict": {"true"}}, &m); err != nil {
 		return nil, err
 	}
-	// Só EXACT: quando o nome não existe, o GBIF devolve o GÊNERO (HIGHERRANK)
-	// e o mapa mostraria avistamentos de outras espécies. Desconhecida não é erro.
+	// Só EXACT: sem strict, o GBIF devolveria o GÊNERO (HIGHERRANK) quando não
+	// acha a espécie, e FUZZY pode ser outra espécie de nome parecido. Com
+	// strict=true ele já não sobe na classificação, mas conferimos mesmo assim
+	// para o mapa nunca mostrar outra espécie. Desconhecida não é erro.
 	if m.MatchType != "EXACT" || m.UsageKey == 0 {
 		return nil, nil
 	}

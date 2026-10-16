@@ -26,7 +26,8 @@ CREATE TABLE species (
     description_source     text NOT NULL DEFAULT '',
     description_source_url text NOT NULL DEFAULT '',
     is_curated             boolean NOT NULL DEFAULT false,
-    -- Colunas calculadas pela aplicação (domain.NormalizeForSearch):
+    -- Colunas calculadas pela aplicação: sort_name com domain.NormalizeForSearch,
+    -- search_text com domain.NormalizeSearchText.
     sort_name              text NOT NULL,  -- nome popular sem acento: ordena a lista
     search_text            text NOT NULL,  -- nomes popular + científico sem acento: busca
     created_at             timestamptz NOT NULL DEFAULT now(),

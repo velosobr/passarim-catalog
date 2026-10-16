@@ -107,8 +107,9 @@ func run(log *slog.Logger) error {
 		grpcadapter.UnaryRequestID(), metrics.UnaryServerInterceptor(), grpcadapter.UnaryLogging(log)))
 	catalogv1.RegisterCatalogServiceServer(grpcServer, srv)
 	// O serviço de saúde padrão do gRPC responde "SERVING" enquanto a API está
-	// no ar; o healthcheck do Docker o consulta. Reflection (só ligada fora da
-	// produção) deixa ferramentas como o grpcurl descobrirem os métodos.
+	// no ar; o healthcheck do Docker o consulta. Reflection (desligada por
+	// padrão; GRPC_REFLECTION=true liga, para desenvolvimento) deixa
+	// ferramentas como o grpcurl descobrirem os métodos.
 	healthSrv := health.NewServer()
 	healthpb.RegisterHealthServer(grpcServer, healthSrv)
 	if cfg.Reflection {

@@ -9,6 +9,8 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/worker ./cmd/worker
 
+# Estágio 2: a imagem final, com o ffmpeg e os certificados raiz
+# (ca-certificates) para o HTTPS das fontes.
 FROM alpine:3.22
 # --no-cache: não guarda o índice de pacotes na imagem (menor e sem lixo).
 # adduser -D -H -u 10001 cria o usuário "worker" sem senha, sem pasta home e

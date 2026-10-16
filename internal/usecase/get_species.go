@@ -21,7 +21,7 @@ func (u GetSpecies) Execute(ctx context.Context, id string) (domain.Species, err
 	if id == "" {
 		return domain.Species{}, &domain.InvalidArgumentError{Field: "id", Reason: "obrigatório"}
 	}
-	// Não "embrulhamos" o erro aqui de propósito: quem chama precisa
-	// reconhecer domain.ErrNotFound com errors.Is (e reconhece mesmo assim).
+	// Devolvemos o erro do repositório sem embrulhar: não há contexto útil a
+	// acrescentar, e quem chama reconhece domain.ErrNotFound com errors.Is.
 	return u.Repo.GetSpecies(ctx, id)
 }

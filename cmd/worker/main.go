@@ -180,7 +180,8 @@ func loop(ctx context.Context, log *slog.Logger, runner ingest.Runner, cfg confi
 }
 
 // runBatch usa um contexto que NÃO é cancelado pelo shutdown (só pelo
-// timeout): um job nunca fica pela metade só porque recebemos SIGTERM.
+// timeout de batchTimeout): um SIGTERM deixa o lote em andamento terminar,
+// desde que o orquestrador espere esse tempo antes de matar o processo.
 func runBatch(ctx context.Context, log *slog.Logger, runner ingest.Runner) int {
 	batchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), batchTimeout)
 	defer cancel()

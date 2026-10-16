@@ -32,8 +32,9 @@ type WorkerConfig struct {
 	UserAgent       string
 }
 
-// LoadWorker lê o ambiente. Os erros citam o NOME da variável, nunca o
-// valor: segredos não podem vazar para logs.
+// LoadWorker lê o ambiente. Os erros das obrigatórias citam só o NOME da
+// variável, nunca o valor: segredos não podem vazar para logs. Só os
+// booleanos, que não são segredo, mostram o valor recebido.
 func LoadWorker(getenv func(string) string) (WorkerConfig, error) {
 	c := WorkerConfig{
 		DatabaseURL:     getenv("DATABASE_URL"),

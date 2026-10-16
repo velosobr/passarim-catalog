@@ -104,8 +104,8 @@ func (s *Server) toStatus(ctx context.Context, err error) error {
 	case errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled):
 		// O BFF chama com timeout de 2s: cliente cancelando ou prazo
 		// expirando é operação normal, não falha do catalog — por isso
-		// vira DEADLINE_EXCEEDED/CANCELLED (não INTERNAL) e é logado em
-		// nível baixo, sem poluir métricas/alertas de erro (WARN/INFO).
+		// vira DEADLINE_EXCEEDED/CANCELLED (não INTERNAL) e é logado como
+		// WARN, sem poluir métricas e alertas de erro.
 		st := status.FromContextError(err)
 		s.log.WarnContext(ctx, "requisição cancelada ou expirou", "error", err, "code", st.Code(), "request_id", RequestIDFrom(ctx))
 		return st.Err()

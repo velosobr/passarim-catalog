@@ -39,8 +39,10 @@ type Job struct {
 
 // JobQueue é a fila persistente (tabela ingestion_job).
 type JobQueue interface {
-	// EnqueueMissing cria jobs que ainda não existem (espécie × fonte) e
-	// reagenda jobs concluídos há mais de refreshAfter. Devolve quantos ficaram pendentes.
+	// EnqueueMissing faz a manutenção da fila: cria os jobs que ainda não
+	// existem (espécie × fonte), reagenda os concluídos há mais de
+	// refreshAfter, reabre os failed antigos e devolve à fila os presos em
+	// running. Devolve quantos ficaram pendentes.
 	EnqueueMissing(ctx context.Context, sources []Source, refreshAfter time.Duration) (int, error)
 	// ClaimDue pega até limit jobs vencidos e os marca como "running",
 	// sem que outro worker pegue os mesmos.
@@ -50,7 +52,7 @@ type JobQueue interface {
 	// Release devolve à fila um job que foi pego mas não chegou a rodar
 	// (ex.: o lote estourou o tempo). Não gasta tentativa.
 	Release(ctx context.Context, jobID int64) error
-	// Fail registra o erro. Se attempts chegou ao máximo, status = failed;
+	// Fail registra o erro e conta uma tentativa. Com giveUp, status = failed;
 	// senão volta para pending com next_run_at = agora + retryIn.
 	Fail(ctx context.Context, jobID int64, cause string, retryIn time.Duration, giveUp bool) error
 }
@@ -126,6 +128,7 @@ type ImageProcessor interface {
 	Process(ctx context.Context, original []byte) (PhotoVariants, error)
 }
 
+// AudioProcessor converte gravações para o formato do app.
 type AudioProcessor interface {
 	// ToAAC converte para AAC mono e corta em maxDuration.
 	ToAAC(ctx context.Context, original []byte, maxDuration time.Duration) ([]byte, error)

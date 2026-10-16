@@ -1,6 +1,7 @@
 # Build em dois estágios ("multi-stage"):
-# 1) uma imagem com o Go completo compila o binário;
-# 2) a imagem final leva SÓ o binário — menor e com menos superfície de ataque.
+# 1) uma imagem com o Go completo compila os binários;
+# 2) a imagem final leva só os binários e o conteúdo curado — menor e com menos
+#    superfície de ataque.
 
 FROM golang:1.27-alpine AS build
 WORKDIR /src

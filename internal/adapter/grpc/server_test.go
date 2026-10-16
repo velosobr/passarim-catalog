@@ -158,6 +158,8 @@ func (c *levelCapture) Handle(_ context.Context, r slog.Record) error {
 func (c *levelCapture) WithAttrs([]slog.Attr) slog.Handler { return c }
 func (c *levelCapture) WithGroup(string) slog.Handler      { return c }
 
+// Cancelamento e prazo esgotado são logados abaixo de ERROR, para não
+// disparar alertas de erro.
 func TestErrorsMapToGRPCCodes_ContextCancellationLogsBelowError(t *testing.T) {
 	cap := &levelCapture{}
 	log := slog.New(cap)

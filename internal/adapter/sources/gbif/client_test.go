@@ -106,8 +106,8 @@ func TestFindOccurrences_HTTPErrorIsError(t *testing.T) {
 	}
 }
 
-// Ao não achar a espécie, o GBIF devolve o GÊNERO (HIGHERRANK): isso conta
-// como "não achou", para o mapa não mostrar outras espécies.
+// Um match HIGHERRANK (o gênero, e não a espécie) conta como "não achou",
+// para o mapa não mostrar outras espécies.
 func TestFindOccurrences_HigherRankMatchIsEmpty(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v1/species/match" {

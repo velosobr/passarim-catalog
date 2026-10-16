@@ -29,8 +29,8 @@ func TestParseLicense(t *testing.T) {
 			t.Errorf("ParseLicense(%q) = %q, %v; want %q", in, got, err, want)
 		}
 	}
-	// ND (sem obras derivadas), vazio ("todos os direitos
-	// reservados") e lixo são recusados.
+	// ND (sem obras derivadas), vazio ("todos os direitos reservados") e lixo
+	// são recusados.
 	for _, in := range []string{"cc-by-nd", "cc-by-nc-nd", "https://creativecommons.org/licenses/by-nc-nd/4.0/", "", "all rights reserved", "gpl"} {
 		if _, err := domain.ParseLicense(in); !errors.Is(err, domain.ErrLicenseNotAccepted) {
 			t.Errorf("ParseLicense(%q) deveria recusar, veio %v", in, err)

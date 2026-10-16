@@ -11,9 +11,10 @@ import (
 )
 
 // toInt32 converte um int para int32 saturando nos limites do int32 em vez
-// de dar overflow silencioso (gosec G115). Os valores convertidos aqui vêm
-// de conteúdo curado (tamanho em cm, dimensões de foto, duração de áudio,
-// contagem de ocorrências), então a saturação nunca deve ocorrer na prática.
+// de dar overflow silencioso (gosec G115). Os valores convertidos aqui são
+// pequenos: tamanho em cm (curado e validado), dimensões de foto, duração de
+// áudio e contagens (gravados pelo worker), então a saturação nunca deve
+// ocorrer na prática.
 func toInt32(v int) int32 {
 	if v > math.MaxInt32 {
 		return math.MaxInt32

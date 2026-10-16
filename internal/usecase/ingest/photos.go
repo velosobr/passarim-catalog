@@ -17,7 +17,7 @@ import (
 // A ordem das fotos é a que a fonte devolve (as observações mais votadas
 // primeiro), e a primeira processada vira a principal.
 // TODO: a escolha da foto principal ainda não olha o conteúdo da imagem
-// (ninho, ovos, bando); é a curadoria da frente A do PRD da guinada.
+// (ninho, ovos, bando); falta uma curadoria da foto de capa.
 type IngestPhotos struct {
 	Source     PhotoSource
 	Downloader Downloader

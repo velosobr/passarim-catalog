@@ -39,8 +39,8 @@ func TestNormalizeForSearch(t *testing.T) {
 	}
 }
 
-// Hífen e espaços repetidos não podem
-// impedir a busca ("bem te vi" precisa achar "Bem-te-vi").
+// Hífen e espaços repetidos não podem impedir a busca ("bem te vi" precisa
+// achar "Bem-te-vi").
 func TestNormalizeSearchText(t *testing.T) {
 	cases := map[string]string{
 		"Bem-te-vi":            "bem te vi",

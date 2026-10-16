@@ -39,8 +39,8 @@ func TestClusterPoints_Empty(t *testing.T) {
 	}
 }
 
-// Coordenadas negativas (todo o Brasil fica abaixo do equador e a oeste de
-// Greenwich) caem na célula certa graças ao math.Floor.
+// Coordenadas negativas (quase todo o Brasil fica abaixo do equador, e todo
+// ele a oeste de Greenwich) caem na célula certa graças ao math.Floor.
 func TestClusterPoints_NegativeCoordinatesUseFloor(t *testing.T) {
 	// -0.5 e +0.5 estão em células DIFERENTES (floor(-0.5) = -1, floor(0.5) = 0).
 	got := domain.ClusterPoints([]domain.Point{{Lat: -0.5, Lng: 0}, {Lat: 0.5, Lng: 0}}, 1.0)
