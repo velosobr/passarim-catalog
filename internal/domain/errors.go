@@ -1,3 +1,5 @@
+// Os erros do domínio que as outras camadas sabem traduzir.
+
 package domain
 
 import "errors"
@@ -13,6 +15,8 @@ type InvalidArgumentError struct {
 	Reason string
 }
 
+// Error faz do tipo um erro: "campo: motivo".
 func (e *InvalidArgumentError) Error() string { return e.Field + ": " + e.Reason }
 
+// invalid é um atalho para criar o erro de argumento inválido.
 func invalid(field, reason string) error { return &InvalidArgumentError{Field: field, Reason: reason} }

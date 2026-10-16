@@ -1,3 +1,6 @@
+// Testes das regras da espécie: id, normalização para busca, biomas,
+// status, UFs e validação completa.
+
 package domain_test
 
 import (
@@ -7,6 +10,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/domain"
 )
 
+// O id é o nome científico em minúsculas, com hífen no lugar dos espaços.
 func TestSpeciesID(t *testing.T) {
 	cases := map[string]string{
 		"Turdus rufiventris":         "turdus-rufiventris",
@@ -20,6 +24,7 @@ func TestSpeciesID(t *testing.T) {
 	}
 }
 
+// Acentos e maiúsculas somem, para "sabia" encontrar "Sabiá".
 func TestNormalizeForSearch(t *testing.T) {
 	cases := map[string]string{
 		"Sabiá-Laranjeira": "sabia-laranjeira",
@@ -34,7 +39,7 @@ func TestNormalizeForSearch(t *testing.T) {
 	}
 }
 
-// Review Focus #1 da revisão final: hífen e espaços repetidos não podem
+// Hífen e espaços repetidos não podem
 // impedir a busca ("bem te vi" precisa achar "Bem-te-vi").
 func TestNormalizeSearchText(t *testing.T) {
 	cases := map[string]string{
@@ -54,6 +59,7 @@ func TestNormalizeSearchText(t *testing.T) {
 	}
 }
 
+// Só os seis códigos exatos são aceitos.
 func TestParseBiome(t *testing.T) {
 	if b, err := domain.ParseBiome("pantanal"); err != nil || b != domain.BiomePantanal {
 		t.Fatalf("ParseBiome(pantanal) = %v, %v", b, err)
@@ -68,6 +74,7 @@ func TestParseBiome(t *testing.T) {
 	}
 }
 
+// Só as categorias da IUCN (ou vazio) são aceitas.
 func TestParseConservationStatus(t *testing.T) {
 	for _, s := range []string{"", "LC", "NT", "VU", "EN", "CR", "EW", "EX", "DD"} {
 		if _, err := domain.ParseConservationStatus(s); err != nil {
@@ -79,6 +86,7 @@ func TestParseConservationStatus(t *testing.T) {
 	}
 }
 
+// A UF é aparada e passada para maiúsculas; sigla inexistente é recusada.
 func TestNormalizeUF(t *testing.T) {
 	if uf, err := domain.NormalizeUF(" ms "); err != nil || uf != "MS" {
 		t.Fatalf("NormalizeUF(ms) = %q, %v", uf, err)
@@ -91,6 +99,8 @@ func TestNormalizeUF(t *testing.T) {
 	}
 }
 
+// validSpecies é uma espécie que passa em todas as regras; cada caso do
+// teste abaixo estraga um campo.
 func validSpecies() domain.Species {
 	size := 25
 	return domain.Species{
@@ -103,6 +113,7 @@ func validSpecies() domain.Species {
 	}
 }
 
+// Cada regra da validação, uma por caso, aponta o campo certo.
 func TestSpeciesValidate(t *testing.T) {
 	if err := validSpecies().Validate(); err != nil {
 		t.Fatalf("espécie válida recusada: %v", err)
