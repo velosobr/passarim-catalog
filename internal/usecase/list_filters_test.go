@@ -1,3 +1,5 @@
+// Testes do caso de uso de filtros.
+
 package usecase_test
 
 import (
@@ -8,6 +10,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase"
 )
 
+// Biomas saem na ordem oficial e UFs em ordem alfabética, sem as zeradas.
 func TestListFilters_OrdersBiomesCanonicallyAndStatesAlphabetically(t *testing.T) {
 	out, err := usecase.ListFilters{Repo: &fakeRepo{}}.Execute(context.Background())
 	if err != nil {

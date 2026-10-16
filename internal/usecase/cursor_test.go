@@ -1,3 +1,5 @@
+// Testes do cursor de paginação.
+
 package usecase_test
 
 import (
@@ -8,6 +10,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase"
 )
 
+// Um cursor codificado e decodificado volta igual.
 func TestCursorRoundTrip(t *testing.T) {
 	c := usecase.Cursor{SortName: "sabia-laranjeira", ID: "turdus-rufiventris"}
 	got, err := usecase.DecodeCursor(usecase.EncodeCursor(c))
@@ -16,6 +19,8 @@ func TestCursorRoundTrip(t *testing.T) {
 	}
 }
 
+// Texto que não é base64, JSON quebrado ou cursor sem id são recusados como
+// argumento inválido.
 func TestDecodeCursorRejectsGarbage(t *testing.T) {
 	for _, token := range []string{"!!!", "e30", "bm90LWpzb24"} { // inválido, "{}", "not-json"
 		_, err := usecase.DecodeCursor(token)

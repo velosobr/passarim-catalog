@@ -2,6 +2,11 @@
 // Ele depende só do domain e de interfaces ("ports"). Quem implementa as
 // interfaces (PostgreSQL, por exemplo) fica na camada adapter. Assim dá
 // para trocar o banco sem tocar numa linha daqui.
+//
+// Este arquivo define a porta do repositório e o filtro que ela recebe. Em
+// Go, uma interface é satisfeita sem declaração: o repositório Postgres
+// implementa SpeciesRepository só por ter estes métodos, e os testes usam
+// um repositório em memória (fake_repo_test.go) do mesmo jeito.
 package usecase
 
 import (
@@ -17,6 +22,7 @@ type SpeciesRepository interface {
 	ListSpecies(ctx context.Context, filter ListFilter) ([]domain.SpeciesSummary, error)
 	// GetSpecies devolve domain.ErrNotFound se o id não existir.
 	GetSpecies(ctx context.Context, id string) (domain.Species, error)
+	// CountByBiome e CountByState contam as espécies de cada bioma e de cada UF.
 	CountByBiome(ctx context.Context) (map[domain.Biome]int, error)
 	CountByState(ctx context.Context) (map[string]int, error)
 }

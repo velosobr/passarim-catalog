@@ -1,3 +1,5 @@
+// Caso de uso dos filtros: biomas e UFs com a quantidade de espécies.
+
 package usecase
 
 import (
@@ -8,6 +10,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/domain"
 )
 
+// BiomeCount e StateCount são uma opção de filtro com a contagem.
 type BiomeCount struct {
 	Biome domain.Biome
 	Count int
@@ -29,6 +32,9 @@ type ListFilters struct {
 	Repo SpeciesRepository
 }
 
+// Execute busca as duas contagens, tira as zeradas e ordena: biomas na
+// ordem oficial, UFs em ordem alfabética. Os erros ganham contexto com %w,
+// que embrulha o erro original sem perdê-lo.
 func (u ListFilters) Execute(ctx context.Context) (Filters, error) {
 	byBiome, err := u.Repo.CountByBiome(ctx)
 	if err != nil {

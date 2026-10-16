@@ -1,3 +1,6 @@
+// Cursor de paginação: o que ele guarda e como vira o texto que o cliente
+// devolve para pedir a próxima página.
+
 package usecase
 
 import (
@@ -16,6 +19,8 @@ type Cursor struct {
 }
 
 // EncodeCursor transforma o cursor num texto "opaco" para o cliente.
+// O JSON vira base64 "URL-safe" sem preenchimento ("="): só letras, números,
+// "-" e "_", que passam numa URL sem precisar de escape.
 // Opaco = o cliente não deve interpretar nem montar esse texto, só devolvê-lo.
 func EncodeCursor(c Cursor) string {
 	b, _ := json.Marshal(c) // struct com 2 strings: Marshal nunca falha
