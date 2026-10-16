@@ -17,6 +17,11 @@ var notEvaluated = map[string]bool{
 	"troglodytes-musculus": true, // corruíra: separada de Troglodytes aedon, ainda não avaliada pela IUCN.
 }
 
+// TestCuratedContent carrega todos os YAML de content/species pelo mesmo
+// caminho do seed e confere as regras extras do conteúdo: pelo menos 30
+// espécies; cada uma com 2 ou mais curiosidades, biomas e UFs, descrição de
+// 200 caracteres ou mais com fonte https, e status IUCN (menos as da lista
+// notEvaluated).
 func TestCuratedContent(t *testing.T) {
 	species, err := curated.LoadDir("species")
 	if err != nil {

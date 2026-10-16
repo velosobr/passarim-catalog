@@ -9,6 +9,7 @@ test:
 generate:
 	go tool sqlc generate
 
+# Lint com o golangci-lint (regras no .golangci.yml).
 lint:
 	golangci-lint run
 

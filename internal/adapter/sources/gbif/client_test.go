@@ -1,3 +1,6 @@
+// Testes do cliente do GBIF contra um servidor HTTP falso que responde com
+// os JSON de testdata/ (respostas reais gravadas).
+
 package gbif_test
 
 import (
@@ -15,8 +18,10 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/adapter/sources/gbif"
 )
 
+// limiter sem limite de ritmo, para os testes não esperarem.
 func limiter() *rate.Limiter { return rate.NewLimiter(rate.Inf, 1) }
 
+// Os avistamentos viram pontos com latitude e longitude.
 func TestFindOccurrences(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var file string
@@ -46,6 +51,7 @@ func TestFindOccurrences(t *testing.T) {
 	}
 }
 
+// A paginação para quando junta max pontos.
 func TestFindOccurrences_PaginatesUntilMax(t *testing.T) {
 	var searches atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -75,6 +81,7 @@ func TestFindOccurrences_PaginatesUntilMax(t *testing.T) {
 	}
 }
 
+// Espécie que o GBIF não conhece devolve lista vazia, sem erro.
 func TestFindOccurrences_NoMatchIsEmpty(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v1/species/match" {
@@ -90,6 +97,7 @@ func TestFindOccurrences_NoMatchIsEmpty(t *testing.T) {
 	}
 }
 
+// Um status de erro da API vira erro.
 func TestFindOccurrences_HTTPErrorIsError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(500) }))
 	defer srv.Close()
@@ -98,7 +106,8 @@ func TestFindOccurrences_HTTPErrorIsError(t *testing.T) {
 	}
 }
 
-// Revisão final #4: ao não achar a espécie, o GBIF devolve o GÊNERO (HIGHERRANK).
+// Ao não achar a espécie, o GBIF devolve o GÊNERO (HIGHERRANK): isso conta
+// como "não achou", para o mapa não mostrar outras espécies.
 func TestFindOccurrences_HigherRankMatchIsEmpty(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v1/species/match" {

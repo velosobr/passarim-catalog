@@ -1,5 +1,6 @@
 // Testes do conversor com o ffmpeg de verdade. Sem o ffmpeg instalado, os
-// testes que precisam dele são pulados.
+// testes que precisam dele são pulados, a não ser com REQUIRE_FFMPEG=1 (como
+// na CI), que os faz falhar.
 
 package media_test
 
@@ -21,7 +22,8 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/adapter/media"
 )
 
-// requireFFmpeg pula o teste quando o ffmpeg não está no PATH.
+// requireFFmpeg pula o teste quando o ffmpeg não está no PATH, ou o reprova
+// se REQUIRE_FFMPEG=1.
 func requireFFmpeg(t *testing.T) {
 	t.Helper()
 	if _, err := exec.LookPath("ffmpeg"); err != nil {

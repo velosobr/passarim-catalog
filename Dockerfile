@@ -14,9 +14,12 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/catalog-api ./cmd/
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/seed ./cmd/seed
 
 # distroless: sem shell, sem gerenciador de pacotes. "nonroot" = não roda como root.
+# A imagem final leva os dois binários (a API e o seed) e o conteúdo curado,
+# que o seed lê de /content.
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/ /usr/local/bin/
 COPY content /content
 USER nonroot:nonroot
+# 50051 é o gRPC; 9091, as métricas.
 EXPOSE 50051 9091
 ENTRYPOINT ["/usr/local/bin/catalog-api"]

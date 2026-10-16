@@ -29,6 +29,8 @@ const (
 	licenses = "cc-by,cc-by-nc,cc-by-sa,cc-by-nc-sa,cc0"
 )
 
+// Client é o cliente da API. O limiter garante o ritmo de no máximo uma
+// requisição por segundo, e o http.Client tem prazo de 20 s por requisição.
 type Client struct {
 	baseURL   string
 	userAgent string
@@ -36,8 +38,10 @@ type Client struct {
 	http      *http.Client
 }
 
+// Conferência em tempo de compilação: Client implementa ingest.PhotoSource.
 var _ ingest.PhotoSource = (*Client)(nil)
 
+// New cria o cliente; a barra final da URL base é removida.
 func New(baseURL, userAgent string, limiter *rate.Limiter) *Client {
 	return &Client{baseURL: strings.TrimRight(baseURL, "/"), userAgent: userAgent, limiter: limiter,
 		http: &http.Client{Timeout: 20 * time.Second}}
@@ -51,6 +55,9 @@ type taxaResponse struct {
 	} `json:"results"`
 }
 
+// observationsResponse é a parte usada da resposta de /v1/observations:
+// cada observação tem a página (uri) e as fotos, com id, URL, licença,
+// autoria e dimensões.
 type observationsResponse struct {
 	Results []struct {
 		URI    string `json:"uri"`
@@ -67,6 +74,10 @@ type observationsResponse struct {
 	} `json:"results"`
 }
 
+// FindPhotos busca o táxon pelo nome científico e depois as observações dele
+// no Brasil: só "research grade" (identificação confirmada pela comunidade),
+// só com as licenças aceitas e ordenadas pelos votos. Fica com a primeira
+// foto de cada observação.
 func (c *Client) FindPhotos(ctx context.Context, scientificName string, max int) ([]ingest.PhotoCandidate, error) {
 	var taxa taxaResponse
 	if err := c.getJSON(ctx, "/v1/taxa", url.Values{"q": {scientificName}, "rank": {"species"}, "per_page": {"1"}}, &taxa); err != nil {
@@ -109,6 +120,7 @@ func (c *Client) FindPhotos(ctx context.Context, scientificName string, max int)
 	return out, nil
 }
 
+// getJSON faz um GET, espera a vez no rate limiter e decodifica o JSON.
 func (c *Client) getJSON(ctx context.Context, path string, q url.Values, out any) error {
 	// Respeita o limite de requisições por segundo da fonte.
 	if err := c.limiter.Wait(ctx); err != nil {

@@ -20,29 +20,38 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// pageSize é quantos avistamentos pedimos por página (o máximo do GBIF), e
+// maxJSONBytes o maior JSON aceito (5 MB).
 const (
 	pageSize     = 300
 	maxJSONBytes = 5 << 20
 )
 
+// Client é o cliente da API, com o ritmo controlado pelo limiter.
 type Client struct {
 	baseURL string
 	limiter *rate.Limiter
 	http    *http.Client
 }
 
+// Conferência em tempo de compilação: Client implementa ingest.OccurrenceSource.
 var _ ingest.OccurrenceSource = (*Client)(nil)
 
+// New cria o cliente; a barra final da URL base é removida.
 func New(baseURL string, limiter *rate.Limiter) *Client {
 	return &Client{baseURL: strings.TrimRight(baseURL, "/"), limiter: limiter,
 		http: &http.Client{Timeout: 20 * time.Second}}
 }
 
+// matchResponse é a resposta de /v1/species/match: o id do táxon no GBIF e
+// o tipo de correspondência (EXACT, FUZZY, HIGHERRANK...).
 type matchResponse struct {
 	UsageKey  int    `json:"usageKey"`
 	MatchType string `json:"matchType"`
 }
 
+// searchResponse é uma página de avistamentos, com as coordenadas e o aviso
+// de fim (endOfRecords).
 type searchResponse struct {
 	EndOfRecords bool `json:"endOfRecords"`
 	Results      []struct {
@@ -51,6 +60,8 @@ type searchResponse struct {
 	} `json:"results"`
 }
 
+// FindOccurrences acha o táxon pelo nome e pagina os avistamentos no Brasil
+// até juntar max pontos ou acabarem as páginas.
 func (c *Client) FindOccurrences(ctx context.Context, scientificName string, max int) ([]domain.Point, error) {
 	var m matchResponse
 	if err := c.getJSON(ctx, "/v1/species/match", url.Values{"name": {scientificName}, "class": {"Aves"}, "strict": {"true"}}, &m); err != nil {
@@ -88,6 +99,7 @@ func (c *Client) FindOccurrences(ctx context.Context, scientificName string, max
 	return points, nil
 }
 
+// getJSON faz um GET, espera a vez no rate limiter e decodifica o JSON.
 func (c *Client) getJSON(ctx context.Context, path string, q url.Values, out any) error {
 	if err := c.limiter.Wait(ctx); err != nil {
 		return err
