@@ -1,6 +1,13 @@
 // catalog-api: ponto de entrada do serviço. Aqui só "ligamos os fios":
 // lemos a config, criamos as dependências e as entregamos umas às outras.
 // Nenhuma regra de negócio mora no main.
+//
+// O catalog tem três programas (ADR-0005, pré-ingestão): esta API gRPC, que
+// só LÊ o banco e responde ao BFF; o worker, que busca dados nas fontes
+// externas e grava; e o seed, que carrega o conteúdo curado. Separados, a
+// API nunca fica lenta por causa de uma busca no iNaturalist, e cada um pode
+// ser reiniciado sem derrubar os outros. O banco pertence ao catalog: nenhum
+// outro serviço o acessa (ADR-0004).
 package main
 
 import (
@@ -33,6 +40,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase"
 )
 
+// main cria o logger JSON e decide entre o healthcheck e a API de verdade.
 func main() {
 	// Logs em JSON: fáceis de buscar e filtrar em qualquer ferramenta.
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -48,6 +56,11 @@ func main() {
 	}
 }
 
+// run monta a API e só retorna quando ela termina. A ordem: configuração →
+// sinais de desligamento → pool de conexões com o Postgres → espera o banco
+// responder → migrations (se ligadas) → repositório e casos de uso →
+// servidor gRPC com interceptors, saúde e métricas → servidor de métricas →
+// espera o sinal de parar → desligamento gracioso.
 func run(log *slog.Logger) error {
 	cfg, err := config.Load(os.Getenv)
 	if err != nil {
@@ -58,6 +71,10 @@ func run(log *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// Um pool mantém várias conexões abertas com o Postgres e as reaproveita
+	// entre as chamadas: abrir uma conexão nova a cada consulta seria lento.
+	// WaitForDB tenta o ping até 30 vezes, uma por segundo, porque no docker
+	// compose o banco pode subir depois da API.
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return fmt.Errorf("configurar pool: %w", err)
@@ -78,12 +95,21 @@ func run(log *slog.Logger) error {
 	srv := grpcadapter.NewServer(
 		usecase.ListSpecies{Repo: repo}, usecase.GetSpecies{Repo: repo}, usecase.ListFilters{Repo: repo}, log)
 
+	// Métricas do Prometheus para cada chamada gRPC (contagem e duração por
+	// método e código de resposta).
 	metrics := grpcprom.NewServerMetrics(grpcprom.WithServerHandlingTimeHistogram())
 	prometheus.MustRegister(metrics)
 
+	// Interceptors são os "middlewares" do gRPC: rodam em volta de cada chamada,
+	// na ordem da lista. Primeiro pegamos o request_id, depois medimos e, por
+	// fim, registramos o log da chamada.
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		grpcadapter.UnaryRequestID(), metrics.UnaryServerInterceptor(), grpcadapter.UnaryLogging(log)))
 	catalogv1.RegisterCatalogServiceServer(grpcServer, srv)
+	// O serviço de saúde padrão do gRPC responde "SERVING" enquanto a API está
+	// no ar; o healthcheck do Docker o consulta. Reflection (desligada por
+	// padrão; GRPC_REFLECTION=true liga, para desenvolvimento) deixa
+	// ferramentas como o grpcurl descobrirem os métodos.
 	healthSrv := health.NewServer()
 	healthpb.RegisterHealthServer(grpcServer, healthSrv)
 	if cfg.Reflection {
@@ -96,6 +122,8 @@ func run(log *slog.Logger) error {
 	mux.Handle("GET /metrics", promhttp.Handler())
 	httpServer := &http.Server{Addr: cfg.MetricsAddr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 
+	// Os dois servidores rodam em goroutines. O canal errCh recebe o erro de
+	// qualquer um que cair; o select abaixo espera o sinal de parar ou essa queda.
 	lis, err := net.Listen("tcp", cfg.GRPCAddr)
 	if err != nil {
 		return err

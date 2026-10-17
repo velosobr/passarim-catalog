@@ -1,3 +1,5 @@
+// Aplicação das migrations (as mudanças de esquema do banco) na subida.
+
 package postgres
 
 import (

@@ -1,3 +1,5 @@
+// Configuração do worker (cmd/worker).
+
 package config
 
 import (
@@ -8,6 +10,12 @@ import (
 )
 
 // WorkerConfig é a configuração do binário cmd/worker.
+//
+// Obrigatórias: DATABASE_URL, S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY e
+// XENO_CANTO_API_KEY. Padrões: bucket "passarim-media", sem SSL no S3,
+// aceita licenças NC, rodadas a cada 1 min com 5 jobs, métricas em :9092,
+// "ffmpeg" no PATH e um User-Agent que identifica o projeto. Mandar um
+// User-Agent com contato é uma regra de boa educação das APIs públicas.
 type WorkerConfig struct {
 	DatabaseURL     string
 	S3Endpoint      string
@@ -24,8 +32,9 @@ type WorkerConfig struct {
 	UserAgent       string
 }
 
-// LoadWorker lê o ambiente. Os erros citam o NOME da variável, nunca o
-// valor: segredos não podem vazar para logs.
+// LoadWorker lê o ambiente. Os erros das obrigatórias citam só o NOME da
+// variável, nunca o valor: segredos não podem vazar para logs. Só os
+// booleanos, que não são segredo, mostram o valor recebido.
 func LoadWorker(getenv func(string) string) (WorkerConfig, error) {
 	c := WorkerConfig{
 		DatabaseURL:     getenv("DATABASE_URL"),
@@ -64,6 +73,8 @@ func LoadWorker(getenv func(string) string) (WorkerConfig, error) {
 	return c, nil
 }
 
+// durationVar lê uma duração no formato do Go ("30s", "1m"); zero ou
+// negativa é erro.
 func durationVar(getenv func(string) string, key string, def time.Duration) (time.Duration, error) {
 	v := getenv(key)
 	if v == "" {

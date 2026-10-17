@@ -1,5 +1,9 @@
 // seed: carrega as aves curadas (content/species/*.yaml) no banco.
 // Pode rodar quantas vezes quiser: o resultado é sempre o mesmo (idempotente).
+//
+// O conteúdo curado (nome, descrição, curiosidades com fonte) é escrito à mão
+// nos YAML e revisado por PR. O seed é o único caminho dele até o banco.
+// "Upsert" quer dizer inserir se não existe, atualizar se já existe.
 package main
 
 import (
@@ -15,6 +19,9 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/adapter/postgres"
 )
 
+// main lê a pasta (o padrão pode ser trocado com "-dir"), valida tudo e grava
+// espécie por espécie. Qualquer erro encerra com código 1, para o docker
+// compose e a CI perceberem.
 func main() {
 	dir := flag.String("dir", "content/species", "pasta com os arquivos .yaml")
 	flag.Parse()

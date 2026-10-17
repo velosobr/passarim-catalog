@@ -1,3 +1,5 @@
+// Caso de uso dos avistamentos (GBIF): busca e agrupa em grade para o mapa.
+
 package ingest
 
 import (
@@ -15,6 +17,8 @@ type IngestOccurrences struct {
 	CellDeg   float64
 }
 
+// Run busca até MaxPoints avistamentos (900 no worker), agrupa em células de
+// CellDeg graus (1° no worker) e substitui os grupos da espécie.
 func (u IngestOccurrences) Run(ctx context.Context, job Job) error {
 	points, err := u.Source.FindOccurrences(ctx, job.ScientificName, u.MaxPoints)
 	if err != nil {

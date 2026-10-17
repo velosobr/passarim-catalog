@@ -1,3 +1,5 @@
+// Testes do interceptor de request_id.
+
 package grpcadapter_test
 
 import (
@@ -10,6 +12,7 @@ import (
 	grpcadapter "github.com/velosobr/passarim-catalog/internal/adapter/grpc"
 )
 
+// O id que o BFF mandou é mantido.
 func TestUnaryRequestID_KeepsIncomingID(t *testing.T) {
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-request-id", "abc-123"))
 	var seen string
@@ -20,6 +23,7 @@ func TestUnaryRequestID_KeepsIncomingID(t *testing.T) {
 	}
 }
 
+// Sem id recebido, um novo é gerado.
 func TestUnaryRequestID_GeneratesWhenMissing(t *testing.T) {
 	var seen string
 	handler := func(ctx context.Context, _ any) (any, error) { seen = grpcadapter.RequestIDFrom(ctx); return nil, nil }
@@ -29,6 +33,7 @@ func TestUnaryRequestID_GeneratesWhenMissing(t *testing.T) {
 	}
 }
 
+// Um id com mais de 64 bytes é trocado por um gerado.
 func TestUnaryRequestID_RejectsOversizedID(t *testing.T) {
 	long := string(make([]byte, 200))
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-request-id", long))

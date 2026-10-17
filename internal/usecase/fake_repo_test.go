@@ -1,3 +1,5 @@
+// Repositório falso, em memória, usado pelos testes dos casos de uso.
+
 package usecase_test
 
 import (
@@ -18,10 +20,12 @@ type fakeRepo struct {
 	// sortNameOverride simula um sort_name GRAVADO no banco que diverge do
 	// que domain.NormalizeForSearch(CommonNamePt) recalcularia agora —
 	// prova que o cursor vem do valor devolvido pelo repo, não de um
-	// recálculo (Review Focus #2). Chave = ID da espécie.
+	// recálculo. Chave = ID da espécie.
 	sortNameOverride map[string]string
 }
 
+// ListSpecies imita o SQL: filtra só pela busca (bioma e UF são ignorados),
+// ordena por (sort_name, id), começa depois do cursor e corta no limite.
 func (f *fakeRepo) ListSpecies(_ context.Context, q usecase.ListFilter) ([]domain.SpeciesSummary, error) {
 	f.lastQuery = q
 	if f.err != nil {
@@ -56,6 +60,7 @@ func (f *fakeRepo) ListSpecies(_ context.Context, q usecase.ListFilter) ([]domai
 	return out, nil
 }
 
+// GetSpecies devolve a espécie ou domain.ErrNotFound.
 func (f *fakeRepo) GetSpecies(_ context.Context, id string) (domain.Species, error) {
 	for _, s := range f.species {
 		if s.ID == id {
@@ -65,6 +70,8 @@ func (f *fakeRepo) GetSpecies(_ context.Context, id string) (domain.Species, err
 	return domain.Species{}, domain.ErrNotFound
 }
 
+// CountByBiome e CountByState devolvem contagens fixas (não olham f.species),
+// junto com o erro configurado.
 func (f *fakeRepo) CountByBiome(context.Context) (map[domain.Biome]int, error) {
 	return map[domain.Biome]int{domain.BiomePantanal: 2, domain.BiomeAmazonia: 1}, f.err
 }
@@ -73,7 +80,7 @@ func (f *fakeRepo) CountByState(context.Context) (map[string]int, error) {
 	return map[string]int{"SP": 3, "AM": 1}, f.err
 }
 
-// birds cria n espécies "Ave 01", "Ave 02"...
+// birds cria n espécies com nomes "Ave Aa", "Ave Ab"..., já em ordem alfabética.
 func birds(n int) []domain.Species {
 	out := make([]domain.Species, n)
 	for i := range out {

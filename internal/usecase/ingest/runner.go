@@ -1,3 +1,6 @@
+// O laço da fila: enfileira o que falta, pega um lote e executa cada job com
+// o handler da fonte certa, registrando sucesso ou falha.
+
 package ingest
 
 import (
@@ -46,6 +49,9 @@ func (r Runner) RunOnce(ctx context.Context) (int, error) {
 	return len(jobs), nil
 }
 
+// runJob executa um job e grava o resultado na fila. Na falha, a próxima
+// tentativa é agendada com backoff exponencial; depois de MaxAttempts (ou
+// se a fonte não tem handler), o job desiste.
 func (r Runner) runJob(ctx context.Context, job Job) {
 	var err error
 	if h, ok := r.Handlers[job.Source]; ok {

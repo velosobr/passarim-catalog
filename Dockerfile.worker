@@ -1,6 +1,7 @@
 # Imagem do worker. Diferente da API (distroless), o worker precisa do
 # ffmpeg, que depende de bibliotecas do sistema. Usamos Alpine (pequena)
 # e criamos um usuário sem privilégios (ADR-0014).
+# Estágio 1: compila o worker, como na imagem da API.
 FROM golang:1.27-alpine AS build
 WORKDIR /src
 COPY go.mod go.sum ./
@@ -8,10 +9,15 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/worker ./cmd/worker
 
+# Estágio 2: a imagem final, com o ffmpeg e os certificados raiz
+# (ca-certificates) para o HTTPS das fontes.
 FROM alpine:3.22
 # --no-cache: não guarda o índice de pacotes na imagem (menor e sem lixo).
+# adduser -D -H -u 10001 cria o usuário "worker" sem senha, sem pasta home e
+# com um id fixo.
 RUN apk add --no-cache ffmpeg ca-certificates && adduser -D -H -u 10001 worker
 COPY --from=build /out/worker /usr/local/bin/worker
 USER worker
+# 9092 são as métricas do worker.
 EXPOSE 9092
 ENTRYPOINT ["/usr/local/bin/worker"]

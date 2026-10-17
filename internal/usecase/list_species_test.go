@@ -1,3 +1,6 @@
+// Testes do caso de uso da lista: tamanho de página, paginação sem buracos
+// nem repetições, normalização, limites e propagação de erros.
+
 package usecase_test
 
 import (
@@ -10,6 +13,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase"
 )
 
+// Sem page_size vêm 20; com mais de 50, vêm 50.
 func TestListSpecies_DefaultAndMaxPageSize(t *testing.T) {
 	repo := &fakeRepo{species: birds(80)}
 	uc := usecase.ListSpecies{Repo: repo}
@@ -24,6 +28,7 @@ func TestListSpecies_DefaultAndMaxPageSize(t *testing.T) {
 	}
 }
 
+// Percorrendo todas as páginas pelo token, cada ave aparece uma vez só.
 func TestListSpecies_PaginatesWithoutGapsOrRepeats(t *testing.T) {
 	repo := &fakeRepo{species: birds(45)}
 	uc := usecase.ListSpecies{Repo: repo}
@@ -50,6 +55,7 @@ func TestListSpecies_PaginatesWithoutGapsOrRepeats(t *testing.T) {
 	}
 }
 
+// A última página vem sem token.
 func TestListSpecies_LastPageHasNoToken(t *testing.T) {
 	uc := usecase.ListSpecies{Repo: &fakeRepo{species: birds(20)}}
 	out, _ := uc.Execute(context.Background(), usecase.ListSpeciesInput{PageSize: 20})
@@ -58,6 +64,7 @@ func TestListSpecies_LastPageHasNoToken(t *testing.T) {
 	}
 }
 
+// A busca e os filtros chegam ao repositório já normalizados.
 func TestListSpecies_NormalizesQueryAndFilters(t *testing.T) {
 	repo := &fakeRepo{}
 	uc := usecase.ListSpecies{Repo: repo}
@@ -71,7 +78,7 @@ func TestListSpecies_NormalizesQueryAndFilters(t *testing.T) {
 	}
 }
 
-// Review Focus #4: o limite é em CARACTERES (runas), não em bytes.
+// O limite é em CARACTERES (runas), não em bytes.
 // "á" ocupa 2 bytes em UTF-8; 100 deles = 200 bytes, mas são 100 caracteres.
 func TestListSpecies_QueryLengthCountsRunes(t *testing.T) {
 	uc := usecase.ListSpecies{Repo: &fakeRepo{}}
@@ -82,6 +89,8 @@ func TestListSpecies_QueryLengthCountsRunes(t *testing.T) {
 	assertInvalid(t, err, "query")
 }
 
+// Bioma, UF, page_size negativo e token inválidos são recusados apontando o
+// campo.
 func TestListSpecies_InvalidInputs(t *testing.T) {
 	uc := usecase.ListSpecies{Repo: &fakeRepo{}}
 	cases := map[string]usecase.ListSpeciesInput{
@@ -96,7 +105,7 @@ func TestListSpecies_InvalidInputs(t *testing.T) {
 	}
 }
 
-// Review Focus #2 da revisão final: o cursor precisa encodar o sort_name
+// O cursor precisa encodar o sort_name
 // DEVOLVIDO pelo repositório (o que o banco realmente gravou e comparou),
 // nunca um recálculo de domain.NormalizeForSearch(CommonNamePt) feito aqui.
 func TestListSpecies_CursorUsesRepositorySortNameNotRecomputed(t *testing.T) {
@@ -121,6 +130,7 @@ func TestListSpecies_CursorUsesRepositorySortNameNotRecomputed(t *testing.T) {
 	}
 }
 
+// Um erro do repositório chega a quem chamou.
 func TestListSpecies_RepositoryErrorPropagates(t *testing.T) {
 	boom := errors.New("banco caiu")
 	_, err := usecase.ListSpecies{Repo: &fakeRepo{err: boom}}.Execute(context.Background(), usecase.ListSpeciesInput{})
@@ -129,6 +139,7 @@ func TestListSpecies_RepositoryErrorPropagates(t *testing.T) {
 	}
 }
 
+// assertInvalid confere que o erro é de argumento inválido e aponta o campo.
 func assertInvalid(t *testing.T, err error, field string) {
 	t.Helper()
 	var inv *domain.InvalidArgumentError

@@ -2,6 +2,11 @@
 // mídia e avistamentos em fontes externas e gravar no nosso catálogo.
 // Como no resto do projeto, aqui só há regras e interfaces ("ports");
 // HTTP, ffmpeg, S3 e SQL ficam nos adapters.
+//
+// Este arquivo define as portas da ingestão: a fila de jobs, o repositório
+// de mídia, as três fontes, o downloader, os conversores e o storage. Cada
+// interface descreve só o que o caso de uso precisa, e os testes usam
+// versões falsas de todas elas (fakes_test.go).
 package ingest
 
 import (
@@ -34,17 +39,20 @@ type Job struct {
 
 // JobQueue é a fila persistente (tabela ingestion_job).
 type JobQueue interface {
-	// EnqueueMissing cria jobs que ainda não existem (espécie × fonte) e
-	// reagenda jobs concluídos há mais de refreshAfter. Devolve quantos ficaram pendentes.
+	// EnqueueMissing faz a manutenção da fila: cria os jobs que ainda não
+	// existem (espécie × fonte), reagenda os concluídos há mais de
+	// refreshAfter, reabre os failed antigos e devolve à fila os presos em
+	// running. Devolve quantos ficaram pendentes.
 	EnqueueMissing(ctx context.Context, sources []Source, refreshAfter time.Duration) (int, error)
 	// ClaimDue pega até limit jobs vencidos e os marca como "running",
 	// sem que outro worker pegue os mesmos.
 	ClaimDue(ctx context.Context, limit int) ([]Job, error)
+	// Complete marca o job como concluído com sucesso.
 	Complete(ctx context.Context, jobID int64) error
 	// Release devolve à fila um job que foi pego mas não chegou a rodar
 	// (ex.: o lote estourou o tempo). Não gasta tentativa.
 	Release(ctx context.Context, jobID int64) error
-	// Fail registra o erro. Se attempts chegou ao máximo, status = failed;
+	// Fail registra o erro e conta uma tentativa. Com giveUp, status = failed;
 	// senão volta para pending com next_run_at = agora + retryIn.
 	Fail(ctx context.Context, jobID int64, cause string, retryIn time.Duration, giveUp bool) error
 }
@@ -81,6 +89,8 @@ type AudioCandidate struct {
 	DurationMs int
 }
 
+// As três fontes externas: fotos (iNaturalist), cantos (xeno-canto) e
+// avistamentos (GBIF). Cada uma busca pelo nome científico.
 type PhotoSource interface {
 	FindPhotos(ctx context.Context, scientificName string, max int) ([]PhotoCandidate, error)
 }
@@ -102,6 +112,7 @@ type Downloader interface {
 type DownloadKind int
 
 const (
+	// iota numera as constantes a partir de 0: DownloadImage = 0, DownloadAudio = 1.
 	DownloadImage DownloadKind = iota
 	DownloadAudio
 )
@@ -112,10 +123,12 @@ type PhotoVariants struct {
 	Width, Height        int // dimensões da versão Large
 }
 
+// ImageProcessor gera as três versões WebP de uma foto original.
 type ImageProcessor interface {
 	Process(ctx context.Context, original []byte) (PhotoVariants, error)
 }
 
+// AudioProcessor converte gravações para o formato do app.
 type AudioProcessor interface {
 	// ToAAC converte para AAC mono e corta em maxDuration.
 	ToAAC(ctx context.Context, original []byte, maxDuration time.Duration) ([]byte, error)

@@ -1,3 +1,5 @@
+// Peças falsas dos testes de ingestão.
+
 package ingest_test
 
 import (
@@ -13,6 +15,7 @@ import (
 
 // Fakes simples e escritos à mão: guardam o que receberam para o teste conferir.
 
+// As três fontes falsas devolvem a lista e o erro configurados.
 type fakePhotoSource struct {
 	cands []ingest.PhotoCandidate
 	err   error
@@ -58,6 +61,8 @@ func (f *fakeDownloader) Fetch(_ context.Context, url string, _ ingest.DownloadK
 	return b, "image/jpeg", nil
 }
 
+// fakeImages "converte" sem ffmpeg: devolve variantes fixas ("t", "m",
+// "l", 1600×1000) ou o erro configurado.
 type fakeImages struct{ err error }
 
 func (f fakeImages) Process(_ context.Context, orig []byte) (ingest.PhotoVariants, error) {
@@ -77,16 +82,20 @@ func (f fakeAudio) ToAAC(_ context.Context, orig []byte, _ time.Duration) ([]byt
 	return []byte("aac:" + string(orig)), nil
 }
 
+// fakeStore é um object storage em memória; guarda o que foi gravado e a lista
+// do que foi apagado.
 type fakeStore struct {
 	objects map[string]string // key -> contentType
 	data    map[string][]byte
 	deleted []string
 }
 
+// newFakeStore cria o storage vazio.
 func newFakeStore() *fakeStore {
 	return &fakeStore{objects: map[string]string{}, data: map[string][]byte{}}
 }
 
+// List, Delete e Put imitam o storage real sobre o mapa.
 func (f *fakeStore) List(_ context.Context, prefix string) ([]string, error) {
 	var keys []string
 	for k := range f.objects {
@@ -112,6 +121,7 @@ func (f *fakeStore) Put(_ context.Context, key, ct string, data []byte) error {
 	return nil
 }
 
+// fakeRepo guarda o último valor gravado de cada tipo.
 type fakeRepo struct {
 	photos       []domain.Photo
 	audio        *domain.Audio
@@ -122,6 +132,8 @@ type fakeRepo struct {
 	replaceErr   error
 }
 
+// Os três Replace* contam a chamada e guardam o valor recebido. ReplacePhotos
+// e ReplaceAudio devolvem replaceErr, se configurado; ReplaceClusters nunca falha.
 func (f *fakeRepo) ReplacePhotos(_ context.Context, _ string, p []domain.Photo) error {
 	f.photoCalls++
 	if f.replaceErr != nil {
@@ -146,6 +158,7 @@ func (f *fakeRepo) ReplaceClusters(_ context.Context, _ string, c []domain.Occur
 	return nil
 }
 
+// failCall registra uma chamada a Fail da fila falsa.
 type failCall struct {
 	id      int64
 	cause   string
@@ -153,6 +166,9 @@ type failCall struct {
 	giveUp  bool
 }
 
+// fakeQueue é a fila falsa: ClaimDue devolve os jobs configurados (até o
+// limite), e Complete, Fail e Release só registram o que receberam e com que
+// contexto, para o teste conferir.
 type fakeQueue struct {
 	jobs      []ingest.Job
 	completed []int64

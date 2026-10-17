@@ -1,6 +1,10 @@
 // Package domain contém as regras de negócio puras do catálogo de aves.
 // Nada aqui conhece banco de dados, gRPC ou HTTP — só Go puro.
 // Por isso dá para testar tudo sem subir nenhum container.
+//
+// Este arquivo tem os tipos de uma espécie e as regras de validação e de
+// normalização de texto. Os outros arquivos do pacote cuidam de licenças,
+// agrupamento de avistamentos, backoff da fila e erros.
 package domain
 
 import (
@@ -18,6 +22,8 @@ import (
 type Biome string
 
 const (
+	// Os seis biomas. O texto de cada um é o código usado no banco, no YAML
+	// curado e no contrato com o BFF.
 	BiomeAmazonia      Biome = "amazonia"
 	BiomeMataAtlantica Biome = "mata_atlantica"
 	BiomeCerrado       Biome = "cerrado"
@@ -26,6 +32,7 @@ const (
 	BiomePampa         Biome = "pampa"
 )
 
+// allBiomes é a lista na ordem de exibição.
 var allBiomes = []Biome{BiomeAmazonia, BiomeMataAtlantica, BiomeCerrado, BiomeCaatinga, BiomePantanal, BiomePampa}
 
 // AllBiomes devolve uma CÓPIA da lista (quem chamar não consegue alterar a original).
@@ -182,7 +189,7 @@ type SpeciesSummary struct {
 	// paginação precisa encodar exatamente o valor com o qual o SQL comparou
 	// (ORDER BY sort_name, id) — se a aplicação recalculasse a partir de
 	// CommonNamePt e o valor gravado tivesse ficado diferente por qualquer
-	// motivo, a página 2 repetiria ou pularia itens (Review Focus #2).
+	// motivo, a página 2 repetiria ou pularia itens.
 	SortName string
 }
 
@@ -209,6 +216,9 @@ type Species struct {
 
 // Validate verifica as regras que toda espécie precisa cumprir antes
 // de ser gravada. Devolve o PRIMEIRO problema encontrado.
+// O nome científico tem sempre duas palavras (gênero e espécie, a
+// "nomenclatura binomial"), e o id é derivado dele, então os dois precisam
+// bater. strings.Fields separa por qualquer espaço em branco.
 func (s Species) Validate() error {
 	if len(strings.Fields(s.ScientificName)) != 2 {
 		return invalid("scientific_name", "deve ter gênero e espécie, ex.: \"Turdus rufiventris\"")

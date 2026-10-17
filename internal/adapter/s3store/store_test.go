@@ -1,3 +1,5 @@
+// Teste de integração do storage com um SeaweedFS de verdade, num container.
+
 package s3store_test
 
 import (
@@ -10,6 +12,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/adapter/s3store"
 )
 
+// O que é gravado é lido igual, e o bucket é criado se não existir.
 func TestStore_PutAndGet(t *testing.T) {
 	if testing.Short() {
 		t.Skip("integração")

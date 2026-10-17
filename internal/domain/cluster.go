@@ -1,3 +1,5 @@
+// Agrupamento dos avistamentos em células de uma grade, para o mapa.
+
 package domain
 
 import (
@@ -14,6 +16,9 @@ type Point struct {
 // UM ponto (a média das coordenadas) com a contagem. Assim o app desenha
 // dezenas de círculos em vez de milhares de marcadores.
 func ClusterPoints(points []Point, cellDeg float64) []OccurrenceCluster {
+	// acc acumula, por célula, a soma das coordenadas e a quantidade de pontos.
+	// A chave do mapa é um array de dois inteiros [linha, coluna] da grade;
+	// arrays (ao contrário de slices) podem ser chave de map em Go.
 	type acc struct {
 		sumLat, sumLng float64
 		n              int

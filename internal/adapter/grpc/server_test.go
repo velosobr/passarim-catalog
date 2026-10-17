@@ -1,3 +1,6 @@
+// Testes do servidor gRPC com casos de uso falsos e um cliente gRPC real,
+// numa conexão em memória.
+
 package grpcadapter_test
 
 import (
@@ -22,6 +25,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase"
 )
 
+// Os três casos de uso falsos guardam a entrada e devolvem o configurado.
 type fakeList struct {
 	in  usecase.ListSpeciesInput
 	out usecase.ListSpeciesOutput
@@ -62,8 +66,10 @@ func dial(t *testing.T, srv catalogv1.CatalogServiceServer) catalogv1.CatalogSer
 	return catalogv1.NewCatalogServiceClient(conn)
 }
 
+// quiet é um logger que descarta tudo.
 var quiet = slog.New(slog.NewTextHandler(io.Discard, nil))
 
+// Os campos do pedido chegam ao caso de uso, e a resposta volta ao proto.
 func TestListSpecies_MapsRequestAndResponse(t *testing.T) {
 	list := &fakeList{out: usecase.ListSpeciesOutput{
 		Species:       []domain.SpeciesSummary{{ID: "a", CommonNamePt: "Ave", ScientificName: "A a", ThumbnailKey: "k", ConservationStatus: domain.StatusVU}},
@@ -84,6 +90,7 @@ func TestListSpecies_MapsRequestAndResponse(t *testing.T) {
 	}
 }
 
+// Um número de bioma que não existe no enum vira INVALID_ARGUMENT.
 func TestListSpecies_UnknownBiomeEnumIsInvalidArgument(t *testing.T) {
 	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{}, fakeFilters{}, quiet))
 	_, err := c.ListSpecies(context.Background(), &catalogv1.ListSpeciesRequest{Biome: catalogv1.Biome(99)})
@@ -92,6 +99,8 @@ func TestListSpecies_UnknownBiomeEnumIsInvalidArgument(t *testing.T) {
 	}
 }
 
+// Cada erro do domínio vira o código gRPC certo, e um erro inesperado vira
+// INTERNAL sem vazar a mensagem original.
 func TestErrorsMapToGRPCCodes(t *testing.T) {
 	cases := []struct {
 		err  error
@@ -113,7 +122,7 @@ func TestErrorsMapToGRPCCodes(t *testing.T) {
 	}
 }
 
-// Review Focus #3 da revisão final: ctx cancelado/expirado (ex.: timeout
+// Ctx cancelado/expirado (ex.: timeout
 // de 2s do BFF) não pode virar INTERNAL — isso polui as métricas de erro.
 // DeadlineExceeded e Canceled têm códigos gRPC próprios.
 func TestErrorsMapToGRPCCodes_ContextCancellationAndDeadline(t *testing.T) {
@@ -140,6 +149,7 @@ func TestErrorsMapToGRPCCodes_ContextCancellationAndDeadline(t *testing.T) {
 // para provar que cancelamento/deadline NÃO são logados como ERROR.
 type levelCapture struct{ levels []slog.Level }
 
+// Os quatro métodos abaixo são a interface slog.Handler.
 func (c *levelCapture) Enabled(context.Context, slog.Level) bool { return true }
 func (c *levelCapture) Handle(_ context.Context, r slog.Record) error {
 	c.levels = append(c.levels, r.Level)
@@ -148,6 +158,8 @@ func (c *levelCapture) Handle(_ context.Context, r slog.Record) error {
 func (c *levelCapture) WithAttrs([]slog.Attr) slog.Handler { return c }
 func (c *levelCapture) WithGroup(string) slog.Handler      { return c }
 
+// Cancelamento e prazo esgotado são logados abaixo de ERROR, para não
+// disparar alertas de erro.
 func TestErrorsMapToGRPCCodes_ContextCancellationLogsBelowError(t *testing.T) {
 	cap := &levelCapture{}
 	log := slog.New(cap)
@@ -158,6 +170,7 @@ func TestErrorsMapToGRPCCodes_ContextCancellationLogsBelowError(t *testing.T) {
 	}
 }
 
+// Campos opcionais e listas da espécie chegam ao proto.
 func TestGetSpecies_MapsOptionalsAndLists(t *testing.T) {
 	size := 25
 	s := domain.Species{
@@ -181,6 +194,7 @@ func TestGetSpecies_MapsOptionalsAndLists(t *testing.T) {
 	}
 }
 
+// Os filtros chegam ao proto com as contagens.
 func TestListFilters(t *testing.T) {
 	f := usecase.Filters{Biomes: []usecase.BiomeCount{{Biome: domain.BiomePampa, Count: 2}}, States: []usecase.StateCount{{State: "RS", Count: 2}}}
 	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{}, fakeFilters{f: f}, quiet))

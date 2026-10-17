@@ -5,8 +5,12 @@
 -- pg_trgm: índices de "trigramas" deixam buscas com LIKE '%texto%' rápidas.
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
+-- Um ENUM é um tipo com uma lista fechada de valores: o banco recusa
+-- qualquer bioma fora da lista, mesmo que o código erre.
 CREATE TYPE biome AS ENUM ('amazonia', 'mata_atlantica', 'cerrado', 'caatinga', 'pantanal', 'pampa');
 
+-- A espécie, com os campos curados. "ON DELETE CASCADE" nas tabelas abaixo
+-- faz apagar uma espécie apagar junto tudo o que é dela.
 CREATE TABLE species (
     id                     text PRIMARY KEY,           -- ex.: turdus-rufiventris
     scientific_name        text NOT NULL UNIQUE,
@@ -22,7 +26,8 @@ CREATE TABLE species (
     description_source     text NOT NULL DEFAULT '',
     description_source_url text NOT NULL DEFAULT '',
     is_curated             boolean NOT NULL DEFAULT false,
-    -- Colunas calculadas pela aplicação (domain.NormalizeForSearch):
+    -- Colunas calculadas pela aplicação: sort_name com domain.NormalizeForSearch,
+    -- search_text com domain.NormalizeSearchText.
     sort_name              text NOT NULL,  -- nome popular sem acento: ordena a lista
     search_text            text NOT NULL,  -- nomes popular + científico sem acento: busca
     created_at             timestamptz NOT NULL DEFAULT now(),
@@ -34,6 +39,7 @@ CREATE INDEX species_sort_idx ON species (sort_name, id);
 -- Índice de trigramas para a busca por trecho do nome.
 CREATE INDEX species_search_idx ON species USING gin (search_text gin_trgm_ops);
 
+-- Curiosidades, cada uma com a fonte.
 CREATE TABLE species_fact (
     id         bigserial PRIMARY KEY,
     species_id text NOT NULL REFERENCES species (id) ON DELETE CASCADE,
@@ -42,6 +48,8 @@ CREATE TABLE species_fact (
     source     text NOT NULL
 );
 
+-- Biomas da espécie. A chave composta impede o mesmo bioma duas vezes, e o
+-- índice por bioma acelera o filtro.
 CREATE TABLE species_biome (
     species_id text NOT NULL REFERENCES species (id) ON DELETE CASCADE,
     biome      biome NOT NULL,
@@ -49,6 +57,8 @@ CREATE TABLE species_biome (
 );
 CREATE INDEX species_biome_biome_idx ON species_biome (biome);
 
+-- UFs da espécie, sempre duas letras maiúsculas (o CHECK com expressão
+-- regular garante).
 CREATE TABLE species_state (
     species_id text NOT NULL REFERENCES species (id) ON DELETE CASCADE,
     uf         char(2) NOT NULL CHECK (uf ~ '^[A-Z]{2}$'),
@@ -56,7 +66,7 @@ CREATE TABLE species_state (
 );
 CREATE INDEX species_state_uf_idx ON species_state (uf);
 
--- Fotos e cantos: preenchidos pelo worker (Etapa 2b).
+-- Fotos e cantos: preenchidos pelo worker.
 CREATE TABLE media (
     id          bigserial PRIMARY KEY,
     species_id  text NOT NULL REFERENCES species (id) ON DELETE CASCADE,
@@ -77,7 +87,7 @@ CREATE TABLE media (
 );
 CREATE INDEX media_species_idx ON media (species_id, kind, position);
 
--- Avistamentos agrupados para o mapa: preenchidos pelo worker (Etapa 2b).
+-- Avistamentos agrupados para o mapa: preenchidos pelo worker.
 CREATE TABLE occurrence_cluster (
     species_id text NOT NULL REFERENCES species (id) ON DELETE CASCADE,
     lat        double precision NOT NULL,

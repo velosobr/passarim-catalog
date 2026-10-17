@@ -1,3 +1,6 @@
+// Repositório de espécies: implementa usecase.SpeciesRepository com as
+// consultas geradas pelo sqlc, e o UpsertCurated usado pelo seed.
+
 package postgres
 
 import (
@@ -39,6 +42,7 @@ type Repository struct {
 // Garante, em tempo de compilação, que Repository cumpre a interface.
 var _ usecase.SpeciesRepository = (*Repository)(nil)
 
+// NewRepository cria o repositório sobre o pool de conexões.
 func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool, q: sqlcgen.New(pool)}
 }
@@ -50,8 +54,13 @@ func escapeLike(s string) string {
 	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(s)
 }
 
+// text converte uma string no tipo de texto anulável do pgx: "" vira NULL,
+// que é como o SQL entende "filtro ausente".
 func text(s string) pgtype.Text { return pgtype.Text{String: s, Valid: s != ""} }
 
+// ListSpecies traduz o filtro em parâmetros do SQL. A busca passa pelo
+// escapeLike; o cursor vira o par (sort_name, id) depois do qual a página
+// começa.
 func (r *Repository) ListSpecies(ctx context.Context, f usecase.ListFilter) ([]domain.SpeciesSummary, error) {
 	params := sqlcgen.ListSpeciesParams{
 		Query: text(escapeLike(f.Query)),
@@ -81,6 +90,8 @@ func (r *Repository) ListSpecies(ctx context.Context, f usecase.ListFilter) ([]d
 	return out, nil
 }
 
+// GetSpecies lê a espécie e depois cada lista ligada a ela, uma consulta por
+// tabela. pgx.ErrNoRows (nenhuma linha) vira domain.ErrNotFound.
 func (r *Repository) GetSpecies(ctx context.Context, id string) (domain.Species, error) {
 	row, err := r.q.GetSpecies(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -147,6 +158,7 @@ func (r *Repository) GetSpecies(ctx context.Context, id string) (domain.Species,
 	return s, nil
 }
 
+// CountByBiome e CountByState devolvem as contagens como mapas.
 func (r *Repository) CountByBiome(ctx context.Context) (map[domain.Biome]int, error) {
 	rows, err := r.q.CountByBiome(ctx)
 	if err != nil {
@@ -183,6 +195,8 @@ func (r *Repository) UpsertCurated(ctx context.Context, s domain.Species) error 
 		return err
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // após Commit, Rollback não faz nada
+	// WithTx faz as consultas geradas rodarem dentro da transação. O defer do
+	// Rollback desfaz tudo se a função sair antes do Commit.
 	q := r.q.WithTx(tx)
 
 	params := sqlcgen.UpsertSpeciesParams{

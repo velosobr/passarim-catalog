@@ -1,3 +1,5 @@
+// Testes do agrupamento de avistamentos.
+
 package domain_test
 
 import (
@@ -6,6 +8,8 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/domain"
 )
 
+// Pontos na mesma célula viram um só, na média das coordenadas e com a
+// contagem; a saída vem do maior grupo para o menor.
 func TestClusterPoints(t *testing.T) {
 	pts := []domain.Point{
 		{Lat: -23.5, Lng: -46.6}, {Lat: -23.7, Lng: -46.2}, {Lat: -23.1, Lng: -46.9}, // mesma célula (SP)
@@ -28,12 +32,15 @@ func TestClusterPoints(t *testing.T) {
 	}
 }
 
+// Sem pontos, sem grupos (e sem erro).
 func TestClusterPoints_Empty(t *testing.T) {
 	if got := domain.ClusterPoints(nil, 1.0); len(got) != 0 {
 		t.Fatalf("sem pontos deveria dar lista vazia, veio %v", got)
 	}
 }
 
+// Coordenadas negativas (quase todo o Brasil fica abaixo do equador, e todo
+// ele a oeste de Greenwich) caem na célula certa graças ao math.Floor.
 func TestClusterPoints_NegativeCoordinatesUseFloor(t *testing.T) {
 	// -0.5 e +0.5 estão em células DIFERENTES (floor(-0.5) = -1, floor(0.5) = 0).
 	got := domain.ClusterPoints([]domain.Point{{Lat: -0.5, Lng: 0}, {Lat: 0.5, Lng: 0}}, 1.0)

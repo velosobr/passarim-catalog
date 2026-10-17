@@ -1,3 +1,5 @@
+// Conversões entre os tipos do domínio e as mensagens do proto.
+
 package grpcadapter
 
 import (
@@ -9,9 +11,10 @@ import (
 )
 
 // toInt32 converte um int para int32 saturando nos limites do int32 em vez
-// de dar overflow silencioso (gosec G115). Os valores convertidos aqui vêm
-// de conteúdo curado (tamanho em cm, dimensões de foto, duração de áudio,
-// contagem de ocorrências), então a saturação nunca deve ocorrer na prática.
+// de dar overflow silencioso (gosec G115). Os valores convertidos aqui são
+// pequenos: tamanho em cm (curado e validado), dimensões de foto, duração de
+// áudio e contagens (gravados pelo worker), então a saturação nunca deve
+// ocorrer na prática.
 func toInt32(v int) int32 {
 	if v > math.MaxInt32 {
 		return math.MaxInt32
@@ -29,6 +32,8 @@ var biomeToProto = map[domain.Biome]catalogv1.Biome{
 	domain.BiomePantanal: catalogv1.Biome_BIOME_PANTANAL, domain.BiomePampa: catalogv1.Biome_BIOME_PAMPA,
 }
 
+// statusToProto traduz o código IUCN no enum do proto. Um status vazio
+// (desconhecido) não está no mapa e vira o valor zero, UNSPECIFIED.
 var statusToProto = map[domain.ConservationStatus]catalogv1.ConservationStatus{
 	domain.StatusLC: catalogv1.ConservationStatus_CONSERVATION_STATUS_LC, domain.StatusNT: catalogv1.ConservationStatus_CONSERVATION_STATUS_NT,
 	domain.StatusVU: catalogv1.ConservationStatus_CONSERVATION_STATUS_VU, domain.StatusEN: catalogv1.ConservationStatus_CONSERVATION_STATUS_EN,
@@ -49,6 +54,9 @@ func biomeFromProto(b catalogv1.Biome) (string, bool) {
 	return "", false
 }
 
+// creditToProto, summaryToProto e speciesToProto montam as mensagens de
+// resposta. Os campos "optional" do proto são ponteiros, por isso SizeCm é
+// convertido para um ponteiro novo de int32.
 func creditToProto(c domain.Credit) *catalogv1.Credit {
 	return &catalogv1.Credit{Author: c.Author, License: c.License, Source: c.Source, SourceUrl: c.SourceURL}
 }

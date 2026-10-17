@@ -15,6 +15,8 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// Config é o acesso ao storage: endereço, chaves, bucket (a "pasta" raiz dos
+// arquivos) e se a conexão usa TLS.
 type Config struct {
 	Endpoint  string // host:porta, sem "http://"
 	AccessKey string
@@ -23,13 +25,16 @@ type Config struct {
 	UseSSL    bool
 }
 
+// Store é o cliente do storage já apontado para o bucket.
 type Store struct {
 	client *minio.Client
 	bucket string
 }
 
+// Conferência em tempo de compilação: Store implementa ingest.MediaStore.
 var _ ingest.MediaStore = (*Store)(nil)
 
+// New conecta e garante que o bucket existe, criando-o na primeira vez.
 func New(ctx context.Context, cfg Config) (*Store, error) {
 	client, err := minio.New(cfg.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
@@ -71,6 +76,9 @@ func (s *Store) List(ctx context.Context, prefix string) ([]string, error) {
 }
 
 // Delete apaga várias chaves de uma vez. Chave que não existe não é erro.
+// O minio-go recebe as chaves por um canal e devolve os erros por outro; o
+// canal de entrada é preenchido e fechado antes, para a remoção saber onde
+// acabar. Guardamos só o primeiro erro.
 func (s *Store) Delete(ctx context.Context, keys []string) error {
 	in := make(chan minio.ObjectInfo, len(keys))
 	for _, k := range keys {
@@ -86,6 +94,7 @@ func (s *Store) Delete(ctx context.Context, keys []string) error {
 	return first
 }
 
+// Get lê um arquivo inteiro. Os testes usam para conferir o que foi gravado.
 func (s *Store) Get(ctx context.Context, key string) ([]byte, error) {
 	obj, err := s.client.GetObject(ctx, s.bucket, key, minio.GetObjectOptions{})
 	if err != nil {

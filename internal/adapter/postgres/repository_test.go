@@ -1,3 +1,7 @@
+// Testes de integração do repositório de espécies contra um PostgreSQL de
+// verdade, num container. Eles provam que o SQL escrito à mão funciona:
+// busca, filtros, paginação, gravação do seed e restrições do banco.
+
 package postgres_test
 
 import (
@@ -45,6 +49,7 @@ func newRepo(t *testing.T) (*postgres.Repository, *pgxpool.Pool) {
 	return postgres.NewRepository(pool), pool
 }
 
+// sp cria uma espécie válida para o teste com nome, biomas e UFs.
 func sp(sci, common string, biomes []domain.Biome, states ...string) domain.Species {
 	size := 20
 	return domain.Species{
@@ -55,6 +60,7 @@ func sp(sci, common string, biomes []domain.Biome, states ...string) domain.Spec
 	}
 }
 
+// seed grava as espécies pelo mesmo caminho do binário seed.
 func seed(t *testing.T, repo *postgres.Repository, all ...domain.Species) {
 	t.Helper()
 	for _, s := range all {
@@ -64,6 +70,7 @@ func seed(t *testing.T, repo *postgres.Repository, all ...domain.Species) {
 	}
 }
 
+// ids extrai os ids de uma lista, para comparar com o esperado.
 func ids(list []domain.SpeciesSummary) []string {
 	out := make([]string, len(list))
 	for i, s := range list {
@@ -72,6 +79,8 @@ func ids(list []domain.SpeciesSummary) []string {
 	return out
 }
 
+// TestRepository grava um conjunto pequeno de aves e roda vários subtestes
+// sobre o mesmo banco, para não subir um container por caso.
 func TestRepository(t *testing.T) {
 	repo, pool := newRepo(t)
 	ctx := context.Background()
@@ -94,7 +103,7 @@ func TestRepository(t *testing.T) {
 		}
 	})
 
-	// Review Focus #1
+	// A busca ignora acentos e maiúsculas e acha também pelo nome científico.
 	t.Run("TestListSpecies_SearchIgnoresAccentsAndCase", func(t *testing.T) {
 		for _, q := range []string{"sabia", domain.NormalizeForSearch("SABIÁ"), "rufiventris"} {
 			got, _ := repo.ListSpecies(ctx, usecase.ListFilter{Query: q, Limit: 10})
@@ -104,9 +113,9 @@ func TestRepository(t *testing.T) {
 		}
 	})
 
-	// Review Focus #2
+	// "%" e "_" digitados na busca valem como texto, e não como curingas.
 	t.Run("TestListSpecies_WildcardsAreLiteral", func(t *testing.T) {
-		// Desde o Review Focus #1, search_text é normalizado com
+		// O search_text é normalizado com
 		// domain.NormalizeSearchText, que troca pontuação (incluindo '%' e
 		// '_') por espaço ao GRAVAR. Logo nenhum search_text contém esses
 		// caracteres literalmente — mas escapeLike continua garantindo que,
@@ -124,7 +133,7 @@ func TestRepository(t *testing.T) {
 		}
 	})
 
-	// Review Focus #1 da revisão final: hífen e espaço duplo não podem
+	// Hífen e espaço duplo não podem
 	// impedir a busca por "bem te vi" ou "joao de barro".
 	t.Run("TestListSpecies_SearchIgnoresHyphensAndRepeatedSpaces", func(t *testing.T) {
 		for _, q := range []string{"bem te vi", "bem-te-vi", "bem  te  vi"} {
@@ -192,7 +201,7 @@ func TestRepository(t *testing.T) {
 		}
 	})
 
-	// Review Focus #3
+	// O seed regrava os campos curados sem apagar as fotos e o canto do worker.
 	t.Run("TestUpsertCurated_PreservesWorkerData", func(t *testing.T) {
 		_, err := pool.Exec(ctx, `INSERT INTO media (species_id, kind, position, audio_key, duration_ms, author, license, source, source_url)
 			VALUES ('turdus-rufiventris', 'audio', 0, 'a.m4a', 12000, 'Autor', 'CC-BY-NC', 'xeno-canto', 'https://xeno-canto.org/1')`)
@@ -217,7 +226,7 @@ func TestRepository(t *testing.T) {
 	})
 }
 
-// Review Focus #2 da revisão final: o cursor de paginação precisa vir do
+// O cursor de paginação precisa vir do
 // sort_name DEVOLVIDO pelo banco, não de um recálculo de
 // domain.NormalizeForSearch(common_name_pt) feito pela aplicação. Esta
 // espécie tem seu sort_name forçado, via SQL direto, para um valor que
@@ -264,7 +273,7 @@ func TestListSpecies_CursorPaginatesUsingStoredSortNameNotRecomputed(t *testing.
 	}
 }
 
-// Review Focus #5 da revisão final (ADR-0013 do passarim-docs):
+// ADR-0013 do passarim-docs:
 // (species_id, kind, position) é a chave natural de "media" — a migration
 // 0002 adiciona um índice ÚNICO para que o banco recuse uma segunda linha
 // na mesma posição em vez de aceitar uma segunda linha silenciosamente.
@@ -288,6 +297,7 @@ func TestMedia_DuplicatePositionIsRejected(t *testing.T) {
 	}
 }
 
+// equal compara duas listas de texto.
 func equal(a, b []string) bool {
 	if len(a) != len(b) {
 		return false

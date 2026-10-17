@@ -1,3 +1,5 @@
+// Caso de uso da tela de detalhe.
+
 package usecase
 
 import (
@@ -12,12 +14,14 @@ type GetSpecies struct {
 	Repo SpeciesRepository
 }
 
+// Execute devolve a espécie pelo id, ou domain.ErrNotFound. Um id vazio
+// (mesmo só com espaços) é recusado antes de ir ao banco.
 func (u GetSpecies) Execute(ctx context.Context, id string) (domain.Species, error) {
 	id = strings.TrimSpace(id)
 	if id == "" {
 		return domain.Species{}, &domain.InvalidArgumentError{Field: "id", Reason: "obrigatório"}
 	}
-	// Não "embrulhamos" o erro aqui de propósito: quem chama precisa
-	// reconhecer domain.ErrNotFound com errors.Is (e reconhece mesmo assim).
+	// Devolvemos o erro do repositório sem embrulhar: não há contexto útil a
+	// acrescentar, e quem chama reconhece domain.ErrNotFound com errors.Is.
 	return u.Repo.GetSpecies(ctx, id)
 }

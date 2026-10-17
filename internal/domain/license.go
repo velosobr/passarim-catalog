@@ -1,3 +1,10 @@
+// Licenças Creative Commons: quais as fontes usam e quais o Passarim aceita.
+//
+// Creative Commons (CC) é uma família de licenças que deixa usar uma obra
+// com condições: BY = dar crédito ao autor; SA = compartilhar derivados com
+// a mesma licença; NC = só uso não comercial; ND = sem obras derivadas. CC0
+// é domínio público.
+
 package domain
 
 import (
@@ -8,6 +15,7 @@ import (
 // License é uma licença Creative Commons ACEITA pelo Passarim (ADR-0007).
 type License string
 
+// As cinco licenças aceitas, já no formato que o app mostra.
 const (
 	LicenseCC0      License = "CC0"
 	LicenseCCBY     License = "CC-BY"
@@ -56,6 +64,8 @@ type LicensePolicy struct {
 	AllowNC bool
 }
 
+// Accepts diz se a licença pode ser usada com esta política: CC0, BY e
+// BY-SA sempre; as NC só com AllowNC.
 func (p LicensePolicy) Accepts(l License) bool {
 	switch l {
 	case LicenseCC0, LicenseCCBY, LicenseCCBYSA:

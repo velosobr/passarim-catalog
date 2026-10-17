@@ -29,9 +29,11 @@ type ClaimDueJobsRow struct {
 	Attempts       int32
 }
 
-// FOR UPDATE SKIP LOCKED: se outro worker já travou uma linha nesta
-// transação, pulamos ela em vez de esperar. É o padrão clássico de
-// "fila no PostgreSQL" sem dois workers pegarem o mesmo job.
+// FOR UPDATE trava as linhas escolhidas até o fim da transação; SKIP LOCKED
+// faz esta consulta pular as que outro worker já travou, em vez de esperar.
+// É o padrão clássico de "fila no PostgreSQL": dois workers nunca pegam o
+// mesmo job. Os mais atrasados (menor next_run_at) saem primeiro, e o JOIN
+// com species traz o nome científico que a fonte usa na busca.
 func (q *Queries) ClaimDueJobs(ctx context.Context, lim int32) ([]ClaimDueJobsRow, error) {
 	rows, err := q.db.Query(ctx, claimDueJobs, lim)
 	if err != nil {
@@ -62,6 +64,7 @@ const completeJob = `-- name: CompleteJob :exec
 UPDATE ingestion_job SET status = 'done', last_error = '', updated_at = now() WHERE id = $1
 `
 
+// Marca o job como concluído e limpa o último erro.
 func (q *Queries) CompleteJob(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, completeJob, id)
 	return err
@@ -71,6 +74,7 @@ const countPendingJobs = `-- name: CountPendingJobs :one
 SELECT count(*)::int FROM ingestion_job WHERE status = 'pending'
 `
 
+// Quantos jobs estão esperando a vez.
 func (q *Queries) CountPendingJobs(ctx context.Context) (int32, error) {
 	row := q.db.QueryRow(ctx, countPendingJobs)
 	var column_1 int32
@@ -82,6 +86,7 @@ const deleteClusters = `-- name: DeleteClusters :exec
 DELETE FROM occurrence_cluster WHERE species_id = $1
 `
 
+// Apaga os grupos de avistamentos da espécie.
 func (q *Queries) DeleteClusters(ctx context.Context, speciesID string) error {
 	_, err := q.db.Exec(ctx, deleteClusters, speciesID)
 	return err
@@ -96,6 +101,7 @@ type DeleteMediaByKindParams struct {
 	Kind      string
 }
 
+// Apaga as fotos (ou o canto) da espécie, antes de gravar as novas.
 func (q *Queries) DeleteMediaByKind(ctx context.Context, arg DeleteMediaByKindParams) error {
 	_, err := q.db.Exec(ctx, deleteMediaByKind, arg.SpeciesID, arg.Kind)
 	return err
@@ -107,8 +113,9 @@ SELECT s.id, src FROM species s CROSS JOIN unnest($1::text[]) AS src
 ON CONFLICT (species_id, source) DO NOTHING
 `
 
-// Cria (espécie × fonte) que ainda não existe. ON CONFLICT DO NOTHING
-// torna a operação idempotente.
+// Cria um job para cada par (espécie, fonte) que ainda não existe: CROSS JOIN
+// unnest(lista) combina cada espécie com cada fonte da lista. ON CONFLICT DO
+// NOTHING pula os pares que já têm job, o que torna a operação idempotente.
 func (q *Queries) EnqueueMissingJobs(ctx context.Context, sources []string) error {
 	_, err := q.db.Exec(ctx, enqueueMissingJobs, sources)
 	return err
@@ -131,6 +138,8 @@ type FailJobParams struct {
 	ID          int64
 }
 
+// Registra a falha: com give_up, o job vira 'failed'; senão volta para
+// 'pending' com a próxima tentativa daqui a retry_in_secs segundos.
 func (q *Queries) FailJob(ctx context.Context, arg FailJobParams) error {
 	_, err := q.db.Exec(ctx, failJob,
 		arg.GiveUp,
@@ -153,6 +162,7 @@ type InsertClusterParams struct {
 	Precision float64
 }
 
+// Grava um grupo de avistamentos.
 func (q *Queries) InsertCluster(ctx context.Context, arg InsertClusterParams) error {
 	_, err := q.db.Exec(ctx, insertCluster,
 		arg.SpeciesID,
@@ -187,6 +197,7 @@ type InsertMediaParams struct {
 	SourceUrl  string
 }
 
+// Grava uma foto ou um canto, com o crédito.
 func (q *Queries) InsertMedia(ctx context.Context, arg InsertMediaParams) error {
 	_, err := q.db.Exec(ctx, insertMedia,
 		arg.SpeciesID,
@@ -211,6 +222,7 @@ const releaseJob = `-- name: ReleaseJob :exec
 UPDATE ingestion_job SET status = 'pending', updated_at = now() WHERE id = $1 AND status = 'running'
 `
 
+// Devolve à fila um job pego que não chegou a rodar, sem contar tentativa.
 func (q *Queries) ReleaseJob(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, releaseJob, id)
 	return err

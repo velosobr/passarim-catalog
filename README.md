@@ -3,6 +3,20 @@
 Catalog API do **Passarim**: guarda as aves do Brasil no PostgreSQL e as serve via **gRPC** para o BFF.
 Todo o código é comentado para estudo. Arquitetura geral: [passarim-docs](https://github.com/velosobr/passarim-docs).
 
+## Por onde começar a ler
+
+O código é todo comentado para estudo. Uma ordem que vai da API para o worker:
+
+1. `cmd/catalog-api/main.go`: como a API é montada e desligada.
+2. `internal/domain`: os tipos e as regras puras (espécie, licenças, agrupamento, backoff).
+3. `internal/usecase`: os casos de uso da API e a porta `SpeciesRepository`.
+4. `internal/adapter/grpc`: o servidor gRPC que o BFF chama.
+5. `internal/adapter/postgres`: o repositório, as migrations e o SQL que o sqlc transforma em Go.
+6. `cmd/worker/main.go` e `internal/usecase/ingest`: a fila de jobs e a ingestão de fotos, cantos e avistamentos.
+7. `internal/adapter/sources`, `safehttp`, `media` e `s3store`: as fontes externas, o download seguro, o ffmpeg e o storage.
+8. `cmd/seed` e `internal/adapter/curated`: o conteúdo curado que vai dos YAML para o banco.
+9. Os `*_test.go` de cada pacote mostram o comportamento esperado em exemplos.
+
 ## Arquitetura limpa
 
 ```mermaid

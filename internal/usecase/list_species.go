@@ -1,3 +1,5 @@
+// Caso de uso da lista: busca, filtros e paginação por cursor.
+
 package usecase
 
 import (
@@ -36,6 +38,9 @@ type ListSpecies struct {
 	Repo SpeciesRepository
 }
 
+// Execute valida a entrada, busca uma página no repositório e monta o token
+// da próxima a partir do último item. O token guarda o sort_name gravado no
+// banco, e não um valor recalculado, para casar com o ORDER BY do SQL.
 func (u ListSpecies) Execute(ctx context.Context, in ListSpeciesInput) (ListSpeciesOutput, error) {
 	filter, pageSize, err := buildFilter(in)
 	if err != nil {
@@ -84,6 +89,8 @@ func buildFilter(in ListSpeciesInput) (ListFilter, int, error) {
 		f.State = uf
 	}
 
+	// page_size: negativo é erro, zero vira o padrão (20) e acima de 50 é
+	// reduzido a 50, como diz o contrato do proto.
 	pageSize := in.PageSize
 	switch {
 	case pageSize < 0:

@@ -22,8 +22,10 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// maxJSONBytes é o maior JSON aceito da API (5 MB).
 const maxJSONBytes = 5 << 20
 
+// Client é o cliente da API, com a chave, o User-Agent e o rate limiter.
 type Client struct {
 	baseURL   string
 	apiKey    string
@@ -32,13 +34,17 @@ type Client struct {
 	http      *http.Client
 }
 
+// Conferência em tempo de compilação: Client implementa ingest.AudioSource.
 var _ ingest.AudioSource = (*Client)(nil)
 
+// New cria o cliente; a barra final da URL base é removida.
 func New(baseURL, apiKey, userAgent string, limiter *rate.Limiter) *Client {
 	return &Client{baseURL: strings.TrimRight(baseURL, "/"), apiKey: apiKey, userAgent: userAgent, limiter: limiter,
 		http: &http.Client{Timeout: 20 * time.Second}}
 }
 
+// response é a parte usada da resposta: cada gravação com id, arquivo,
+// licença, autor, página, duração ("m:ss"), qualidade (A a E) e tipo.
 type response struct {
 	Recordings []struct {
 		ID     string `json:"id"`
@@ -52,6 +58,8 @@ type response struct {
 	} `json:"recordings"`
 }
 
+// FindRecordings busca até 50 gravações da espécie no Brasil, com a
+// sintaxe de busca do xeno-canto (sp:"nome" cnt:brazil).
 func (c *Client) FindRecordings(ctx context.Context, scientificName string) ([]ingest.AudioCandidate, error) {
 	if err := c.limiter.Wait(ctx); err != nil {
 		return nil, err

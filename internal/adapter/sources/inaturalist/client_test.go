@@ -1,3 +1,6 @@
+// Testes do cliente do iNaturalist contra um servidor HTTP falso com os
+// JSON de testdata/.
+
 package inaturalist_test
 
 import (
@@ -13,6 +16,8 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/adapter/sources/inaturalist"
 )
 
+// server responde a busca de táxon com o arquivo dado e a de observações
+// com observations.json.
 func server(t *testing.T, taxaFile string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("User-Agent") == "" {
@@ -37,6 +42,8 @@ func server(t *testing.T, taxaFile string) *httptest.Server {
 	}))
 }
 
+// Cada observação vira uma candidata, com a URL da versão grande, a página,
+// a licença e o autor.
 func TestFindPhotos(t *testing.T) {
 	srv := server(t, "testdata/taxa.json")
 	defer srv.Close()
@@ -57,6 +64,7 @@ func TestFindPhotos(t *testing.T) {
 	}
 }
 
+// Táxon que não existe na fonte devolve lista vazia, sem erro.
 func TestFindPhotos_UnknownTaxonIsEmpty(t *testing.T) {
 	srv := server(t, "testdata/taxa-empty.json")
 	defer srv.Close()
@@ -66,6 +74,7 @@ func TestFindPhotos_UnknownTaxonIsEmpty(t *testing.T) {
 	}
 }
 
+// Um status de erro da API vira erro.
 func TestFindPhotos_HTTPErrorIsError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(503) }))
 	defer srv.Close()
@@ -74,7 +83,7 @@ func TestFindPhotos_HTTPErrorIsError(t *testing.T) {
 	}
 }
 
-// Revisão final #4: a busca de táxon é "autocomplete"; o nome precisa bater.
+// A busca de táxon é "autocomplete"; o nome precisa bater.
 func TestFindPhotos_TaxonWithDifferentNameIsEmpty(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/v1/observations" {

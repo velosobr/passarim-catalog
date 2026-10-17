@@ -1,3 +1,5 @@
+// Testes do cliente do xeno-canto contra um servidor HTTP falso.
+
 package xenocanto_test
 
 import (
@@ -13,10 +15,14 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/adapter/sources/xenocanto"
 )
 
+// testKey é uma chave falsa; os testes conferem que ela nunca aparece nos
+// erros.
 const testKey = "segredo-de-teste"
 
+// limiter sem limite de ritmo, para os testes não esperarem.
 func limiter() *rate.Limiter { return rate.NewLimiter(rate.Inf, 1) }
 
+// As gravações viram candidatas, com a duração convertida.
 func TestFindRecordings(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
@@ -47,6 +53,7 @@ func TestFindRecordings(t *testing.T) {
 	}
 }
 
+// Uma licença sem esquema ("//creativecommons.org/...") ganha o "https:".
 func TestFindRecordings_ProtocolRelativeLicense(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`{"recordings":[{"file":"https://xeno-canto.org/1/download","lic":"//creativecommons.org/licenses/by/4.0/","rec":"A","url":"https://xeno-canto.org/1","length":"0:07","q":"A","type":"song"}]}`))
@@ -58,6 +65,7 @@ func TestFindRecordings_ProtocolRelativeLicense(t *testing.T) {
 	}
 }
 
+// Um status de erro não leva a chave da API para a mensagem.
 func TestFindRecordings_ErrorDoesNotLeakKey(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(401) }))
 	defer srv.Close()
@@ -67,6 +75,7 @@ func TestFindRecordings_ErrorDoesNotLeakKey(t *testing.T) {
 	}
 }
 
+// Uma falha de conexão também não leva a chave para a mensagem.
 func TestFindRecordings_ConnectionErrorDoesNotLeakKey(t *testing.T) {
 	srv := httptest.NewServer(http.NotFoundHandler())
 	url := srv.URL

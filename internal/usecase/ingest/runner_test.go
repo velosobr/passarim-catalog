@@ -1,3 +1,5 @@
+// Testes do laço da fila.
+
 package ingest_test
 
 import (
@@ -9,15 +11,18 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// handlerFunc deixa uma função qualquer servir de Handler.
 type handlerFunc func(context.Context, ingest.Job) error
 
 func (f handlerFunc) Run(ctx context.Context, j ingest.Job) error { return f(ctx, j) }
 
+// observed registra o que foi passado ao Observe (a métrica).
 type observed struct {
 	source ingest.Source
 	ok     bool
 }
 
+// O job que dá certo é concluído; o que falha é reagendado com backoff.
 func TestRunner_CompletesSuccessfulAndRetriesFailed(t *testing.T) {
 	q := &fakeQueue{jobs: []ingest.Job{
 		{ID: 1, Source: ingest.SourceINaturalist},
@@ -45,6 +50,7 @@ func TestRunner_CompletesSuccessfulAndRetriesFailed(t *testing.T) {
 	}
 }
 
+// Na última tentativa, o job desiste.
 func TestRunner_GivesUpAfterMaxAttempts(t *testing.T) {
 	q := &fakeQueue{jobs: []ingest.Job{{ID: 1, Source: ingest.SourceGBIF, Attempts: 4}}}
 	r := ingest.Runner{Queue: q, BatchSize: 5, MaxAttempts: 5,
@@ -57,6 +63,7 @@ func TestRunner_GivesUpAfterMaxAttempts(t *testing.T) {
 	}
 }
 
+// Um job de uma fonte sem handler falha de vez, sem derrubar o worker.
 func TestRunner_UnknownSourceFailsJobWithoutPanic(t *testing.T) {
 	q := &fakeQueue{jobs: []ingest.Job{{ID: 1, Source: "desconhecida"}}}
 	r := ingest.Runner{Queue: q, BatchSize: 5, MaxAttempts: 5, Handlers: map[ingest.Source]ingest.Handler{}}
@@ -68,7 +75,7 @@ func TestRunner_UnknownSourceFailsJobWithoutPanic(t *testing.T) {
 	}
 }
 
-// Revisão final #1: se o contexto do lote expira durante um job, Fail precisa
+// Se o contexto do lote expira durante um job, Fail precisa
 // funcionar mesmo assim, e os jobs que nem começaram são devolvidos sem
 // gastar tentativa nem poluir a métrica.
 func TestRunner_ExpiredBatchStillRecordsFailureAndReleasesUnstartedJobs(t *testing.T) {

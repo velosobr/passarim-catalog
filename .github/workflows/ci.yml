@@ -1,3 +1,7 @@
+# CI do catalog: roda a cada push na main e a cada pull request. Os jobs são
+# independentes e rodam em paralelo: testes, lint, segurança e, nas branches
+# de comentários, a verificação "só comentários".
+
 name: ci
 on:
   push:
@@ -5,6 +9,8 @@ on:
   pull_request:
 
 jobs:
+  # Testes, conferência do código gerado pelo sqlc e vulnerabilidades
+  # conhecidas nas dependências.
   test:
     runs-on: ubuntu-latest
     steps:
@@ -23,11 +29,11 @@ jobs:
         env:
           REQUIRE_FFMPEG: "1"
       - name: govulncheck
-        # v1.1.4 (pedida originalmente) dá panic ao analisar código Go 1.27
-        # (golang.org/x/tools antigo não entende sintaxe nova). v1.8.0 é a
-        # versão estável mais recente e funciona.
+        # v1.8.0: versões antigas do govulncheck dão panic ao analisar código Go
+        # 1.27 (o golang.org/x/tools delas não entende a sintaxe nova).
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
 
+  # Lint: o golangci-lint junta vários verificadores (.golangci.yml).
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -39,6 +45,8 @@ jobs:
         with:
           version: v2.14.0
 
+  # Segurança: o gitleaks procura segredos no histórico, e o Trivy procura
+  # vulnerabilidades nas duas imagens Docker.
   security:
     runs-on: ubuntu-latest
     steps:
@@ -51,10 +59,8 @@ jobs:
       - name: build da imagem
         run: docker build -t passarim-catalog:ci .
       # Trivy procura vulnerabilidades na imagem. Falha em HIGH/CRITICAL.
-      # v0.33.1 (versão pedida, corrigindo a tag para o formato real "vX.Y.Z")
-      # falha ao instalar o binário do Trivy no runner (script de instalação
-      # antigo incompatível com os releases atuais do Trivy). v0.36.0 é a
-      # versão estável mais recente e funciona.
+      # v0.36.0: versões antigas da action falham ao instalar o binário do
+      # Trivy no runner.
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: passarim-catalog:ci
@@ -69,3 +75,16 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
           ignore-unfixed: true
+
+  # Nas branches docs/comentarios-*, que só comentam o código, garante que
+  # nenhuma linha de código mudou (scripts/check-comment-only.sh).
+  comentarios:
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'docs/comentarios-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # O histórico inteiro é necessário para comparar com a base do PR.
+          fetch-depth: 0
+      - run: bash scripts/check-comment-only_test.sh
+      - run: bash scripts/check-comment-only.sh origin/${{ github.base_ref }}

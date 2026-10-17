@@ -1,7 +1,10 @@
+// Teste da conversão da duração do xeno-canto.
+
 package xenocanto
 
 import "testing"
 
+// "m:ss" vira milissegundos, e texto inválido vira 0.
 func TestParseLength(t *testing.T) {
 	cases := map[string]int{"1:26": 86000, "0:07": 7000, "lixo": 0, "": 0, "a:b": 0, "-1:00": 0}
 	for in, want := range cases {

@@ -1,3 +1,6 @@
+// Caso de uso do canto (xeno-canto): escolher a melhor gravação aceitável,
+// converter para AAC e trocar o canto da espécie no banco.
+
 package ingest
 
 import (
@@ -21,8 +24,11 @@ type IngestAudio struct {
 	MaxDuration time.Duration
 }
 
+// minGoodDurationMs: gravações com menos de 5 s são preteridas, porque mal
+// dá para ouvir o canto.
 const minGoodDurationMs = 5000
 
+// acceptedAudio é uma gravação que passou na licença e na qualidade.
 type acceptedAudio struct {
 	cand    AudioCandidate
 	license domain.License
@@ -41,6 +47,9 @@ func qualityRank(q string) int {
 	return -1
 }
 
+// Run trata um job de canto: filtra por licença e qualidade, ordena da
+// melhor para a pior e grava a primeira que der certo. sort.SliceStable
+// mantém a ordem original entre empates.
 func (u IngestAudio) Run(ctx context.Context, job Job) error {
 	cands, err := u.Source.FindRecordings(ctx, job.ScientificName)
 	if err != nil {
@@ -95,8 +104,11 @@ func (u IngestAudio) Run(ctx context.Context, job Job) error {
 	return fmt.Errorf("nenhuma gravação processada: %w", lastErr)
 }
 
+// isSong diz se a gravação é um canto ("song"), e não um chamado ("call").
 func isSong(c AudioCandidate) bool { return strings.Contains(strings.ToLower(c.Type), "song") }
 
+// processOne baixa, converte para AAC (cortando em MaxDuration) e grava. A
+// duração gravada é limitada ao corte.
 func (u IngestAudio) processOne(ctx context.Context, job Job, a acceptedAudio) (*domain.Audio, error) {
 	data, _, err := u.Downloader.Fetch(ctx, a.cand.URL, DownloadAudio)
 	if err != nil {

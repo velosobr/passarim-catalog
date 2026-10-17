@@ -1,3 +1,6 @@
+// Repositório da ingestão: a fila de jobs (tabela ingestion_job) e a troca
+// de fotos, cantos e grupos de avistamentos de cada espécie.
+
 package postgres
 
 import (
@@ -19,15 +22,20 @@ type IngestRepository struct {
 	q    *sqlcgen.Queries
 }
 
+// Conferência em tempo de compilação das duas interfaces implementadas.
 var (
 	_ ingest.JobQueue        = (*IngestRepository)(nil)
 	_ ingest.MediaRepository = (*IngestRepository)(nil)
 )
 
+// NewIngestRepository cria o repositório sobre o pool de conexões.
 func NewIngestRepository(pool *pgxpool.Pool) *IngestRepository {
 	return &IngestRepository{pool: pool, q: sqlcgen.New(pool)}
 }
 
+// EnqueueMissing faz a manutenção da fila antes de cada rodada: cria os
+// jobs que faltam, reagenda os antigos, reabre os que falharam há mais de
+// 24 h e devolve os presos. Devolve quantos estão pendentes.
 func (r *IngestRepository) EnqueueMissing(ctx context.Context, sources []ingest.Source, refreshAfter time.Duration) (int, error) {
 	names := make([]string, len(sources))
 	for i, s := range sources {
@@ -49,6 +57,7 @@ func (r *IngestRepository) EnqueueMissing(ctx context.Context, sources []ingest.
 	return int(n), err
 }
 
+// ClaimDue pega até limit jobs vencidos e os marca como "running".
 func (r *IngestRepository) ClaimDue(ctx context.Context, limit int) ([]ingest.Job, error) {
 	rows, err := r.q.ClaimDueJobs(ctx, toInt32(limit))
 	if err != nil {
@@ -62,6 +71,7 @@ func (r *IngestRepository) ClaimDue(ctx context.Context, limit int) ([]ingest.Jo
 	return jobs, nil
 }
 
+// Complete, Release e Fail gravam o resultado de um job.
 func (r *IngestRepository) Complete(ctx context.Context, jobID int64) error {
 	return r.q.CompleteJob(ctx, jobID)
 }
@@ -98,6 +108,7 @@ func (r *IngestRepository) replaceMedia(ctx context.Context, speciesID, kind str
 	return tx.Commit(ctx)
 }
 
+// ReplacePhotos grava as fotos na ordem recebida: a posição 0 é a principal.
 func (r *IngestRepository) ReplacePhotos(ctx context.Context, speciesID string, photos []domain.Photo) error {
 	rows := make([]sqlcgen.InsertMediaParams, len(photos))
 	for i, p := range photos {
@@ -109,6 +120,7 @@ func (r *IngestRepository) ReplacePhotos(ctx context.Context, speciesID string, 
 	return r.replaceMedia(ctx, speciesID, "photo", rows)
 }
 
+// ReplaceAudio grava o canto (ou nenhum, com nil).
 func (r *IngestRepository) ReplaceAudio(ctx context.Context, speciesID string, a *domain.Audio) error {
 	var rows []sqlcgen.InsertMediaParams
 	if a != nil {
@@ -119,6 +131,7 @@ func (r *IngestRepository) ReplaceAudio(ctx context.Context, speciesID string, a
 	return r.replaceMedia(ctx, speciesID, "audio", rows)
 }
 
+// ReplaceClusters troca os grupos de avistamentos numa transação.
 func (r *IngestRepository) ReplaceClusters(ctx context.Context, speciesID string, clusters []domain.OccurrenceCluster) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {

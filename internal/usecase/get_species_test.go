@@ -1,3 +1,5 @@
+// Testes do caso de uso de detalhe.
+
 package usecase_test
 
 import (
@@ -9,6 +11,8 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase"
 )
 
+// Acha uma espécie existente, devolve ErrNotFound para a inexistente e
+// recusa o id vazio.
 func TestGetSpecies(t *testing.T) {
 	uc := usecase.GetSpecies{Repo: &fakeRepo{species: birds(3)}}
 	want := birds(3)[1]

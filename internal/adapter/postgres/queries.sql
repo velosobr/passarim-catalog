@@ -1,6 +1,11 @@
 -- name: ListSpecies :many
 -- Lista resumida com busca, filtros e paginação por cursor.
 -- Cada filtro é opcional: "(parâmetro IS NULL OR condição)".
+-- A miniatura é a thumb da foto de menor position ('' se não houver foto).
+-- ESCAPE '\' declara a barra como escape do LIKE (o Go já escapou % e _).
+-- "(s.sort_name, s.id) > (after_sort, after_id)" compara os pares em ordem
+-- (sort_name e, no empate, id): começa logo depois do último item da página
+-- anterior e usa o índice species_sort_idx.
 SELECT s.id, s.scientific_name, s.common_name_pt, s.conservation_status, s.sort_name,
        COALESCE((SELECT m.thumb_key FROM media m
                  WHERE m.species_id = s.id AND m.kind = 'photo'
@@ -17,27 +22,37 @@ ORDER BY s.sort_name, s.id
 LIMIT sqlc.arg('lim');
 
 -- name: GetSpecies :one
+-- A linha da espécie pelo id. As listas (fatos, biomas, UFs, mídia e
+-- grupos) vêm das consultas abaixo, uma por tabela.
 SELECT * FROM species WHERE id = $1;
 
 -- name: ListFacts :many
+-- As curiosidades da espécie, na ordem de exibição.
 SELECT text, source FROM species_fact WHERE species_id = $1 ORDER BY position;
 
 -- name: ListBiomes :many
+-- Os biomas da espécie.
 SELECT biome FROM species_biome WHERE species_id = $1 ORDER BY biome;
 
 -- name: ListStates :many
+-- As UFs da espécie. O "::text" converte o char(2) da coluna em texto.
 SELECT uf::text FROM species_state WHERE species_id = $1 ORDER BY uf;
 
 -- name: ListMedia :many
+-- Fotos e canto da espécie, em ordem de tipo e de posição (a foto 0 é a
+-- principal).
 SELECT * FROM media WHERE species_id = $1 ORDER BY kind, position;
 
 -- name: ListClusters :many
+-- Os grupos de avistamentos do mapa, do maior para o menor.
 SELECT lat, lng, count, precision FROM occurrence_cluster WHERE species_id = $1 ORDER BY count DESC;
 
 -- name: CountByBiome :many
+-- Quantas espécies há em cada bioma (os filtros do Explorar).
 SELECT biome, count(*)::int AS total FROM species_biome GROUP BY biome;
 
 -- name: CountByState :many
+-- Quantas espécies há em cada UF.
 SELECT uf::text AS uf, count(*)::int AS total FROM species_state GROUP BY uf;
 
 -- name: UpsertSpecies :exec
@@ -57,19 +72,26 @@ ON CONFLICT (id) DO UPDATE SET
     updated_at = now();
 
 -- name: DeleteFacts :exec
+-- Apaga as curiosidades da espécie, antes de gravar as novas. O seed
+-- regrava fatos, biomas e UFs inteiros a cada rodada, numa transação.
 DELETE FROM species_fact WHERE species_id = $1;
 
 -- name: InsertFact :exec
+-- Grava uma curiosidade na posição dada.
 INSERT INTO species_fact (species_id, position, text, source) VALUES ($1, $2, $3, $4);
 
 -- name: DeleteBiomes :exec
+-- Apaga os biomas da espécie.
 DELETE FROM species_biome WHERE species_id = $1;
 
 -- name: InsertBiome :exec
+-- Grava um bioma da espécie.
 INSERT INTO species_biome (species_id, biome) VALUES ($1, $2);
 
 -- name: DeleteStates :exec
+-- Apaga as UFs da espécie.
 DELETE FROM species_state WHERE species_id = $1;
 
 -- name: InsertState :exec
+-- Grava uma UF da espécie.
 INSERT INTO species_state (species_id, uf) VALUES ($1, $2);

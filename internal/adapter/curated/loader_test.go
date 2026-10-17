@@ -1,3 +1,6 @@
+// Testes do carregador de conteúdo curado, com arquivos de exemplo em
+// testdata/.
+
 package curated_test
 
 import (
@@ -8,6 +11,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/domain"
 )
 
+// Uma pasta válida vira as espécies, com o id derivado e os textos limpos.
 func TestLoadDir_Valid(t *testing.T) {
 	species, err := curated.LoadDir("testdata/valid")
 	if err != nil {
@@ -32,7 +36,7 @@ func TestLoadDir_Valid(t *testing.T) {
 	}
 }
 
-// Review Focus #5: campo com erro de digitação não pode passar em silêncio.
+// Campo com erro de digitação não pode passar em silêncio.
 func TestLoadDir_UnknownFieldFails(t *testing.T) {
 	_, err := curated.LoadDir("testdata/typo")
 	if err == nil || !strings.Contains(err.Error(), "bad.yaml") || !strings.Contains(err.Error(), "familly") {
@@ -40,6 +44,8 @@ func TestLoadDir_UnknownFieldFails(t *testing.T) {
 	}
 }
 
+// Um arquivo com dado inválido (bioma inexistente) faz a pasta inteira
+// falhar, citando o arquivo.
 func TestLoadDir_InvalidSpeciesFails(t *testing.T) {
 	_, err := curated.LoadDir("testdata/invalid-biome")
 	if err == nil || !strings.Contains(err.Error(), "bad.yaml") || !strings.Contains(err.Error(), "biomes") {
@@ -47,6 +53,7 @@ func TestLoadDir_InvalidSpeciesFails(t *testing.T) {
 	}
 }
 
+// Uma pasta sem YAML é erro.
 func TestLoadDir_MissingDirFails(t *testing.T) {
 	if _, err := curated.LoadDir("testdata/nao-existe"); err == nil {
 		t.Fatal("pasta inexistente deveria dar erro")

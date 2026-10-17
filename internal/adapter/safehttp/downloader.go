@@ -28,8 +28,13 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// ErrBlocked é o erro de toda recusa por regra de segurança. As mensagens
+// embrulham ele com o motivo, e errors.Is(err, ErrBlocked) separa uma recusa
+// de uma falha de rede comum.
 var ErrBlocked = errors.New("download bloqueado")
 
+// Options são as regras do downloader. Os campos zerados ganham padrões em
+// NewWithTransport: 30 s de prazo, 15 MB para imagem e 40 MB para áudio.
 type Options struct {
 	AllowedHosts    []string
 	AllowPrivateIPs bool // SÓ para testes locais
@@ -40,19 +45,24 @@ type Options struct {
 	Blocked         func(reason string) // chamada a cada bloqueio (métrica)
 }
 
+// Downloader guarda as regras, a allowlist já em minúsculas e o cliente HTTP
+// configurado com as checagens.
 type Downloader struct {
 	opts    Options
 	allowed map[string]bool
 	client  *http.Client
 }
 
+// Conferência em tempo de compilação: Downloader implementa ingest.Downloader.
 var _ ingest.Downloader = (*Downloader)(nil)
 
+// allowedTypes são os Content-Types aceitos por tipo de download.
 var allowedTypes = map[ingest.DownloadKind]map[string]bool{
 	ingest.DownloadImage: {"image/jpeg": true, "image/png": true},
 	ingest.DownloadAudio: {"audio/mpeg": true, "audio/mp3": true, "audio/wav": true, "audio/x-wav": true, "audio/wave": true},
 }
 
+// New cria o downloader com o TLS padrão do sistema.
 func New(opts Options) *Downloader { return NewWithTransport(opts, nil) }
 
 // NewWithTransport permite injetar uma config TLS (usado nos testes para
@@ -71,6 +81,8 @@ func NewWithTransport(opts Options, tlsConfig *tls.Config) *Downloader {
 	for _, h := range opts.AllowedHosts {
 		d.allowed[strings.ToLower(h)] = true
 	}
+	// O Control do Dialer roda depois de o DNS resolver o nome e antes de a
+	// conexão abrir: é ali que o IP real é conferido.
 	dialer := &net.Dialer{Timeout: 10 * time.Second, Control: d.checkIP}
 	d.client = &http.Client{
 		Timeout: opts.Timeout,
@@ -90,6 +102,7 @@ func NewWithTransport(opts Options, tlsConfig *tls.Config) *Downloader {
 	return d
 }
 
+// block avisa a métrica e cria o erro de recusa com o motivo.
 func (d *Downloader) block(reason string) error {
 	if d.opts.Blocked != nil {
 		d.opts.Blocked(reason)
@@ -97,6 +110,7 @@ func (d *Downloader) block(reason string) error {
 	return fmt.Errorf("%w: %s", ErrBlocked, reason)
 }
 
+// checkURL aplica as regras 1 e 2: só HTTPS e só hosts da allowlist.
 func (d *Downloader) checkURL(u *url.URL) error {
 	if u.Scheme != "https" {
 		return d.block("esquema não é https")
@@ -124,6 +138,8 @@ func (d *Downloader) checkIP(_, address string, _ syscall.RawConn) error {
 	return nil
 }
 
+// Fetch baixa uma URL depois de conferir tudo: URL, IP (na conexão), status,
+// Content-Type e tamanho.
 func (d *Downloader) Fetch(ctx context.Context, rawURL string, kind ingest.DownloadKind) ([]byte, string, error) {
 	u, err := url.Parse(rawURL)
 	if err != nil {

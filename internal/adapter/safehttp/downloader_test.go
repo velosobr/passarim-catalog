@@ -1,3 +1,5 @@
+// Testes do downloader seguro, com servidores HTTPS de teste locais.
+
 package safehttp_test
 
 import (
@@ -14,11 +16,13 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
+// host extrai o nome do servidor de teste (127.0.0.1) da URL dele.
 func host(t *testing.T, srv *httptest.Server) string {
 	u, _ := url.Parse(srv.URL)
 	return u.Hostname()
 }
 
+// imageServer responde a qualquer pedido com uma "imagem" JPEG falsa.
 func imageServer() *httptest.Server {
 	return httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/jpeg")
@@ -35,6 +39,8 @@ func newTestDownloader(srv *httptest.Server, opts safehttp.Options) *safehttp.Do
 	return safehttp.NewWithTransport(opts, srv.Client().Transport.(*http.Transport).TLSClientConfig)
 }
 
+// Com o host na allowlist e IPs privados liberados (só em teste), o
+// download funciona.
 func TestDownloader_AllowsListedHostWhenPrivateAllowed(t *testing.T) {
 	srv := imageServer()
 	defer srv.Close()
@@ -45,6 +51,7 @@ func TestDownloader_AllowsListedHostWhenPrivateAllowed(t *testing.T) {
 	}
 }
 
+// Um host fora da allowlist é bloqueado antes da conexão.
 func TestDownloader_BlocksHostNotInAllowlist(t *testing.T) {
 	srv := imageServer()
 	defer srv.Close()
@@ -55,6 +62,7 @@ func TestDownloader_BlocksHostNotInAllowlist(t *testing.T) {
 	}
 }
 
+// HTTP sem TLS é bloqueado.
 func TestDownloader_BlocksPlainHTTP(t *testing.T) {
 	d := safehttp.New(safehttp.Options{AllowedHosts: []string{"example.org"}})
 	_, _, err := d.Fetch(context.Background(), "http://example.org/a.jpg", ingest.DownloadImage)
@@ -63,6 +71,8 @@ func TestDownloader_BlocksPlainHTTP(t *testing.T) {
 	}
 }
 
+// Um host na allowlist que resolve para um IP interno (loopback) é bloqueado
+// na conexão.
 func TestDownloader_BlocksPrivateIP(t *testing.T) {
 	srv := imageServer() // escuta em 127.0.0.1
 	defer srv.Close()
@@ -74,7 +84,9 @@ func TestDownloader_BlocksPrivateIP(t *testing.T) {
 	}
 }
 
-// Review Focus #1
+// Um redirecionamento para um endereço interno (aqui, o serviço de
+// metadados da nuvem) é bloqueado: cada salto passa pelas mesmas regras de
+// URL, e esse host não está na allowlist (o IP privado está liberado neste teste).
 func TestDownloader_BlocksPrivateIPAfterRedirect(t *testing.T) {
 	target := imageServer()
 	defer target.Close()
@@ -96,6 +108,7 @@ func TestDownloader_BlocksPrivateIPAfterRedirect(t *testing.T) {
 	}
 }
 
+// Um arquivo maior que o limite é recusado.
 func TestDownloader_RejectsOversizedBody(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/jpeg")
@@ -108,6 +121,7 @@ func TestDownloader_RejectsOversizedBody(t *testing.T) {
 	}
 }
 
+// Um Content-Type fora da lista (por exemplo, HTML) é recusado.
 func TestDownloader_RejectsUnexpectedContentType(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
@@ -120,6 +134,7 @@ func TestDownloader_RejectsUnexpectedContentType(t *testing.T) {
 	}
 }
 
+// Cada bloqueio avisa a função Blocked com o motivo, para a métrica.
 func TestDownloader_ReportsBlockedReason(t *testing.T) {
 	var reasons []string
 	d := safehttp.New(safehttp.Options{AllowedHosts: []string{"example.org"}, Blocked: func(r string) { reasons = append(reasons, r) }})
