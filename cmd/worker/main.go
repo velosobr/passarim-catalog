@@ -82,6 +82,7 @@ func run(log *slog.Logger) error {
 		return err
 	}
 
+	// promauto cria a métrica e já a registra no registro padrão do Prometheus.
 	jobs := promauto.NewCounterVec(prometheus.CounterOpts{Name: "passarim_ingest_jobs_total",
 		Help: "Jobs de ingestão processados, por fonte e resultado."}, []string{"source", "result"})
 	blocked := promauto.NewCounterVec(prometheus.CounterOpts{Name: "passarim_downloads_blocked_total",
@@ -109,6 +110,8 @@ func run(log *slog.Logger) error {
 	// tempo cada espécie é buscada de novo, e MaxAttempts (5) quantas vezes um
 	// job que falha é tentado antes de desistir. Cada handler recebe as peças
 	// de que precisa: a fonte, o downloader, o conversor, o storage e o banco.
+	// Limites: até 5 fotos por espécie, canto cortado em 30 s e até 900
+	// avistamentos agrupados em células de 1°.
 	runner := ingest.Runner{
 		Queue: repo, BatchSize: cfg.BatchSize, MaxAttempts: 5, RefreshAfter: 30 * 24 * time.Hour,
 		Handlers: map[ingest.Source]ingest.Handler{

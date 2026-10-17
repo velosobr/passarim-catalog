@@ -113,8 +113,9 @@ SELECT s.id, src FROM species s CROSS JOIN unnest($1::text[]) AS src
 ON CONFLICT (species_id, source) DO NOTHING
 `
 
-// Cria (espécie × fonte) que ainda não existe. ON CONFLICT DO NOTHING
-// torna a operação idempotente.
+// Cria um job para cada par (espécie, fonte) que ainda não existe: CROSS JOIN
+// unnest(lista) combina cada espécie com cada fonte da lista. ON CONFLICT DO
+// NOTHING pula os pares que já têm job, o que torna a operação idempotente.
 func (q *Queries) EnqueueMissingJobs(ctx context.Context, sources []string) error {
 	_, err := q.db.Exec(ctx, enqueueMissingJobs, sources)
 	return err

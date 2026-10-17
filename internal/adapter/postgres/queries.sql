@@ -1,6 +1,11 @@
 -- name: ListSpecies :many
 -- Lista resumida com busca, filtros e paginação por cursor.
 -- Cada filtro é opcional: "(parâmetro IS NULL OR condição)".
+-- A miniatura é a thumb da foto de menor position ('' se não houver foto).
+-- ESCAPE '\' declara a barra como escape do LIKE (o Go já escapou % e _).
+-- "(s.sort_name, s.id) > (after_sort, after_id)" compara os pares em ordem
+-- (sort_name e, no empate, id): começa logo depois do último item da página
+-- anterior e usa o índice species_sort_idx.
 SELECT s.id, s.scientific_name, s.common_name_pt, s.conservation_status, s.sort_name,
        COALESCE((SELECT m.thumb_key FROM media m
                  WHERE m.species_id = s.id AND m.kind = 'photo'

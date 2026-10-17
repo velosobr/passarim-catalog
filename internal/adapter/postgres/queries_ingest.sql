@@ -1,6 +1,7 @@
 -- name: EnqueueMissingJobs :exec
--- Cria (espécie × fonte) que ainda não existe. ON CONFLICT DO NOTHING
--- torna a operação idempotente.
+-- Cria um job para cada par (espécie, fonte) que ainda não existe: CROSS JOIN
+-- unnest(lista) combina cada espécie com cada fonte da lista. ON CONFLICT DO
+-- NOTHING pula os pares que já têm job, o que torna a operação idempotente.
 INSERT INTO ingestion_job (species_id, source)
 SELECT s.id, src FROM species s CROSS JOIN unnest(sqlc.arg('sources')::text[]) AS src
 ON CONFLICT (species_id, source) DO NOTHING;
