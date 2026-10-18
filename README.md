@@ -70,7 +70,7 @@ O `cmd/worker` busca, para cada ave, **fotos** (iNaturalist), o **canto** (xeno-
 | `make lint` | golangci-lint |
 | `make run` | Sobe a API apontando para o PostgreSQL do compose |
 
-Tudo junto (banco + API + seed): veja o `docker compose` do [passarim-docs](https://github.com/velosobr/passarim-docs).
+Tudo junto (banco, API, seed e worker): `../passarim-docs/env.scripts/back-end-init` (com `--build` depois de mudar o código Go), `back-end-status` e `back-end-down`. Ver a seção "Operando o ambiente local" do README do [passarim-docs](https://github.com/velosobr/passarim-docs).
 
 ## Conteúdo
-As 40 aves curadas ficam em [`content/species`](content/species) — veja as [regras de escrita](content/README.md).
+As 41 aves curadas ficam em [`content/species`](content/species) — veja as [regras de escrita](content/README.md).
