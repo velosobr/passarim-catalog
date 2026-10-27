@@ -132,9 +132,16 @@ type PhotoVariants struct {
 	Width, Height        int // dimensões da versão Large
 }
 
-// ImageProcessor gera as três versões WebP de uma foto original.
+// ImageProcessor gera as versões WebP de uma foto original, em dois passos:
+// a medium de todas as candidatas (é ela que vai ao curador) e a thumb e a
+// large só das escolhidas. Assim as ~40 candidatas não custam 3 conversões
+// cada.
 type ImageProcessor interface {
-	Process(ctx context.Context, original []byte) (PhotoVariants, error)
+	// Medium gera só a variante de 800 px.
+	Medium(ctx context.Context, original []byte) ([]byte, error)
+	// ThumbAndLarge gera a thumb (320 px) e a large (1600 px), com as
+	// dimensões da large. O campo Medium volta vazio.
+	ThumbAndLarge(ctx context.Context, original []byte) (PhotoVariants, error)
 }
 
 // AudioProcessor converte gravações para o formato do app.

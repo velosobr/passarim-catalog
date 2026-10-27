@@ -40,27 +40,40 @@ var (
 // NewFFmpeg cria o conversor.
 func NewFFmpeg(binary string) *FFmpeg { return &FFmpeg{binary: binary} }
 
-// Process gera as 3 variantes WebP. Antes de tudo lê SÓ o cabeçalho da
-// imagem: uma "bomba de descompressão" (arquivo pequeno que vira bilhões
-// de pixels) é recusada sem gastar memória (OWASP API10).
-func (f *FFmpeg) Process(ctx context.Context, original []byte) (ingest.PhotoVariants, error) {
+// check lê SÓ o cabeçalho da imagem: uma "bomba de descompressão" (arquivo
+// pequeno que vira bilhões de pixels) é recusada sem gastar memória
+// (OWASP API10). Devolve as dimensões.
+func check(original []byte) (image.Config, error) {
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(original))
 	if err != nil {
-		return ingest.PhotoVariants{}, fmt.Errorf("%w: %w", ErrUnsupported, err)
+		return cfg, fmt.Errorf("%w: %w", ErrUnsupported, err)
 	}
 	if cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width*cfg.Height > MaxPixels {
-		return ingest.PhotoVariants{}, fmt.Errorf("%w: %dx%d", ErrTooLarge, cfg.Width, cfg.Height)
+		return cfg, fmt.Errorf("%w: %dx%d", ErrTooLarge, cfg.Width, cfg.Height)
+	}
+	return cfg, nil
+}
+
+// Medium gera a variante de 800 px, a que o curador classifica.
+func (f *FFmpeg) Medium(ctx context.Context, original []byte) ([]byte, error) {
+	if _, err := check(original); err != nil {
+		return nil, err
+	}
+	return f.webp(ctx, original, 800)
+}
+
+// ThumbAndLarge gera a thumb e a large de uma foto escolhida.
+func (f *FFmpeg) ThumbAndLarge(ctx context.Context, original []byte) (ingest.PhotoVariants, error) {
+	cfg, err := check(original)
+	if err != nil {
+		return ingest.PhotoVariants{}, err
 	}
 	var v ingest.PhotoVariants
-	for _, spec := range []struct {
-		width int
-		dst   *[]byte
-	}{{320, &v.Thumb}, {800, &v.Medium}, {1600, &v.Large}} {
-		out, err := f.webp(ctx, original, spec.width)
-		if err != nil {
-			return ingest.PhotoVariants{}, err
-		}
-		*spec.dst = out
+	if v.Thumb, err = f.webp(ctx, original, 320); err != nil {
+		return ingest.PhotoVariants{}, err
+	}
+	if v.Large, err = f.webp(ctx, original, 1600); err != nil {
+		return ingest.PhotoVariants{}, err
 	}
 	// Dimensões da large: largura limitada a 1600 sem ampliar; altura proporcional e par.
 	v.Width = min(cfg.Width, 1600)

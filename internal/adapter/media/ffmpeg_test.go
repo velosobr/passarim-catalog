@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/velosobr/passarim-catalog/internal/adapter/media"
+	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
 // requireFFmpeg pula o teste quando o ffmpeg não está no PATH, ou o reprova
@@ -49,7 +50,7 @@ func pngOf(w, h int) []byte {
 // Uma imagem vira três WebP, com as dimensões da grande calculadas.
 func TestImageProcessor_CreatesThreeWebPVariants(t *testing.T) {
 	requireFFmpeg(t)
-	v, err := media.NewFFmpeg("ffmpeg").Process(context.Background(), pngOf(2000, 1000))
+	v, err := processAll(context.Background(), media.NewFFmpeg("ffmpeg"), pngOf(2000, 1000))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +78,7 @@ func noisyPNGOf(w, h int) []byte {
 // Os WebP gerados são arquivos completos e válidos.
 func TestImageProcessor_WritesCompleteWebPFiles(t *testing.T) {
 	requireFFmpeg(t)
-	v, err := media.NewFFmpeg("ffmpeg").Process(context.Background(), noisyPNGOf(2000, 1000))
+	v, err := processAll(context.Background(), media.NewFFmpeg("ffmpeg"), noisyPNGOf(2000, 1000))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +100,7 @@ func TestImageProcessor_WritesCompleteWebPFiles(t *testing.T) {
 // Uma imagem menor que 1600 px não é ampliada.
 func TestImageProcessor_DoesNotUpscale(t *testing.T) {
 	requireFFmpeg(t)
-	v, err := media.NewFFmpeg("ffmpeg").Process(context.Background(), pngOf(500, 250))
+	v, err := processAll(context.Background(), media.NewFFmpeg("ffmpeg"), pngOf(500, 250))
 	if err != nil || v.Width != 500 || v.Height != 250 {
 		t.Fatalf("imagem pequena não pode ser ampliada: %dx%d %v", v.Width, v.Height, err)
 	}
@@ -109,14 +110,14 @@ func TestImageProcessor_DoesNotUpscale(t *testing.T) {
 func TestImageProcessor_RejectsHugeDimensions(t *testing.T) {
 	// Cabeçalho PNG declarando 20000x20000 = 400 MP (o arquivo tem poucos bytes).
 	huge := pngHeader(20000, 20000)
-	if _, err := media.NewFFmpeg("ffmpeg-que-nao-existe").Process(context.Background(), huge); !errors.Is(err, media.ErrTooLarge) {
+	if _, err := processAll(context.Background(), media.NewFFmpeg("ffmpeg-que-nao-existe"), huge); !errors.Is(err, media.ErrTooLarge) {
 		t.Fatalf("esperava ErrTooLarge, veio %v", err)
 	}
 }
 
 // Bytes que não são imagem são recusados.
 func TestImageProcessor_RejectsNonImage(t *testing.T) {
-	if _, err := media.NewFFmpeg("ffmpeg").Process(context.Background(), []byte("not an image")); !errors.Is(err, media.ErrUnsupported) {
+	if _, err := processAll(context.Background(), media.NewFFmpeg("ffmpeg"), []byte("not an image")); !errors.Is(err, media.ErrUnsupported) {
 		t.Fatalf("esperava ErrUnsupported, veio %v", err)
 	}
 }
@@ -156,4 +157,36 @@ func pngHeader(w, h uint32) []byte {
 	buf.Write(ihdr)
 	buf.Write(binary.BigEndian.AppendUint32(nil, crc32.ChecksumIEEE(ihdr)))
 	return buf.Bytes()
+}
+
+// processAll gera as três variantes pelos dois passos do worker (a medium
+// para o curador; thumb e large só para as escolhidas), para os testes
+// antigos continuarem conferindo as três juntas.
+func processAll(ctx context.Context, f *media.FFmpeg, in []byte) (ingest.PhotoVariants, error) {
+	medium, err := f.Medium(ctx, in)
+	if err != nil {
+		return ingest.PhotoVariants{}, err
+	}
+	v, err := f.ThumbAndLarge(ctx, in)
+	if err != nil {
+		return ingest.PhotoVariants{}, err
+	}
+	v.Medium = medium
+	return v, nil
+}
+
+// ThumbAndLarge não gera a medium (ela já foi gerada para o curador).
+func TestImageProcessor_ThumbAndLargeLeavesMediumOut(t *testing.T) {
+	requireFFmpeg(t)
+	v, err := media.NewFFmpeg("ffmpeg").ThumbAndLarge(context.Background(), pngOf(2000, 1000))
+	if err != nil || len(v.Thumb) == 0 || len(v.Large) == 0 || v.Medium != nil || v.Width != 1600 || v.Height != 800 {
+		t.Fatalf("got thumb=%d large=%d medium=%v %dx%d err=%v", len(v.Thumb), len(v.Large), v.Medium != nil, v.Width, v.Height, err)
+	}
+}
+
+// Medium também recusa a bomba de descompressão, sem chamar o ffmpeg.
+func TestImageProcessor_MediumRejectsHugeDimensions(t *testing.T) {
+	if _, err := media.NewFFmpeg("ffmpeg-que-nao-existe").Medium(context.Background(), pngHeader(100000, 100000)); !errors.Is(err, media.ErrTooLarge) {
+		t.Fatalf("esperava ErrTooLarge, veio %v", err)
+	}
 }

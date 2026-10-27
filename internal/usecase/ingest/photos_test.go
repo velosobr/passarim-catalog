@@ -31,7 +31,7 @@ func photoFiles(n int) map[string][]byte {
 }
 
 // newPhotos monta o caso de uso (até 5 fotos) com os fakes.
-func newPhotos(src fakePhotoSource, dl *fakeDownloader, imgs fakeImages, policy domain.LicensePolicy) (ingest.IngestPhotos, *fakeStore, *fakeRepo) {
+func newPhotos(src fakePhotoSource, dl *fakeDownloader, imgs *fakeImages, policy domain.LicensePolicy) (ingest.IngestPhotos, *fakeStore, *fakeRepo) {
 	store, repo := newFakeStore(), &fakeRepo{}
 	return ingest.IngestPhotos{Source: src, Downloader: dl, Images: imgs, Store: store, Repo: repo, Policy: policy, MaxPhotos: 5}, store, repo
 }
@@ -39,7 +39,7 @@ func newPhotos(src fakePhotoSource, dl *fakeDownloader, imgs fakeImages, policy 
 // Cada foto vira três arquivos WebP no storage e um registro com o crédito.
 func TestIngestPhotos_StoresVariantsAndCredits(t *testing.T) {
 	uc, store, repo := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{cand(0, "cc-by"), cand(1, "cc-by")}},
-		&fakeDownloader{files: photoFiles(2)}, fakeImages{}, domain.LicensePolicy{AllowNC: true})
+		&fakeDownloader{files: photoFiles(2)}, &fakeImages{}, domain.LicensePolicy{AllowNC: true})
 	if err := uc.Run(context.Background(), sabia); err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +61,7 @@ func TestIngestPhotos_StoresVariantsAndCredits(t *testing.T) {
 func TestIngestPhotos_SkipsRejectedLicenses(t *testing.T) {
 	dl := &fakeDownloader{files: photoFiles(3)}
 	uc, _, repo := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{cand(0, "cc-by-nd"), cand(1, ""), cand(2, "cc-by-nc")}},
-		dl, fakeImages{}, domain.LicensePolicy{AllowNC: false})
+		dl, &fakeImages{}, domain.LicensePolicy{AllowNC: false})
 	if err := uc.Run(context.Background(), sabia); err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +79,7 @@ func TestIngestPhotos_RespectsMax(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		cands = append(cands, cand(i, "cc0"))
 	}
-	uc, _, repo := newPhotos(fakePhotoSource{cands: cands}, &fakeDownloader{files: photoFiles(10)}, fakeImages{}, domain.LicensePolicy{AllowNC: true})
+	uc, _, repo := newPhotos(fakePhotoSource{cands: cands}, &fakeDownloader{files: photoFiles(10)}, &fakeImages{}, domain.LicensePolicy{AllowNC: true})
 	if err := uc.Run(context.Background(), sabia); err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +93,7 @@ func TestIngestPhotos_SkipsBrokenPhoto(t *testing.T) {
 	files := photoFiles(2)
 	delete(files, "https://x/0.jpg") // a primeira falha no download
 	uc, store, repo := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{cand(0, "cc-by"), cand(1, "cc-by")}},
-		&fakeDownloader{files: files}, fakeImages{}, domain.LicensePolicy{AllowNC: true})
+		&fakeDownloader{files: files}, &fakeImages{}, domain.LicensePolicy{AllowNC: true})
 	if err := uc.Run(context.Background(), sabia); err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +105,7 @@ func TestIngestPhotos_SkipsBrokenPhoto(t *testing.T) {
 // Se todas falham, o job dá erro e as fotos antigas ficam.
 func TestIngestPhotos_AllDownloadsFailIsError(t *testing.T) {
 	uc, _, repo := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{cand(0, "cc-by"), cand(1, "cc-by")}},
-		&fakeDownloader{files: map[string][]byte{}}, fakeImages{}, domain.LicensePolicy{AllowNC: true})
+		&fakeDownloader{files: map[string][]byte{}}, &fakeImages{}, domain.LicensePolicy{AllowNC: true})
 	if err := uc.Run(context.Background(), sabia); err == nil {
 		t.Fatal("falha total deveria virar erro (o job tenta de novo)")
 	}
@@ -116,7 +116,7 @@ func TestIngestPhotos_AllDownloadsFailIsError(t *testing.T) {
 
 // Erro da fonte vira erro do job.
 func TestIngestPhotos_SourceErrorIsError(t *testing.T) {
-	uc, _, repo := newPhotos(fakePhotoSource{err: fmt.Errorf("fora do ar")}, &fakeDownloader{}, fakeImages{}, domain.LicensePolicy{})
+	uc, _, repo := newPhotos(fakePhotoSource{err: fmt.Errorf("fora do ar")}, &fakeDownloader{}, &fakeImages{}, domain.LicensePolicy{})
 	if err := uc.Run(context.Background(), sabia); err == nil || repo.photoCalls != 0 {
 		t.Fatalf("erro da fonte deveria propagar sem gravar: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestIngestPhotos_KeyFollowsSourcePhotoNotPosition(t *testing.T) {
 		for _, i := range order {
 			cands = append(cands, cand(i, "cc-by"))
 		}
-		uc, _, repo := newPhotos(fakePhotoSource{cands: cands}, &fakeDownloader{files: photoFiles(2)}, fakeImages{}, domain.LicensePolicy{AllowNC: true})
+		uc, _, repo := newPhotos(fakePhotoSource{cands: cands}, &fakeDownloader{files: photoFiles(2)}, &fakeImages{}, domain.LicensePolicy{AllowNC: true})
 		if err := uc.Run(context.Background(), sabia); err != nil {
 			t.Fatal(err)
 		}
@@ -152,7 +152,7 @@ func TestIngestPhotos_SkipsUnsafeSourceID(t *testing.T) {
 	bad := cand(0, "cc-by")
 	bad.SourceID = "../../outro"
 	dl := &fakeDownloader{files: photoFiles(1)}
-	uc, store, repo := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{bad}}, dl, fakeImages{}, domain.LicensePolicy{AllowNC: true})
+	uc, store, repo := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{bad}}, dl, &fakeImages{}, domain.LicensePolicy{AllowNC: true})
 	if err := uc.Run(context.Background(), sabia); err != nil {
 		t.Fatal(err)
 	}
@@ -163,7 +163,7 @@ func TestIngestPhotos_SkipsUnsafeSourceID(t *testing.T) {
 
 // Depois de trocar as fotos no banco, os arquivos antigos saem do storage.
 func TestIngestPhotos_DeletesOrphanPhotosAfterReplace(t *testing.T) {
-	uc, store, _ := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{cand(1, "cc-by")}}, &fakeDownloader{files: photoFiles(2)}, fakeImages{}, domain.LicensePolicy{AllowNC: true})
+	uc, store, _ := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{cand(1, "cc-by")}}, &fakeDownloader{files: photoFiles(2)}, &fakeImages{}, domain.LicensePolicy{AllowNC: true})
 	// Objetos de uma ingestão anterior: uma foto antiga e o canto (não pode ser tocado).
 	for _, k := range []string{"species/turdus-rufiventris/photo-OLD-thumb.webp", "species/turdus-rufiventris/photo-OLD-large.webp", "species/turdus-rufiventris/audio-7.aac",
 		"species/outra-especie/photo-OLD-thumb.webp"} {
@@ -184,7 +184,7 @@ func TestIngestPhotos_DeletesOrphanPhotosAfterReplace(t *testing.T) {
 
 // Se a troca no banco falha, nada é apagado do storage.
 func TestIngestPhotos_NoCleanupWhenReplaceFails(t *testing.T) {
-	uc, store, repo := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{cand(1, "cc-by")}}, &fakeDownloader{files: photoFiles(2)}, fakeImages{}, domain.LicensePolicy{AllowNC: true})
+	uc, store, repo := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{cand(1, "cc-by")}}, &fakeDownloader{files: photoFiles(2)}, &fakeImages{}, domain.LicensePolicy{AllowNC: true})
 	repo.replaceErr = errors.New("banco fora")
 	store.objects["species/turdus-rufiventris/photo-OLD-thumb.webp"] = "x"
 	if err := uc.Run(context.Background(), sabia); err == nil {
@@ -197,7 +197,7 @@ func TestIngestPhotos_NoCleanupWhenReplaceFails(t *testing.T) {
 
 // Sem nenhuma foto aceitável, as fotos antigas são removidas.
 func TestIngestPhotos_NoAcceptedPhotosRemovesAllOldPhotos(t *testing.T) {
-	uc, store, _ := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{cand(0, "cc-by-nd")}}, &fakeDownloader{}, fakeImages{}, domain.LicensePolicy{AllowNC: true})
+	uc, store, _ := newPhotos(fakePhotoSource{cands: []ingest.PhotoCandidate{cand(0, "cc-by-nd")}}, &fakeDownloader{}, &fakeImages{}, domain.LicensePolicy{AllowNC: true})
 	store.objects["species/turdus-rufiventris/photo-OLD-thumb.webp"] = "x"
 	store.objects["species/turdus-rufiventris/audio-7.aac"] = "x"
 	if err := uc.Run(context.Background(), sabia); err != nil {

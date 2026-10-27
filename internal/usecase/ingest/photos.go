@@ -101,10 +101,17 @@ func (u IngestPhotos) processOne(ctx context.Context, job Job, a acceptedPhoto) 
 	if err != nil {
 		return domain.Photo{}, err
 	}
-	v, err := u.Images.Process(ctx, data)
+	// A conversão tem dois passos: a medium (a que o curador vê) e a thumb e a
+	// large (só das fotos escolhidas). Aqui ainda geramos as três juntas.
+	medium, err := u.Images.Medium(ctx, data)
 	if err != nil {
 		return domain.Photo{}, err
 	}
+	v, err := u.Images.ThumbAndLarge(ctx, data)
+	if err != nil {
+		return domain.Photo{}, err
+	}
+	v.Medium = medium
 	p := domain.Photo{
 		ThumbKey:  photoKey(job.SpeciesID, a.cand.SourceID, "thumb"),
 		MediumKey: photoKey(job.SpeciesID, a.cand.SourceID, "medium"),

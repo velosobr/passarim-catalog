@@ -69,15 +69,35 @@ func (f *fakeDownloader) Fetch(_ context.Context, url string, _ ingest.DownloadK
 	return b, "image/jpeg", nil
 }
 
-// fakeImages "converte" sem ffmpeg: devolve variantes fixas ("t", "m",
-// "l", 1600×1000) ou o erro configurado.
-type fakeImages struct{ err error }
+// fakeImages "converte" sem ffmpeg: a medium é "m:" + os bytes originais
+// (o curador falso usa isso para saber de que foto se trata); thumb e
+// large são fixas, 1600×1000. failMedium faz a medium falhar para os
+// originais listados; thumbAndLarge conta as chamadas.
+type fakeImages struct {
+	err           error
+	failMedium    map[string]bool
+	delay         time.Duration
+	mu            sync.Mutex
+	thumbAndLarge int
+}
 
-func (f fakeImages) Process(_ context.Context, orig []byte) (ingest.PhotoVariants, error) {
+func (f *fakeImages) Medium(_ context.Context, orig []byte) ([]byte, error) {
+	time.Sleep(f.delay)
+	if f.err != nil || f.failMedium[string(orig)] {
+		return nil, errors.New("conversão falhou")
+	}
+	return []byte("m:" + string(orig)), nil
+}
+
+func (f *fakeImages) ThumbAndLarge(_ context.Context, _ []byte) (ingest.PhotoVariants, error) {
+	time.Sleep(f.delay)
+	f.mu.Lock()
+	f.thumbAndLarge++
+	f.mu.Unlock()
 	if f.err != nil {
 		return ingest.PhotoVariants{}, f.err
 	}
-	return ingest.PhotoVariants{Thumb: []byte("t"), Medium: []byte("m"), Large: []byte("l"), Width: 1600, Height: 1000}, nil
+	return ingest.PhotoVariants{Thumb: []byte("t"), Large: []byte("l"), Width: 1600, Height: 1000}, nil
 }
 
 // fakeAudio falha para os bytes listados em failFor (para testar o fallback).
