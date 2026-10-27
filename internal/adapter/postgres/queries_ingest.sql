@@ -8,7 +8,7 @@ ON CONFLICT (species_id, source) DO NOTHING;
 
 -- name: RescheduleStaleJobs :exec
 -- Dados mudam (novas fotos, novos avistamentos): refaz jobs antigos.
-UPDATE ingestion_job SET status = 'pending', attempts = 0, next_run_at = now(), updated_at = now()
+UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, next_run_at = now(), updated_at = now()
 WHERE status = 'done' AND updated_at < now() - make_interval(secs => sqlc.arg('refresh_after_secs')::double precision);
 
 -- name: RequeueStuckJobs :exec
@@ -26,7 +26,7 @@ WHERE status = 'running' AND updated_at < now() - interval '15 minutes';
 -- name: ReopenFailedJobs :exec
 -- Uma queda temporária da fonte (ou chave trocada) não pode condenar o job
 -- para sempre: depois de 24 h, jobs 'failed' ganham nova chance.
-UPDATE ingestion_job SET status = 'pending', attempts = 0, next_run_at = now(), updated_at = now()
+UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, next_run_at = now(), updated_at = now()
 WHERE status = 'failed' AND updated_at < now() - interval '24 hours';
 
 -- name: ReleaseJob :exec
@@ -51,11 +51,11 @@ WHERE j.species_id = s.id AND j.id IN (
     ORDER BY next_run_at
     LIMIT sqlc.arg('lim')
     FOR UPDATE SKIP LOCKED)
-RETURNING j.id, j.species_id, s.scientific_name, j.source, j.attempts;
+RETURNING j.id, j.species_id, s.scientific_name, j.source, j.attempts, j.deferrals;
 
 -- name: CompleteJob :exec
--- Marca o job como concluído e limpa o último erro.
-UPDATE ingestion_job SET status = 'done', last_error = '', updated_at = now() WHERE id = $1;
+-- Marca o job como concluído, limpa o último erro e zera os adiamentos.
+UPDATE ingestion_job SET status = 'done', last_error = '', deferrals = 0, updated_at = now() WHERE id = $1;
 
 -- name: FailJob :exec
 -- Registra a falha: com give_up, o job vira 'failed'; senão volta para
@@ -63,6 +63,18 @@ UPDATE ingestion_job SET status = 'done', last_error = '', updated_at = now() WH
 UPDATE ingestion_job SET
     status = CASE WHEN sqlc.arg('give_up')::bool THEN 'failed' ELSE 'pending' END,
     attempts = attempts + 1,
+    last_error = sqlc.arg('last_error'),
+    next_run_at = now() + make_interval(secs => sqlc.arg('retry_in_secs')::double precision),
+    updated_at = now()
+WHERE id = sqlc.arg('id');
+
+-- name: DeferJob :exec
+-- Adia o job porque o curador está fora do ar: volta para 'pending' daqui a
+-- retry_in_secs segundos, SEM somar tentativa (attempts) e somando um
+-- adiamento (deferrals), que é o que faz a espera crescer.
+UPDATE ingestion_job SET
+    status = 'pending',
+    deferrals = deferrals + 1,
     last_error = sqlc.arg('last_error'),
     next_run_at = now() + make_interval(secs => sqlc.arg('retry_in_secs')::double precision),
     updated_at = now()

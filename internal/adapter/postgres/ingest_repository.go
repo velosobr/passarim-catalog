@@ -30,6 +30,7 @@ type IngestRepository struct {
 var (
 	_ ingest.JobQueue        = (*IngestRepository)(nil)
 	_ ingest.MediaRepository = (*IngestRepository)(nil)
+	_ ingest.OverrideSource  = (*IngestRepository)(nil)
 )
 
 // NewIngestRepository cria o repositório sobre o pool de conexões.
@@ -70,7 +71,7 @@ func (r *IngestRepository) ClaimDue(ctx context.Context, limit int) ([]ingest.Jo
 	jobs := make([]ingest.Job, len(rows))
 	for i, row := range rows {
 		jobs[i] = ingest.Job{ID: row.ID, SpeciesID: row.SpeciesID, ScientificName: row.ScientificName,
-			Source: ingest.Source(row.Source), Attempts: int(row.Attempts)}
+			Source: ingest.Source(row.Source), Attempts: int(row.Attempts), Deferrals: int(row.Deferrals)}
 	}
 	return jobs, nil
 }
@@ -91,6 +92,15 @@ func (r *IngestRepository) Fail(ctx context.Context, jobID int64, cause string, 
 		cause = strings.ToValidUTF8(cause[:500], "")
 	}
 	return r.q.FailJob(ctx, sqlcgen.FailJobParams{ID: jobID, GiveUp: giveUp, LastError: cause, RetryInSecs: retryIn.Seconds()})
+}
+
+// Defer adia o job sem contar tentativa (curador fora do ar). A mensagem é
+// cortada como no Fail.
+func (r *IngestRepository) Defer(ctx context.Context, jobID int64, cause string, retryIn time.Duration) error {
+	if len(cause) > 500 {
+		cause = strings.ToValidUTF8(cause[:500], "")
+	}
+	return r.q.DeferJob(ctx, sqlcgen.DeferJobParams{ID: jobID, LastError: cause, RetryInSecs: retryIn.Seconds()})
 }
 
 // replaceMedia apaga a mídia de um tipo e grava a nova, numa transação.

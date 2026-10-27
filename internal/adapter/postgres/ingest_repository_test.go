@@ -264,3 +264,37 @@ func TestReplacePhotos_WritesCurationReport(t *testing.T) {
 		t.Fatalf("relatório gravado: %q %q %q %v %v", version, primary, category, flags, err)
 	}
 }
+
+// Defer reagenda sem somar tentativa e soma um adiamento; o sucesso zera.
+func TestJobQueue_Defer(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil))
+	q := postgres.NewIngestRepository(pool)
+	if _, err := q.EnqueueMissing(ctx, []ingest.Source{ingest.SourceINaturalist}, time.Hour); err != nil {
+		t.Fatal(err)
+	}
+	jobs, _ := q.ClaimDue(ctx, 1)
+	if err := q.Defer(ctx, jobs[0].ID, "curador indisponível", time.Hour); err != nil {
+		t.Fatal(err)
+	}
+	var status string
+	var attempts, deferrals int
+	_ = pool.QueryRow(ctx, "SELECT status, attempts, deferrals FROM ingestion_job WHERE id=$1", jobs[0].ID).Scan(&status, &attempts, &deferrals)
+	if status != "pending" || attempts != 0 || deferrals != 1 {
+		t.Fatalf("depois de Defer: %s attempts=%d deferrals=%d", status, attempts, deferrals)
+	}
+	if due, _ := q.ClaimDue(ctx, 1); len(due) != 0 {
+		t.Fatal("adiado para daqui a 1 h não pode estar vencido")
+	}
+	_, _ = pool.Exec(ctx, "UPDATE ingestion_job SET next_run_at = now() WHERE id=$1", jobs[0].ID)
+	again, _ := q.ClaimDue(ctx, 1)
+	if len(again) != 1 || again[0].Deferrals != 1 {
+		t.Fatalf("ClaimDue deveria trazer os adiamentos: %+v", again)
+	}
+	_ = q.Complete(ctx, again[0].ID)
+	_ = pool.QueryRow(ctx, "SELECT deferrals FROM ingestion_job WHERE id=$1", jobs[0].ID).Scan(&deferrals)
+	if deferrals != 0 {
+		t.Fatalf("o sucesso deveria zerar os adiamentos, veio %d", deferrals)
+	}
+}

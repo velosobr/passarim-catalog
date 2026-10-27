@@ -26,6 +26,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/time/rate"
 
+	"github.com/velosobr/passarim-catalog/internal/adapter/curator"
 	"github.com/velosobr/passarim-catalog/internal/adapter/media"
 	"github.com/velosobr/passarim-catalog/internal/adapter/postgres"
 	"github.com/velosobr/passarim-catalog/internal/adapter/s3store"
@@ -38,7 +39,9 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
-// batchTimeout é o tempo máximo de uma rodada inteira.
+// batchTimeout é o tempo de uma rodada sem job de fotos. A rodada inteira
+// ganha também o prazo do job de fotos (cfg.PhotoJobTimeout), porque ele
+// pode ser o último a rodar: somar garante o prazo inteiro a ele.
 const batchTimeout = 2 * time.Minute
 
 // main sobe o worker e sai com 1 se ele terminar com erro.
@@ -100,6 +103,13 @@ func run(log *slog.Logger) error {
 		},
 	})
 	ffmpeg := media.NewFFmpeg(cfg.FFmpegPath)
+	// O curador (passarim-photo-curator) diz o que cada foto mostra. Só ele
+	// e o worker estão na rede passarim-curation do compose.
+	photoCurator, err := curator.New(cfg.CuratorAddr, 30*time.Second)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = photoCurator.Close() }()
 	repo := postgres.NewIngestRepository(pool)
 	policy := domain.LicensePolicy{AllowNC: cfg.AllowNC}
 	// Cada fonte tem um rate limiter: no máximo uma chamada por segundo (meio
@@ -110,14 +120,18 @@ func run(log *slog.Logger) error {
 	// tempo cada espécie é buscada de novo, e MaxAttempts (5) quantas vezes um
 	// job que falha é tentado antes de desistir. Cada handler recebe as peças
 	// de que precisa: a fonte, o downloader, o conversor, o storage e o banco.
-	// Limites: até 5 fotos por espécie, canto cortado em 30 s e até 900
-	// avistamentos agrupados em células de 1°.
+	// Limites: galeria de até 6 fotos escolhidas pelo curador entre até 40
+	// candidatas, e um job de fotos por rodada; canto cortado em 30 s e até
+	// 900 avistamentos agrupados em células de 1°.
 	runner := ingest.Runner{
 		Queue: repo, BatchSize: cfg.BatchSize, MaxAttempts: 5, RefreshAfter: 30 * 24 * time.Hour,
+		MaxPerRound: map[ingest.Source]int{ingest.SourceINaturalist: 1},
 		Handlers: map[ingest.Source]ingest.Handler{
 			ingest.SourceINaturalist: ingest.IngestPhotos{
 				Source:     inaturalist.New("https://api.inaturalist.org", cfg.UserAgent, oneSec()),
-				Downloader: downloader, Images: ffmpeg, Store: store, Repo: repo, Policy: policy, MaxPhotos: 5},
+				Downloader: downloader, Images: ffmpeg, Curator: photoCurator, Store: store, Repo: repo, Overrides: repo,
+				Policy: policy, MaxPhotos: 6, MaxCandidates: 40, Observations: 20,
+				LowConfidence: cfg.LowConfidence, Timeout: cfg.PhotoJobTimeout},
 			ingest.SourceXenoCanto: ingest.IngestAudio{
 				Source:     xenocanto.New("https://xeno-canto.org", cfg.XenoCantoAPIKey, cfg.UserAgent, oneSec()),
 				Downloader: downloader, Audio: ffmpeg, Store: store, Repo: repo, Policy: policy, MaxDuration: 30 * time.Second},
@@ -170,7 +184,7 @@ func loop(ctx context.Context, log *slog.Logger, runner ingest.Runner, cfg confi
 	ticker := time.NewTicker(cfg.Interval)
 	defer ticker.Stop()
 	for {
-		n := runBatch(ctx, log, runner)
+		n := runBatch(ctx, log, runner, batchTimeout+cfg.PhotoJobTimeout)
 		if n >= cfg.BatchSize && ctx.Err() == nil {
 			continue
 		}
@@ -183,10 +197,11 @@ func loop(ctx context.Context, log *slog.Logger, runner ingest.Runner, cfg confi
 }
 
 // runBatch usa um contexto que NÃO é cancelado pelo shutdown (só pelo
-// timeout de batchTimeout): um SIGTERM deixa o lote em andamento terminar,
-// desde que o orquestrador espere esse tempo antes de matar o processo.
-func runBatch(ctx context.Context, log *slog.Logger, runner ingest.Runner) int {
-	batchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), batchTimeout)
+// prazo da rodada, timeout = batchTimeout + PHOTO_JOB_TIMEOUT): um SIGTERM
+// deixa o lote em andamento terminar, desde que o orquestrador espere esse
+// tempo antes de matar o processo (stop_grace_period de 8m30s no compose).
+func runBatch(ctx context.Context, log *slog.Logger, runner ingest.Runner, timeout time.Duration) int {
+	batchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), timeout)
 	defer cancel()
 	n, err := runner.RunOnce(batchCtx)
 	if err != nil {

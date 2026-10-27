@@ -203,8 +203,15 @@ type fakeQueue struct {
 	completed []int64
 	failed    []failCall
 	released  []int64
+	deferred  []failCall
 	// ctxErrOnFinish guarda ctx.Err() visto por Complete/Fail (deve ser nil).
 	ctxErrOnFinish []error
+}
+
+func (f *fakeQueue) Defer(ctx context.Context, id int64, cause string, retryIn time.Duration) error {
+	f.ctxErrOnFinish = append(f.ctxErrOnFinish, ctx.Err())
+	f.deferred = append(f.deferred, failCall{id: id, cause: cause, retryIn: retryIn})
+	return nil
 }
 
 func (f *fakeQueue) EnqueueMissing(context.Context, []ingest.Source, time.Duration) (int, error) {

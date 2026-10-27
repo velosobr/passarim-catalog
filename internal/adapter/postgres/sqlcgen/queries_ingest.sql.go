@@ -20,7 +20,7 @@ WHERE j.species_id = s.id AND j.id IN (
     ORDER BY next_run_at
     LIMIT $1
     FOR UPDATE SKIP LOCKED)
-RETURNING j.id, j.species_id, s.scientific_name, j.source, j.attempts
+RETURNING j.id, j.species_id, s.scientific_name, j.source, j.attempts, j.deferrals
 `
 
 type ClaimDueJobsRow struct {
@@ -29,6 +29,7 @@ type ClaimDueJobsRow struct {
 	ScientificName string
 	Source         string
 	Attempts       int32
+	Deferrals      int32
 }
 
 // FOR UPDATE trava as linhas escolhidas até o fim da transação; SKIP LOCKED
@@ -51,6 +52,7 @@ func (q *Queries) ClaimDueJobs(ctx context.Context, lim int32) ([]ClaimDueJobsRo
 			&i.ScientificName,
 			&i.Source,
 			&i.Attempts,
+			&i.Deferrals,
 		); err != nil {
 			return nil, err
 		}
@@ -63,10 +65,10 @@ func (q *Queries) ClaimDueJobs(ctx context.Context, lim int32) ([]ClaimDueJobsRo
 }
 
 const completeJob = `-- name: CompleteJob :exec
-UPDATE ingestion_job SET status = 'done', last_error = '', updated_at = now() WHERE id = $1
+UPDATE ingestion_job SET status = 'done', last_error = '', deferrals = 0, updated_at = now() WHERE id = $1
 `
 
-// Marca o job como concluído e limpa o último erro.
+// Marca o job como concluído, limpa o último erro e zera os adiamentos.
 func (q *Queries) CompleteJob(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, completeJob, id)
 	return err
@@ -82,6 +84,30 @@ func (q *Queries) CountPendingJobs(ctx context.Context) (int32, error) {
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const deferJob = `-- name: DeferJob :exec
+UPDATE ingestion_job SET
+    status = 'pending',
+    deferrals = deferrals + 1,
+    last_error = $1,
+    next_run_at = now() + make_interval(secs => $2::double precision),
+    updated_at = now()
+WHERE id = $3
+`
+
+type DeferJobParams struct {
+	LastError   string
+	RetryInSecs float64
+	ID          int64
+}
+
+// Adia o job porque o curador está fora do ar: volta para 'pending' daqui a
+// retry_in_secs segundos, SEM somar tentativa (attempts) e somando um
+// adiamento (deferrals), que é o que faz a espera crescer.
+func (q *Queries) DeferJob(ctx context.Context, arg DeferJobParams) error {
+	_, err := q.db.Exec(ctx, deferJob, arg.LastError, arg.RetryInSecs, arg.ID)
+	return err
 }
 
 const deleteClusters = `-- name: DeleteClusters :exec
@@ -285,7 +311,7 @@ func (q *Queries) ReleaseJob(ctx context.Context, id int64) error {
 }
 
 const reopenFailedJobs = `-- name: ReopenFailedJobs :exec
-UPDATE ingestion_job SET status = 'pending', attempts = 0, next_run_at = now(), updated_at = now()
+UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, next_run_at = now(), updated_at = now()
 WHERE status = 'failed' AND updated_at < now() - interval '24 hours'
 `
 
@@ -315,7 +341,7 @@ func (q *Queries) RequeueStuckJobs(ctx context.Context) error {
 }
 
 const rescheduleStaleJobs = `-- name: RescheduleStaleJobs :exec
-UPDATE ingestion_job SET status = 'pending', attempts = 0, next_run_at = now(), updated_at = now()
+UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, next_run_at = now(), updated_at = now()
 WHERE status = 'done' AND updated_at < now() - make_interval(secs => $1::double precision)
 `
 

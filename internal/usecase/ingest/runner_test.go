@@ -5,6 +5,7 @@ package ingest_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -104,5 +105,39 @@ func TestRunner_ExpiredBatchStillRecordsFailureAndReleasesUnstartedJobs(t *testi
 	}
 	if observed != 1 {
 		t.Fatalf("Observe deveria contar só o job executado, veio %d", observed)
+	}
+}
+
+// Curador fora do ar: o job é adiado (sem gastar tentativa), não falha. A
+// espera cresce com os adiamentos anteriores (backoff).
+func TestRunner_DefersCuratorUnavailable(t *testing.T) {
+	q := &fakeQueue{jobs: []ingest.Job{{ID: 1, Source: ingest.SourceINaturalist, Attempts: 4, Deferrals: 2}}}
+	r := ingest.Runner{Queue: q, BatchSize: 5, MaxAttempts: 5,
+		Handlers: map[ingest.Source]ingest.Handler{ingest.SourceINaturalist: handlerFunc(func(context.Context, ingest.Job) error {
+			return fmt.Errorf("classificar: %w", ingest.ErrCuratorUnavailable)
+		})}}
+	if _, err := r.RunOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(q.failed) != 0 || len(q.deferred) != 1 || q.deferred[0].retryIn != 4*time.Minute {
+		t.Fatalf("esperava adiar 4 min sem falhar: failed=%+v deferred=%+v", q.failed, q.deferred)
+	}
+}
+
+// No máximo 1 job de fotos por rodada: os outros voltam para a fila sem rodar.
+func TestRunner_OnePhotoJobPerRound(t *testing.T) {
+	q := &fakeQueue{jobs: []ingest.Job{
+		{ID: 1, Source: ingest.SourceINaturalist}, {ID: 2, Source: ingest.SourceGBIF}, {ID: 3, Source: ingest.SourceINaturalist},
+	}}
+	var ran []int64
+	h := handlerFunc(func(_ context.Context, j ingest.Job) error { ran = append(ran, j.ID); return nil })
+	r := ingest.Runner{Queue: q, BatchSize: 5, MaxAttempts: 5, MaxPerRound: map[ingest.Source]int{ingest.SourceINaturalist: 1},
+		Handlers: map[ingest.Source]ingest.Handler{ingest.SourceINaturalist: h, ingest.SourceGBIF: h}}
+	n, err := r.RunOnce(context.Background())
+	if err != nil || n != 3 {
+		t.Fatalf("n=%d err=%v (o lote pegou 3)", n, err)
+	}
+	if fmt.Sprint(ran) != "[1 2]" || fmt.Sprint(q.released) != "[3]" {
+		t.Fatalf("rodou %v, devolveu %v", ran, q.released)
 	}
 }

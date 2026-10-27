@@ -36,6 +36,7 @@ type Job struct {
 	ScientificName string
 	Source         Source
 	Attempts       int
+	Deferrals      int // quantas vezes foi adiado (curador fora do ar)
 }
 
 // JobQueue é a fila persistente (tabela ingestion_job).
@@ -56,6 +57,9 @@ type JobQueue interface {
 	// Fail registra o erro e conta uma tentativa. Com giveUp, status = failed;
 	// senão volta para pending com next_run_at = agora + retryIn.
 	Fail(ctx context.Context, jobID int64, cause string, retryIn time.Duration, giveUp bool) error
+	// Defer devolve o job à fila para daqui a retryIn SEM contar tentativa
+	// (o problema foi nosso, não da espécie) e soma um adiamento.
+	Defer(ctx context.Context, jobID int64, cause string, retryIn time.Duration) error
 }
 
 // MediaRepository grava o resultado da ingestão. "Replace" = apaga o que
