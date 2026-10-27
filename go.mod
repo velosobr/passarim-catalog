@@ -10,7 +10,7 @@ require (
 	github.com/prometheus/client_golang v1.24.1
 	github.com/testcontainers/testcontainers-go v0.44.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.44.0
-	github.com/velosobr/passarim-proto v0.2.1
+	github.com/velosobr/passarim-proto v0.3.0
 	go.yaml.in/yaml/v3 v3.0.5
 	golang.org/x/text v0.42.0
 	golang.org/x/time v0.16.0

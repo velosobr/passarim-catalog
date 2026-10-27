@@ -11,6 +11,7 @@ package ingest
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/velosobr/passarim-catalog/internal/domain"
@@ -149,4 +150,39 @@ type MediaStore interface {
 	List(ctx context.Context, prefix string) ([]string, error)
 	// Delete apaga as chaves dadas (chave inexistente não é erro).
 	Delete(ctx context.Context, keys []string) error
+}
+
+// ErrCuratorUnavailable: o curador está fora do ar, subindo ou não
+// respondeu no prazo. O job de fotos devolve este erro ANTES de trocar
+// qualquer foto, e o Runner adia o job sem gastar tentativa (é uma falha
+// do nosso lado, não da espécie).
+var ErrCuratorUnavailable = errors.New("curador indisponível")
+
+// MaxCuratorBatch é o maior lote que o curador aceita (o contrato diz 8).
+const MaxCuratorBatch = 8
+
+// CuratorPhoto é uma foto mandada ao curador: o id (ecoado na resposta) e
+// os bytes WebP da variante medium.
+type CuratorPhoto struct {
+	PhotoID string
+	Image   []byte
+}
+
+// PhotoVerdict é o que o curador diz de uma foto (espelha o PhotoVerdict do
+// curator.proto, sem tipos do gRPC).
+type PhotoVerdict struct {
+	PhotoID         string
+	Category        domain.PhotoCategory
+	BirdCount       int
+	LargestBirdArea float64 // fração da foto ocupada pela maior ave, de 0 a 1
+	LargestBirdCut  bool    // a maior ave encosta na borda
+	Sharpness       float64 // de 0 a 1
+	Confidence      float64 // de 0 a 1
+}
+
+// PhotoCurator classifica até MaxCuratorBatch fotos por chamada. Devolve os
+// vereditos na ordem do pedido e a versão do modelo. Curador fora do ar ou
+// sem resposta no prazo: ErrCuratorUnavailable.
+type PhotoCurator interface {
+	ClassifyPhotos(ctx context.Context, photos []CuratorPhoto) ([]PhotoVerdict, string, error)
 }
