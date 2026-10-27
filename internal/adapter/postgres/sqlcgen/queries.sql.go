@@ -278,7 +278,7 @@ func (q *Queries) ListFacts(ctx context.Context, speciesID string) ([]ListFactsR
 }
 
 const listMedia = `-- name: ListMedia :many
-SELECT id, species_id, kind, position, thumb_key, medium_key, large_key, audio_key, width, height, duration_ms, author, license, source, source_url, created_at FROM media WHERE species_id = $1 ORDER BY kind, position
+SELECT id, species_id, kind, position, thumb_key, medium_key, large_key, audio_key, width, height, duration_ms, author, license, source, source_url, created_at, source_photo_id, category, score, model_version FROM media WHERE species_id = $1 ORDER BY kind, position
 `
 
 // Fotos e canto da espécie, em ordem de tipo e de posição (a foto 0 é a
@@ -309,6 +309,10 @@ func (q *Queries) ListMedia(ctx context.Context, speciesID string) ([]Medium, er
 			&i.Source,
 			&i.SourceUrl,
 			&i.CreatedAt,
+			&i.SourcePhotoID,
+			&i.Category,
+			&i.Score,
+			&i.ModelVersion,
 		); err != nil {
 			return nil, err
 		}

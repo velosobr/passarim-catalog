@@ -141,7 +141,10 @@ func (r *Repository) GetSpecies(ctx context.Context, id string) (domain.Species,
 		switch m.Kind {
 		case "photo":
 			s.Photos = append(s.Photos, domain.Photo{ThumbKey: m.ThumbKey, MediumKey: m.MediumKey, LargeKey: m.LargeKey,
-				Width: int(m.Width), Height: int(m.Height), Credit: credit})
+				Width: int(m.Width), Height: int(m.Height), Credit: credit,
+				// .String de um pgtype.Text NULL é "", e .Float32 de um NULL é 0.
+				SourcePhotoID: m.SourcePhotoID.String, Category: domain.PhotoCategory(m.Category.String),
+				Score: float64(m.Score.Float32), ModelVersion: m.ModelVersion.String})
 		case "audio":
 			if s.Audio == nil { // a primeira gravação (menor position) é a escolhida
 				s.Audio = &domain.Audio{Key: m.AudioKey, DurationMs: int(m.DurationMs), Credit: credit}
