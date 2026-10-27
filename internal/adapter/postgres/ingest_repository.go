@@ -224,3 +224,39 @@ func (r *IngestRepository) PhotoOverride(ctx context.Context, speciesID string) 
 	return domain.PhotoOverride{PrimaryObservationID: row.PrimaryObservationID.String,
 		PrimaryPhotoID: row.PrimaryPhotoID.String, ExcludedIDs: row.ExcludedIds}, nil
 }
+
+// RequeuePhotoJobs reenfileira os jobs de fotos das espécies dadas (nil =
+// todas). Antes cria os jobs de fotos que faltam, para o comando funcionar
+// mesmo num banco em que o worker ainda não rodou. Devolve as espécies
+// reenfileiradas; quem chama compara com as pedidas.
+func (r *IngestRepository) RequeuePhotoJobs(ctx context.Context, speciesIDs []string) ([]string, error) {
+	if err := r.q.EnqueueMissingJobs(ctx, []string{string(ingest.SourceINaturalist)}); err != nil {
+		return nil, fmt.Errorf("enfileirar: %w", err)
+	}
+	return r.q.RequeuePhotoJobs(ctx, append([]string{}, speciesIDs...)) // nil viraria NULL, e cardinality(NULL) é NULL
+}
+
+// LatestCurationReports lê a última execução da curadoria de cada espécie.
+func (r *IngestRepository) LatestCurationReports(ctx context.Context) ([]domain.CurationReportEntry, error) {
+	rows, err := r.q.LatestCurationReports(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.CurationReportEntry, len(rows))
+	for i, row := range rows {
+		var dtos []candidateDTO
+		if err := json.Unmarshal(row.Candidates, &dtos); err != nil {
+			return nil, fmt.Errorf("relatório de %s: %w", row.SpeciesID, err)
+		}
+		report := domain.CurationReport{ModelVersion: row.ModelVersion, PrimaryPhotoID: row.PrimaryPhotoID.String}
+		for _, d := range dtos {
+			report.Candidates = append(report.Candidates, domain.CuratedCandidate{PhotoID: d.PhotoID, ObservationID: d.ObservationID,
+				Category: domain.PhotoCategory(d.Category), Score: d.Score, Confidence: d.Confidence})
+		}
+		for _, f := range row.Flags {
+			report.Flags = append(report.Flags, domain.CurationFlag(f))
+		}
+		out[i] = domain.CurationReportEntry{SpeciesID: row.SpeciesID, CommonName: row.CommonNamePt, RanAt: row.RanAt.Time, Report: report}
+	}
+	return out, nil
+}

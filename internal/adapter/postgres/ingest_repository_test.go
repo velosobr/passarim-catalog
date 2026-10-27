@@ -5,6 +5,8 @@ package postgres_test
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -296,5 +298,54 @@ func TestJobQueue_Defer(t *testing.T) {
 	_ = pool.QueryRow(ctx, "SELECT deferrals FROM ingestion_job WHERE id=$1", jobs[0].ID).Scan(&deferrals)
 	if deferrals != 0 {
 		t.Fatalf("o sucesso deveria zerar os adiamentos, veio %d", deferrals)
+	}
+}
+
+// requeue: só as espécies dadas, ou todas; nunca um job rodando.
+func TestRequeuePhotoJobs(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil), sp("Pitangus sulphuratus", "Bem-te-vi", nil),
+		sp("Crotophaga ani", "Anu-preto", nil))
+	q := postgres.NewIngestRepository(pool)
+	// Sem rodar o EnqueueMissing antes: o requeue cria os jobs que faltam.
+	_, _ = pool.Exec(ctx, `UPDATE ingestion_job SET status = 'done'`)
+	got, err := q.RequeuePhotoJobs(ctx, []string{"crotophaga-ani"})
+	if err != nil || fmt.Sprint(got) != "[crotophaga-ani]" {
+		t.Fatalf("só a dada: %v %v", got, err)
+	}
+	_, _ = pool.Exec(ctx, `UPDATE ingestion_job SET status = 'done'`)
+	_, _ = pool.Exec(ctx, `UPDATE ingestion_job SET status = 'running' WHERE species_id = 'pitangus-sulphuratus'`)
+	got, _ = q.RequeuePhotoJobs(ctx, nil)
+	slices.Sort(got)
+	if fmt.Sprint(got) != "[crotophaga-ani turdus-rufiventris]" {
+		t.Fatalf("todas menos a que está rodando: %v", got)
+	}
+	var otherSources int
+	_ = pool.QueryRow(ctx, `SELECT count(*) FROM ingestion_job WHERE source <> 'inaturalist'`).Scan(&otherSources)
+	if otherSources != 0 {
+		t.Fatalf("requeue só cria e mexe em jobs de fotos, achou %d de outras fontes", otherSources)
+	}
+}
+
+// O relatório traz só a última execução de cada espécie, com o nome popular.
+func TestLatestCurationReports(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil))
+	q := postgres.NewIngestRepository(pool)
+	_ = q.ReplacePhotos(ctx, "turdus-rufiventris", nil, domain.CurationReport{ModelVersion: "old"})
+	_ = q.ReplacePhotos(ctx, "turdus-rufiventris", nil, domain.CurationReport{ModelVersion: "new", PrimaryPhotoID: "11",
+		Candidates: []domain.CuratedCandidate{{PhotoID: "11", ObservationID: "1", Category: domain.PhotoSingleBird, Score: 0.5, Confidence: 0.25}},
+		Flags:      []domain.CurationFlag{domain.FlagLowConfidence}})
+	got, err := q.LatestCurationReports(ctx)
+	if err != nil || len(got) != 1 {
+		t.Fatalf("got %+v %v", got, err)
+	}
+	e := got[0]
+	if e.CommonName != "Sabiá-laranjeira" || e.Report.ModelVersion != "new" || e.Report.PrimaryPhotoID != "11" ||
+		len(e.Report.Candidates) != 1 || e.Report.Candidates[0].Category != domain.PhotoSingleBird ||
+		len(e.Report.Flags) != 1 || e.RanAt.IsZero() {
+		t.Fatalf("entrada: %+v", e)
 	}
 }

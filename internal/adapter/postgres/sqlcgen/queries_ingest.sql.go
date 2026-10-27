@@ -300,6 +300,54 @@ func (q *Queries) InsertMedia(ctx context.Context, arg InsertMediaParams) error 
 	return err
 }
 
+const latestCurationReports = `-- name: LatestCurationReports :many
+SELECT DISTINCT ON (r.species_id) r.species_id, s.common_name_pt, r.ran_at, r.model_version,
+       r.primary_photo_id, r.candidates, r.flags
+FROM curation_report r JOIN species s ON s.id = r.species_id
+ORDER BY r.species_id, r.ran_at DESC, r.id DESC
+`
+
+type LatestCurationReportsRow struct {
+	SpeciesID      string
+	CommonNamePt   string
+	RanAt          pgtype.Timestamptz
+	ModelVersion   string
+	PrimaryPhotoID pgtype.Text
+	Candidates     []byte
+	Flags          []string
+}
+
+// A última execução da curadoria de cada espécie. DISTINCT ON (species_id)
+// fica com a PRIMEIRA linha de cada espécie na ordem do ORDER BY, ou seja,
+// a mais recente; o id desempata duas execuções no mesmo instante.
+func (q *Queries) LatestCurationReports(ctx context.Context) ([]LatestCurationReportsRow, error) {
+	rows, err := q.db.Query(ctx, latestCurationReports)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LatestCurationReportsRow
+	for rows.Next() {
+		var i LatestCurationReportsRow
+		if err := rows.Scan(
+			&i.SpeciesID,
+			&i.CommonNamePt,
+			&i.RanAt,
+			&i.ModelVersion,
+			&i.PrimaryPhotoID,
+			&i.Candidates,
+			&i.Flags,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const releaseJob = `-- name: ReleaseJob :exec
 UPDATE ingestion_job SET status = 'pending', updated_at = now() WHERE id = $1 AND status = 'running'
 `
@@ -320,6 +368,39 @@ WHERE status = 'failed' AND updated_at < now() - interval '24 hours'
 func (q *Queries) ReopenFailedJobs(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, reopenFailedJobs)
 	return err
+}
+
+const requeuePhotoJobs = `-- name: RequeuePhotoJobs :many
+UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, last_error = '',
+    next_run_at = now(), updated_at = now()
+WHERE source = 'inaturalist' AND status <> 'running'
+  AND (cardinality($1::text[]) = 0 OR species_id = ANY($1::text[]))
+RETURNING species_id
+`
+
+// Comando "worker requeue": devolve à fila, agora, os jobs de fotos das
+// espécies dadas (lista vazia = todas), sem esperar os 30 dias do refresh.
+// Zera tentativas e adiamentos. Não mexe em job 'running': outro worker
+// está com ele, e reenfileirar faria dois pegarem a mesma espécie.
+// cardinality(lista) é o tamanho da lista; "= ANY(lista)" é "está na lista".
+func (q *Queries) RequeuePhotoJobs(ctx context.Context, speciesIds []string) ([]string, error) {
+	rows, err := q.db.Query(ctx, requeuePhotoJobs, speciesIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var species_id string
+		if err := rows.Scan(&species_id); err != nil {
+			return nil, err
+		}
+		items = append(items, species_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const requeueStuckJobs = `-- name: RequeueStuckJobs :exec

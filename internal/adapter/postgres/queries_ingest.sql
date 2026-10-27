@@ -109,3 +109,24 @@ SELECT primary_observation_id, primary_photo_id, excluded_ids FROM photo_overrid
 -- candidata, a principal escolhida e as marcas para o dono conferir.
 INSERT INTO curation_report (species_id, model_version, primary_photo_id, candidates, flags)
 VALUES ($1, $2, $3, $4, $5);
+
+-- name: RequeuePhotoJobs :many
+-- Comando "worker requeue": devolve à fila, agora, os jobs de fotos das
+-- espécies dadas (lista vazia = todas), sem esperar os 30 dias do refresh.
+-- Zera tentativas e adiamentos. Não mexe em job 'running': outro worker
+-- está com ele, e reenfileirar faria dois pegarem a mesma espécie.
+-- cardinality(lista) é o tamanho da lista; "= ANY(lista)" é "está na lista".
+UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, last_error = '',
+    next_run_at = now(), updated_at = now()
+WHERE source = 'inaturalist' AND status <> 'running'
+  AND (cardinality(sqlc.arg('species_ids')::text[]) = 0 OR species_id = ANY(sqlc.arg('species_ids')::text[]))
+RETURNING species_id;
+
+-- name: LatestCurationReports :many
+-- A última execução da curadoria de cada espécie. DISTINCT ON (species_id)
+-- fica com a PRIMEIRA linha de cada espécie na ordem do ORDER BY, ou seja,
+-- a mais recente; o id desempata duas execuções no mesmo instante.
+SELECT DISTINCT ON (r.species_id) r.species_id, s.common_name_pt, r.ran_at, r.model_version,
+       r.primary_photo_id, r.candidates, r.flags
+FROM curation_report r JOIN species s ON s.id = r.species_id
+ORDER BY r.species_id, r.ran_at DESC, r.id DESC;

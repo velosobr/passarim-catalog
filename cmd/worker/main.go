@@ -6,6 +6,10 @@
 // xeno-canto para cantos, GBIF para avistamentos) e volta a esperar. Nada
 // disso acontece quando o app pede uma ave: o app só lê o que o worker já
 // gravou (ADR-0005).
+//
+// Dois comandos ajudam na curadoria de fotos: "requeue [species-id...]"
+// reenfileira os jobs de fotos e "curation-report" imprime o relatório da
+// última curadoria de cada espécie.
 package main
 
 import (
@@ -16,6 +20,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -44,13 +49,95 @@ import (
 // pode ser o último a rodar: somar garante o prazo inteiro a ele.
 const batchTimeout = 2 * time.Minute
 
-// main sobe o worker e sai com 1 se ele terminar com erro.
+// main escolhe o que fazer pelo primeiro argumento:
+//   - sem argumento: o laço da fila (o que o compose sobe);
+//   - "requeue [species-id...]": reenfileira as fotos das espécies dadas (ou todas);
+//   - "curation-report": imprime o relatório de curadoria em Markdown.
+//
+// No compose: docker compose run --rm catalog-worker requeue crotophaga-ani
 func main() {
-	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	if err := run(log); err != nil {
+	log := slog.New(slog.NewJSONHandler(os.Stderr, nil))
+	var err error
+	args := os.Args[1:]
+	switch {
+	case len(args) == 0:
+		log = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+		err = run(log)
+	case args[0] == "requeue":
+		err = requeue(args[1:])
+	case args[0] == "curation-report":
+		err = curationReport()
+	default:
+		err = fmt.Errorf("comando desconhecido %q (use requeue ou curation-report)", args[0])
+	}
+	if err != nil {
 		log.Error("worker encerrou com erro", "error", err)
 		os.Exit(1)
 	}
+}
+
+// openRepo abre o banco para os comandos (só precisam de DATABASE_URL) e
+// aplica as migrations, como o laço faz.
+func openRepo(ctx context.Context) (*postgres.IngestRepository, func(), error) {
+	url := os.Getenv("DATABASE_URL")
+	if url == "" {
+		return nil, nil, errors.New("DATABASE_URL é obrigatória")
+	}
+	pool, err := pgxpool.New(ctx, url)
+	if err != nil {
+		return nil, nil, fmt.Errorf("configurar pool: %w", err)
+	}
+	if err := postgres.WaitForDB(ctx, pool.Ping, 30, time.Second); err != nil {
+		pool.Close()
+		return nil, nil, err
+	}
+	if err := postgres.Migrate(url); err != nil {
+		pool.Close()
+		return nil, nil, err
+	}
+	return postgres.NewIngestRepository(pool), pool.Close, nil
+}
+
+// requeue reenfileira os jobs de fotos e diz quantos. Se algum id pedido não
+// voltou (não existe ou está rodando agora), sai com erro citando os ids.
+func requeue(speciesIDs []string) error {
+	ctx := context.Background()
+	repo, closeDB, err := openRepo(ctx)
+	if err != nil {
+		return err
+	}
+	defer closeDB()
+	done, err := repo.RequeuePhotoJobs(ctx, speciesIDs)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%d jobs de fotos reenfileirados\n", len(done))
+	var missing []string
+	for _, id := range speciesIDs {
+		if !slices.Contains(done, id) {
+			missing = append(missing, id)
+		}
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("não reenfileirados (espécie inexistente ou job rodando agora): %s", strings.Join(missing, ", "))
+	}
+	return nil
+}
+
+// curationReport imprime o relatório da última curadoria de cada espécie.
+func curationReport() error {
+	ctx := context.Background()
+	repo, closeDB, err := openRepo(ctx)
+	if err != nil {
+		return err
+	}
+	defer closeDB()
+	entries, err := repo.LatestCurationReports(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Print(ingest.FormatCurationReport(entries))
+	return nil
 }
 
 // run monta o worker: configuração, banco (com as migrations), object
