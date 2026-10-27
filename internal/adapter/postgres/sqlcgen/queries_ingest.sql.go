@@ -152,6 +152,24 @@ func (q *Queries) FailJob(ctx context.Context, arg FailJobParams) error {
 	return err
 }
 
+const getPhotoOverride = `-- name: GetPhotoOverride :one
+SELECT primary_observation_id, primary_photo_id, excluded_ids FROM photo_override WHERE species_id = $1
+`
+
+type GetPhotoOverrideRow struct {
+	PrimaryObservationID pgtype.Text
+	PrimaryPhotoID       pgtype.Text
+	ExcludedIds          []string
+}
+
+// A escolha manual de fotos da espécie, lida pelo worker antes da curadoria.
+func (q *Queries) GetPhotoOverride(ctx context.Context, speciesID string) (GetPhotoOverrideRow, error) {
+	row := q.db.QueryRow(ctx, getPhotoOverride, speciesID)
+	var i GetPhotoOverrideRow
+	err := row.Scan(&i.PrimaryObservationID, &i.PrimaryPhotoID, &i.ExcludedIds)
+	return i, err
+}
+
 const insertCluster = `-- name: InsertCluster :exec
 INSERT INTO occurrence_cluster (species_id, lat, lng, count, precision) VALUES ($1, $2, $3, $4, $5)
 `

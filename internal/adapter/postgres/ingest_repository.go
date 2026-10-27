@@ -5,10 +5,12 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -156,4 +158,18 @@ func (r *IngestRepository) ReplaceClusters(ctx context.Context, speciesID string
 		}
 	}
 	return tx.Commit(ctx)
+}
+
+// PhotoOverride lê a escolha manual de fotos da espécie. Sem linha (o YAML
+// não tem a chave photos:), devolve o override vazio, sem erro.
+func (r *IngestRepository) PhotoOverride(ctx context.Context, speciesID string) (domain.PhotoOverride, error) {
+	row, err := r.q.GetPhotoOverride(ctx, speciesID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.PhotoOverride{}, nil
+	}
+	if err != nil {
+		return domain.PhotoOverride{}, fmt.Errorf("ler override: %w", err)
+	}
+	return domain.PhotoOverride{PrimaryObservationID: row.PrimaryObservationID.String,
+		PrimaryPhotoID: row.PrimaryPhotoID.String, ExcludedIDs: row.ExcludedIds}, nil
 }

@@ -59,3 +59,38 @@ func TestLoadDir_MissingDirFails(t *testing.T) {
 		t.Fatal("pasta inexistente deveria dar erro")
 	}
 }
+
+// A chave photos: vira o override da espécie, com os ids como texto.
+func TestLoadDir_PhotosOverride(t *testing.T) {
+	all, err := curated.LoadDir("testdata/photos")
+	if err != nil {
+		t.Fatal(err)
+	}
+	o := all[0].PhotoOverride
+	if o == nil || o.PrimaryObservationID != "123456" || o.PrimaryPhotoID != "219317614" ||
+		len(o.ExcludedIDs) != 2 || o.ExcludedIDs[1] != "219317616" {
+		t.Fatalf("override lido errado: %+v", o)
+	}
+}
+
+// Sem a chave photos:, não há override.
+func TestLoadDir_NoPhotosKeyMeansNoOverride(t *testing.T) {
+	all, err := curated.LoadDir("testdata/valid")
+	if err != nil || all[0].PhotoOverride != nil {
+		t.Fatalf("esperava sem override: %+v %v", all[0].PhotoOverride, err)
+	}
+}
+
+// Chave errada dentro de photos: também é recusada (KnownFields).
+func TestLoadDir_PhotosTypoIsError(t *testing.T) {
+	if _, err := curated.LoadDir("testdata/photos-typo"); err == nil || !strings.Contains(err.Error(), "primari") {
+		t.Fatalf("esperava erro citando a chave errada, veio %v", err)
+	}
+}
+
+// A principal que também está excluída é recusada.
+func TestLoadDir_PrimaryExcludedIsError(t *testing.T) {
+	if _, err := curated.LoadDir("testdata/photos-conflict"); err == nil || !strings.Contains(err.Error(), "photos.exclude") {
+		t.Fatalf("esperava erro em photos.exclude, veio %v", err)
+	}
+}

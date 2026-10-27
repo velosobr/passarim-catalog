@@ -87,3 +87,7 @@ DELETE FROM occurrence_cluster WHERE species_id = $1;
 -- name: InsertCluster :exec
 -- Grava um grupo de avistamentos.
 INSERT INTO occurrence_cluster (species_id, lat, lng, count, precision) VALUES ($1, $2, $3, $4, $5);
+
+-- name: GetPhotoOverride :one
+-- A escolha manual de fotos da espécie, lida pelo worker antes da curadoria.
+SELECT primary_observation_id, primary_photo_id, excluded_ids FROM photo_override WHERE species_id = $1;

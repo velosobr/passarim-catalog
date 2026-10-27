@@ -246,5 +246,23 @@ func (r *Repository) UpsertCurated(ctx context.Context, s domain.Species) error 
 			return err
 		}
 	}
+	// O override de fotos também é conteúdo curado: segue o YAML, inclusive
+	// sumindo quando a chave photos: sai do arquivo.
+	if s.PhotoOverride == nil {
+		if err := q.DeletePhotoOverride(ctx, s.ID); err != nil {
+			return err
+		}
+	} else {
+		o := s.PhotoOverride
+		// A coluna é NOT NULL: uma lista nil viraria NULL no pgx, então
+		// mandamos uma lista vazia de verdade.
+		excluded := append([]string{}, o.ExcludedIDs...)
+		if err := q.UpsertPhotoOverride(ctx, sqlcgen.UpsertPhotoOverrideParams{SpeciesID: s.ID,
+			PrimaryObservationID: pgtype.Text{String: o.PrimaryObservationID, Valid: o.HasPrimary()},
+			PrimaryPhotoID:       pgtype.Text{String: o.PrimaryPhotoID, Valid: o.HasPrimary()},
+			ExcludedIds:          excluded}); err != nil {
+			return err
+		}
+	}
 	return tx.Commit(ctx)
 }
