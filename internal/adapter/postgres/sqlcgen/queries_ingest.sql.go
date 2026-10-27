@@ -194,6 +194,32 @@ func (q *Queries) InsertCluster(ctx context.Context, arg InsertClusterParams) er
 	return err
 }
 
+const insertCurationReport = `-- name: InsertCurationReport :exec
+INSERT INTO curation_report (species_id, model_version, primary_photo_id, candidates, flags)
+VALUES ($1, $2, $3, $4, $5)
+`
+
+type InsertCurationReportParams struct {
+	SpeciesID      string
+	ModelVersion   string
+	PrimaryPhotoID pgtype.Text
+	Candidates     []byte
+	Flags          []string
+}
+
+// Uma linha do relatório de curadoria: o que o curador disse de cada
+// candidata, a principal escolhida e as marcas para o dono conferir.
+func (q *Queries) InsertCurationReport(ctx context.Context, arg InsertCurationReportParams) error {
+	_, err := q.db.Exec(ctx, insertCurationReport,
+		arg.SpeciesID,
+		arg.ModelVersion,
+		arg.PrimaryPhotoID,
+		arg.Candidates,
+		arg.Flags,
+	)
+	return err
+}
+
 const insertMedia = `-- name: InsertMedia :exec
 INSERT INTO media (species_id, kind, position, thumb_key, medium_key, large_key, audio_key,
                    width, height, duration_ms, author, license, source, source_url,

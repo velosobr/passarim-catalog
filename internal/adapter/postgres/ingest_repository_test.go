@@ -124,7 +124,7 @@ func TestMediaRepository_ReplaceIsIdempotent(t *testing.T) {
 	audio := &domain.Audio{Key: "a.aac", DurationMs: 30000, Credit: domain.Credit{Author: "B", License: "CC-BY-NC-SA", Source: "xeno-canto", SourceURL: "https://xeno-canto.org/1"}}
 	clusters := []domain.OccurrenceCluster{{Lat: -23.5, Lng: -46.6, Count: 3, Precision: 1}}
 	for i := 0; i < 2; i++ { // duas vezes = reprocessamento
-		if err := m.ReplacePhotos(ctx, "turdus-rufiventris", photos); err != nil {
+		if err := m.ReplacePhotos(ctx, "turdus-rufiventris", photos, domain.CurationReport{ModelVersion: "m@2"}); err != nil {
 			t.Fatal(err)
 		}
 		if err := m.ReplaceAudio(ctx, "turdus-rufiventris", audio); err != nil {
@@ -139,7 +139,7 @@ func TestMediaRepository_ReplaceIsIdempotent(t *testing.T) {
 		t.Fatalf("depois de 2 replaces: photos=%d audio=%+v clusters=%d", len(s.Photos), s.Audio, len(s.Clusters))
 	}
 	// Trocar fotos não apaga o áudio (cada fonte cuida do seu tipo).
-	_ = m.ReplacePhotos(ctx, "turdus-rufiventris", photos[:1])
+	_ = m.ReplacePhotos(ctx, "turdus-rufiventris", photos[:1], domain.CurationReport{ModelVersion: "m@2"})
 	s, _ = repo.GetSpecies(ctx, "turdus-rufiventris")
 	if len(s.Photos) != 1 || s.Audio == nil {
 		t.Fatalf("replace de fotos afetou o áudio: %+v", s)
@@ -232,7 +232,7 @@ func TestReplacePhotos_StoresCurationFields(t *testing.T) {
 	photo := domain.Photo{ThumbKey: "t", MediumKey: "m", LargeKey: "l", Width: 800, Height: 600,
 		Credit:        domain.Credit{Author: "A", License: "CC-BY", Source: "inaturalist", SourceURL: "https://x"},
 		SourcePhotoID: "219317614", Category: domain.PhotoSingleBird, Score: 0.75, ModelVersion: "m@2"}
-	if err := q.ReplacePhotos(ctx, "turdus-rufiventris", []domain.Photo{photo}); err != nil {
+	if err := q.ReplacePhotos(ctx, "turdus-rufiventris", []domain.Photo{photo}, domain.CurationReport{ModelVersion: "m@2"}); err != nil {
 		t.Fatal(err)
 	}
 	got, err := repo.GetSpecies(ctx, "turdus-rufiventris")
@@ -241,5 +241,26 @@ func TestReplacePhotos_StoresCurationFields(t *testing.T) {
 	}
 	if len(got.Photos) != 1 || got.Photos[0] != photo {
 		t.Fatalf("foto lida diferente da gravada:\n got %+v\nwant %+v", got.Photos, photo)
+	}
+}
+
+// ReplacePhotos grava a linha do relatório junto, com as candidatas em JSON e as marcas.
+func TestReplacePhotos_WritesCurationReport(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil))
+	q := postgres.NewIngestRepository(pool)
+	report := domain.CurationReport{ModelVersion: "m@2", PrimaryPhotoID: "11",
+		Candidates: []domain.CuratedCandidate{{PhotoID: "11", ObservationID: "1001", Category: domain.PhotoSingleBird, Score: 0.5, Confidence: 0.25}},
+		Flags:      []domain.CurationFlag{domain.FlagLowConfidence}}
+	if err := q.ReplacePhotos(ctx, "turdus-rufiventris", nil, report); err != nil {
+		t.Fatal(err)
+	}
+	var version, primary, category string
+	var flags []string
+	err := pool.QueryRow(ctx, `SELECT model_version, primary_photo_id, candidates->0->>'category', flags
+		FROM curation_report WHERE species_id = 'turdus-rufiventris'`).Scan(&version, &primary, &category, &flags)
+	if err != nil || version != "m@2" || primary != "11" || category != "single_bird" || len(flags) != 1 || flags[0] != "low_confidence" {
+		t.Fatalf("relatório gravado: %q %q %q %v %v", version, primary, category, flags, err)
 	}
 }

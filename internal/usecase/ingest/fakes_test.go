@@ -152,6 +152,7 @@ func (f *fakeStore) Put(_ context.Context, key, ct string, data []byte) error {
 // fakeRepo guarda o último valor gravado de cada tipo.
 type fakeRepo struct {
 	photos       []domain.Photo
+	report       domain.CurationReport
 	audio        *domain.Audio
 	clusters     []domain.OccurrenceCluster
 	photoCalls   int
@@ -162,12 +163,12 @@ type fakeRepo struct {
 
 // Os três Replace* contam a chamada e guardam o valor recebido. ReplacePhotos
 // e ReplaceAudio devolvem replaceErr, se configurado; ReplaceClusters nunca falha.
-func (f *fakeRepo) ReplacePhotos(_ context.Context, _ string, p []domain.Photo) error {
+func (f *fakeRepo) ReplacePhotos(_ context.Context, _ string, p []domain.Photo, r domain.CurationReport) error {
 	f.photoCalls++
 	if f.replaceErr != nil {
 		return f.replaceErr
 	}
-	f.photos = p
+	f.photos, f.report = p, r
 	return nil
 }
 
@@ -232,4 +233,44 @@ func (f *fakeQueue) Fail(ctx context.Context, id int64, cause string, retryIn ti
 func (f *fakeQueue) Release(_ context.Context, id int64) error {
 	f.released = append(f.released, id)
 	return nil
+}
+
+// fakeCurator classifica pela medium: a medium do fakeImages é "m:" + os
+// bytes originais, e os originais dos testes são "img-<id>". verdicts dá o
+// veredito de cada id; sem entrada, a foto é uma ave sozinha comum. err faz
+// todas as chamadas falharem; batches guarda o tamanho de cada lote.
+type fakeCurator struct {
+	verdicts map[string]ingest.PhotoVerdict
+	err      error
+	delay    time.Duration
+	mu       sync.Mutex
+	batches  []int
+}
+
+func (f *fakeCurator) ClassifyPhotos(_ context.Context, photos []ingest.CuratorPhoto) ([]ingest.PhotoVerdict, string, error) {
+	time.Sleep(f.delay)
+	f.mu.Lock()
+	f.batches = append(f.batches, len(photos))
+	f.mu.Unlock()
+	if f.err != nil {
+		return nil, "", f.err
+	}
+	out := make([]ingest.PhotoVerdict, len(photos))
+	for i, p := range photos {
+		id := strings.TrimPrefix(string(p.Image), "m:img-")
+		v, ok := f.verdicts[id]
+		if !ok {
+			v = ingest.PhotoVerdict{Category: domain.PhotoSingleBird, LargestBirdArea: 0.1, Sharpness: 0.5, Confidence: 0.5}
+		}
+		v.PhotoID = p.PhotoID
+		out[i] = v
+	}
+	return out, "fake@1", nil
+}
+
+// fakeOverrides devolve o override configurado para qualquer espécie.
+type fakeOverrides struct{ o domain.PhotoOverride }
+
+func (f fakeOverrides) PhotoOverride(context.Context, string) (domain.PhotoOverride, error) {
+	return f.o, nil
 }

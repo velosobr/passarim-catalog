@@ -62,7 +62,9 @@ type JobQueue interface {
 // havia DAQUELE tipo para a espécie e grava o novo, numa transação.
 // Assim reprocessar nunca duplica nada.
 type MediaRepository interface {
-	ReplacePhotos(ctx context.Context, speciesID string, photos []domain.Photo) error
+	// ReplacePhotos troca as fotos da espécie e grava a linha do relatório
+	// de curadoria, as duas coisas numa transação só.
+	ReplacePhotos(ctx context.Context, speciesID string, photos []domain.Photo, report domain.CurationReport) error
 	ReplaceAudio(ctx context.Context, speciesID string, audio *domain.Audio) error
 	ReplaceClusters(ctx context.Context, speciesID string, clusters []domain.OccurrenceCluster) error
 }
@@ -192,4 +194,10 @@ type PhotoVerdict struct {
 // sem resposta no prazo: ErrCuratorUnavailable.
 type PhotoCurator interface {
 	ClassifyPhotos(ctx context.Context, photos []CuratorPhoto) ([]PhotoVerdict, string, error)
+}
+
+// OverrideSource lê a escolha manual de fotos (chave photos: do YAML, que o
+// seed grava). Sem escolha, devolve o override vazio.
+type OverrideSource interface {
+	PhotoOverride(ctx context.Context, speciesID string) (domain.PhotoOverride, error)
 }

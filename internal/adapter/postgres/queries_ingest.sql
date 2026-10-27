@@ -91,3 +91,9 @@ INSERT INTO occurrence_cluster (species_id, lat, lng, count, precision) VALUES (
 -- name: GetPhotoOverride :one
 -- A escolha manual de fotos da espécie, lida pelo worker antes da curadoria.
 SELECT primary_observation_id, primary_photo_id, excluded_ids FROM photo_override WHERE species_id = $1;
+
+-- name: InsertCurationReport :exec
+-- Uma linha do relatório de curadoria: o que o curador disse de cada
+-- candidata, a principal escolhida e as marcas para o dono conferir.
+INSERT INTO curation_report (species_id, model_version, primary_photo_id, candidates, flags)
+VALUES ($1, $2, $3, $4, $5);
