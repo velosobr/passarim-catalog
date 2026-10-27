@@ -38,7 +38,7 @@ type acceptedPhoto struct {
 // Run trata um job de fotos. O mapa seen descarta a mesma foto repetida
 // entre observações. Se nada útil sobra, as fotos da espécie são limpas.
 func (u IngestPhotos) Run(ctx context.Context, job Job) error {
-	// Pedimos o dobro: algumas candidatas serão descartadas (licença) ou falharão.
+	// Pedimos observações, e cada uma pode trazer até 3 fotos.
 	cands, err := u.Source.FindPhotos(ctx, job.ScientificName, u.MaxPhotos*2)
 	if err != nil {
 		return fmt.Errorf("buscar fotos: %w", err)

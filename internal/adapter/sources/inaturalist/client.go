@@ -9,6 +9,7 @@ package inaturalist
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -56,30 +57,90 @@ type taxaResponse struct {
 	} `json:"results"`
 }
 
-// observationsResponse é a parte usada da resposta de /v1/observations:
-// cada observação tem a página (uri) e as fotos, com id, URL, licença,
-// autoria e dimensões.
-type observationsResponse struct {
-	Results []struct {
-		URI    string `json:"uri"`
-		Photos []struct {
-			ID          int    `json:"id"`
-			URL         string `json:"url"`
-			LicenseCode string `json:"license_code"`
-			Attribution string `json:"attribution"`
-			Dimensions  *struct {
-				Width  int `json:"width"`
-				Height int `json:"height"`
-			} `json:"original_dimensions"`
-		} `json:"photos"`
-	} `json:"results"`
+// observation é a parte usada de uma observação: id, página, votos
+// (faves_count, o campo que o order_by=votes usa), anotações e fotos.
+type observation struct {
+	ID          int          `json:"id"`
+	URI         string       `json:"uri"`
+	FavesCount  int          `json:"faves_count"`
+	Annotations []annotation `json:"annotations"`
+	Photos      []photo      `json:"photos"`
 }
+
+// annotation é uma anotação da comunidade ("está morto", "é uma pena"...).
+// Os ids vêm de /v1/controlled_terms. vote_score é o saldo de votos: abaixo
+// de 0, a comunidade discordou da anotação.
+type annotation struct {
+	AttributeID int `json:"controlled_attribute_id"`
+	ValueID     int `json:"controlled_value_id"`
+	VoteScore   int `json:"vote_score"`
+}
+
+// photo é uma foto de uma observação: id, URL, licença, autoria e dimensões.
+type photo struct {
+	ID          int    `json:"id"`
+	URL         string `json:"url"`
+	LicenseCode string `json:"license_code"`
+	Attribution string `json:"attribution"`
+	Dimensions  *struct {
+		Width  int `json:"width"`
+		Height int `json:"height"`
+	} `json:"original_dimensions"`
+}
+
+// observationsResponse é a resposta de /v1/observations (e de /v1/observations/{id}).
+type observationsResponse struct {
+	Results []observation `json:"results"`
+}
+
+// photosPerObservation: quantas fotos de cada observação viram candidatas.
+// As primeiras costumam ser as melhores; a 4ª em diante quase sempre repete.
+const photosPerObservation = 3
+
+// rejectedAnnotations: termo -> valores que tiram a observação inteira.
+// A busca da API não filtra isso direito (sem term_id o parâmetro é
+// ignorado; com term_id ela também exclui quem não tem a anotação), por
+// isso o filtro é feito aqui, sobre as anotações da resposta.
+var rejectedAnnotations = map[int]map[int]bool{
+	17: {19: true},                                         // Alive or Dead: Dead
+	1:  {7: true},                                          // Life Stage: Egg
+	22: {23: true, 27: true, 28: true, 30: true, 35: true}, // Evidence of Presence: Feather, Bone, Molt, Egg, Construction
+}
+
+// rejectedByAnnotation diz se alguma anotação, com saldo de votos >= 0,
+// marca a observação como morto, ovo, pena, osso, muda ou ninho. A anotação
+// vale para a observação inteira; o curador continua olhando foto por foto.
+func rejectedByAnnotation(anns []annotation) bool {
+	for _, a := range anns {
+		if a.VoteScore >= 0 && rejectedAnnotations[a.AttributeID][a.ValueID] {
+			return true
+		}
+	}
+	return false
+}
+
+// candidate converte uma foto da observação em candidata. A API devolve a
+// miniatura quadrada; a versão grande tem o mesmo caminho com "large.".
+func candidate(o observation, p photo) ingest.PhotoCandidate {
+	c := ingest.PhotoCandidate{
+		SourceID: strconv.Itoa(p.ID), ObservationID: strconv.Itoa(o.ID), Votes: o.FavesCount,
+		URL:     strings.Replace(p.URL, "square.", "large.", 1),
+		PageURL: o.URI, License: p.LicenseCode, Author: p.Attribution,
+	}
+	if p.Dimensions != nil {
+		c.Width, c.Height = p.Dimensions.Width, p.Dimensions.Height
+	}
+	return c
+}
+
+// errNotFound: a API respondeu 404.
+var errNotFound = errors.New("inaturalist: não encontrado")
 
 // FindPhotos busca o táxon pelo nome científico e depois as observações dele
 // no Brasil: só "research grade" (identificação confirmada pela comunidade),
-// só com as licenças aceitas e ordenadas pelos votos. Fica com a primeira
-// foto de cada observação.
-func (c *Client) FindPhotos(ctx context.Context, scientificName string, max int) ([]ingest.PhotoCandidate, error) {
+// só com as licenças aceitas e ordenadas pelos votos. De cada observação que
+// passa no filtro de anotações, ficam até 3 fotos.
+func (c *Client) FindPhotos(ctx context.Context, scientificName string, observations int) ([]ingest.PhotoCandidate, error) {
 	var taxa taxaResponse
 	if err := c.getJSON(ctx, "/v1/taxa", url.Values{"q": {scientificName}, "rank": {"species"}, "per_page": {"1"}}, &taxa); err != nil {
 		return nil, err
@@ -96,29 +157,45 @@ func (c *Client) FindPhotos(ctx context.Context, scientificName string, max int)
 		"quality_grade": {"research"},
 		"photo_license": {licenses},
 		"order_by":      {"votes"},
-		"per_page":      {strconv.Itoa(max)},
+		"per_page":      {strconv.Itoa(observations)},
 	}, &obs)
 	if err != nil {
 		return nil, err
 	}
 	var out []ingest.PhotoCandidate
 	for _, o := range obs.Results {
-		if len(o.Photos) == 0 {
+		if rejectedByAnnotation(o.Annotations) {
 			continue
 		}
-		p := o.Photos[0]
-		cand := ingest.PhotoCandidate{
-			SourceID: strconv.Itoa(p.ID),
-			// A API devolve a miniatura quadrada; a versão grande tem o mesmo caminho.
-			URL:     strings.Replace(p.URL, "square.", "large.", 1),
-			PageURL: o.URI, License: p.LicenseCode, Author: p.Attribution,
+		for _, p := range o.Photos[:min(len(o.Photos), photosPerObservation)] {
+			out = append(out, candidate(o, p))
 		}
-		if p.Dimensions != nil {
-			cand.Width, cand.Height = p.Dimensions.Width, p.Dimensions.Height
-		}
-		out = append(out, cand)
 	}
 	return out, nil
+}
+
+// FindObservationPhoto busca a observação pelo id e procura a foto entre
+// TODAS as dela (não só as 3 primeiras): é a principal escolhida à mão no
+// YAML. A API não tem busca de foto pelo id. Observação inexistente (404)
+// ou foto fora dela: ok=false, sem erro. O filtro de anotações não vale
+// aqui: o dono escolheu essa foto olhando para ela.
+func (c *Client) FindObservationPhoto(ctx context.Context, observationID, photoID string) (ingest.PhotoCandidate, bool, error) {
+	var obs observationsResponse
+	err := c.getJSON(ctx, "/v1/observations/"+url.PathEscape(observationID), url.Values{}, &obs)
+	if errors.Is(err, errNotFound) {
+		return ingest.PhotoCandidate{}, false, nil
+	}
+	if err != nil {
+		return ingest.PhotoCandidate{}, false, err
+	}
+	for _, o := range obs.Results {
+		for _, p := range o.Photos {
+			if strconv.Itoa(p.ID) == photoID {
+				return candidate(o, p), true, nil
+			}
+		}
+	}
+	return ingest.PhotoCandidate{}, false, nil
 }
 
 // getJSON faz um GET, espera a vez no rate limiter e decodifica o JSON.
@@ -137,6 +214,9 @@ func (c *Client) getJSON(ctx context.Context, path string, q url.Values, out any
 		return fmt.Errorf("inaturalist: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode == http.StatusNotFound {
+		return errNotFound
+	}
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("inaturalist: status %d", resp.StatusCode)
 	}
