@@ -46,7 +46,8 @@ import (
 
 // batchTimeout é o tempo de uma rodada sem job de fotos. A rodada inteira
 // ganha também o prazo do job de fotos (cfg.PhotoJobTimeout), porque ele
-// pode ser o último a rodar: somar garante o prazo inteiro a ele.
+// pode ser o último a rodar: somar dá a ele o prazo inteiro desde que os
+// outros jobs da rodada (que não têm prazo próprio) terminem em 2 min.
 const batchTimeout = 2 * time.Minute
 
 // main escolhe o que fazer pelo primeiro argumento:

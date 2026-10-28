@@ -100,7 +100,9 @@ func (c *Client) ClassifyPhotos(ctx context.Context, photos []ingest.CuratorPhot
 // (gastar tentativa). status.Code lê o código gRPC do erro.
 //   - UNAVAILABLE: o curador não está no ar ou está subindo.
 //   - DEADLINE_EXCEEDED: não respondeu no prazo.
-//   - CANCELED: quem chamou desistiu (SIGTERM ou fim do prazo do job).
+//   - CANCELED: a chamada foi cancelada no meio (pelo contexto de quem
+//     chamou ou pelo lado do curador). O worker não cancela no SIGTERM
+//     (a rodada usa context.WithoutCancel), então na prática vem do servidor.
 func translate(err error) error {
 	switch status.Code(err) {
 	case codes.Unavailable, codes.DeadlineExceeded, codes.Canceled:

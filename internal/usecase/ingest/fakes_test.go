@@ -15,7 +15,6 @@ import (
 
 // Fakes simples e escritos à mão: guardam o que receberam para o teste conferir.
 
-// As três fontes falsas devolvem a lista e o erro configurados.
 // fakePhotoSource devolve as candidatas e o erro configurados. primary é a
 // resposta do FindObservationPhoto, por id da foto (ausente = não achou).
 type fakePhotoSource struct {
@@ -33,6 +32,7 @@ func (f fakePhotoSource) FindObservationPhoto(_ context.Context, _, photoID stri
 	return c, ok, nil
 }
 
+// fakeAudioSource e a fonte de avistamentos falsa devolvem a lista e o erro configurados.
 type fakeAudioSource struct {
 	cands []ingest.AudioCandidate
 	err   error

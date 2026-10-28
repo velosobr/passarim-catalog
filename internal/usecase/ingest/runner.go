@@ -47,7 +47,8 @@ func (r Runner) RunOnce(ctx context.Context) (int, error) {
 	for _, job := range jobs {
 		limit, limited := r.MaxPerRound[job.Source]
 		if ctx.Err() != nil || (limited && perSource[job.Source] >= limit) {
-			// O lote acabou (tempo ou shutdown), ou a fonte já rodou o seu
+			// O prazo da rodada acabou (o worker não cancela no SIGTERM, só no
+			// fim do prazo), ou a fonte já rodou o seu
 			// limite nesta rodada: devolvemos o job sem rodar, sem gastar
 			// tentativa e sem sujar a métrica de erros.
 			_ = r.finishCtx(ctx, func(c context.Context) error { return r.Queue.Release(c, job.ID) })
