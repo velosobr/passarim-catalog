@@ -13,9 +13,7 @@ import (
 // propósito: foram recentemente separadas taxonomicamente e a IUCN ainda
 // não publicou uma categoria própria para elas (vazio = sem categoria,
 // diferente de "DD - Data Deficient", que é uma categoria formal distinta).
-var notEvaluated = map[string]bool{
-	"troglodytes-musculus": true, // corruíra: separada de Troglodytes aedon, ainda não avaliada pela IUCN.
-}
+var notEvaluated = map[string]bool{}
 
 // TestCuratedContent carrega todos os YAML de content/species pelo mesmo
 // caminho do seed e confere as regras extras do conteúdo: pelo menos 30

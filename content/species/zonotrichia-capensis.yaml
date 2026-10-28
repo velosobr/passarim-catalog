@@ -1,0 +1,22 @@
+scientific_name: Zonotrichia capensis
+common_name_pt: Tico-tico
+family: Passerellidae
+size_cm: 15
+diet: Principalmente grãos, além de frutos; procura comida no chão ou perto de arbustos.
+conservation_status: LC
+biomes: [mata_atlantica, cerrado, caatinga, pantanal, pampa]
+states: [AP, PA, MA, BA, MT, ES, RJ, SP, PR, SC, RS]
+description: >
+  O tico-tico é um passarinho pardo, com listras pretas e cinzentas na
+  cabeça, um topetinho e uma mancha cor de ferrugem na nuca. Vive em campos,
+  cerrados, matas abertas, beiras de plantação e jardins de quase todo o
+  Brasil, menos nas florestas fechadas da Amazônia. Pula pelo chão catando
+  grãos e frutinhas, e o seu canto curto é um dos mais ouvidos no país.
+description_source_url: https://pt.wikipedia.org/wiki/Tico-tico
+facts:
+  - text: Tico-ticos de lugares diferentes cantam de jeitos diferentes, formando "sotaques" que dá para reconhecer.
+    source: https://pt.wikipedia.org/wiki/Tico-tico
+  - text: Deu nome ao choro "Tico-tico no Fubá", de Zequinha de Abreu, gravado por Carmen Miranda e tocado em filmes de Hollywood.
+    source: https://pt.wikipedia.org/wiki/Tico-tico
+  - text: Ele some das cidades muito urbanizadas, mas não é verdade que o pardal o expulse; o que pesa é a falta de áreas verdes.
+    source: https://pt.wikipedia.org/wiki/Tico-tico

@@ -1,0 +1,22 @@
+scientific_name: Opisthocomus hoazin
+common_name_pt: Cigana
+family: Opisthocomidae
+size_cm: 62
+diet: Folhas novas, flores e frutos de plantas da beira d'água, como aninga, embaúba e aguapé.
+conservation_status: LC
+biomes: [amazonia, pantanal]
+states: [AM, PA, MT]
+description: >
+  A cigana parece uma ave pré-histórica: tem o rosto azul, olhos vermelhos e
+  uma crista de penas arrepiadas na cabeça pequena. Vive em grupos nas
+  margens de rios, lagos e áreas alagadas da Amazônia e do alto rio
+  Paraguai, quase sempre empoleirada sobre a água. Come quase só folhas, algo
+  raro entre as aves, e voa pouco e mal.
+description_source_url: https://pt.wikipedia.org/wiki/Opisthocomus_hoazin
+facts:
+  - text: Os filhotes nascem com garras nas pontas das asas, que usam para escalar os galhos; as garras somem quando a ave cresce.
+    source: https://pt.wikipedia.org/wiki/Opisthocomus_hoazin
+  - text: Digere as folhas como uma vaca, com a ajuda de bactérias que vivem no papo, que pode ser até 50 vezes maior que o estômago.
+    source: https://www.wikiaves.com.br/wiki/cigana
+  - text: É a única espécie da sua família no mundo inteiro.
+    source: https://pt.wikipedia.org/wiki/Opisthocomus_hoazin
