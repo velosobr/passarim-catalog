@@ -68,13 +68,15 @@ type MediaRepository interface {
 
 // PhotoCandidate é uma foto encontrada na fonte (ainda não baixada).
 type PhotoCandidate struct {
-	SourceID string // id da foto na fonte; faz parte da chave no storage
-	URL      string // URL do arquivo em tamanho grande
-	PageURL  string // página da observação (crédito)
-	License  string // como a fonte informa (ex.: "cc-by-nc")
-	Author   string
-	Width    int
-	Height   int
+	SourceID      string // id da foto na fonte; faz parte da chave no storage
+	ObservationID string // id da observação; a galeria aceita até 2 fotos de cada
+	Votes         int    // votos da observação (faves); fotos da mesma observação empatam
+	URL           string // URL do arquivo em tamanho grande
+	PageURL       string // página da observação (crédito)
+	License       string // como a fonte informa (ex.: "cc-by-nc")
+	Author        string
+	Width         int
+	Height        int
 }
 
 // AudioCandidate é uma gravação encontrada na fonte.
@@ -92,7 +94,13 @@ type AudioCandidate struct {
 // As três fontes externas: fotos (iNaturalist), cantos (xeno-canto) e
 // avistamentos (GBIF). Cada uma busca pelo nome científico.
 type PhotoSource interface {
-	FindPhotos(ctx context.Context, scientificName string, max int) ([]PhotoCandidate, error)
+	// FindPhotos busca até `observations` observações da espécie e devolve
+	// até 3 fotos de cada, sem as observações anotadas como morto, ovo, pena,
+	// osso, muda ou ninho.
+	FindPhotos(ctx context.Context, scientificName string, observations int) ([]PhotoCandidate, error)
+	// FindObservationPhoto busca uma foto dentro de uma observação (a
+	// principal escolhida no YAML). ok=false: a observação ou a foto não existe.
+	FindObservationPhoto(ctx context.Context, observationID, photoID string) (PhotoCandidate, bool, error)
 }
 
 type AudioSource interface {
