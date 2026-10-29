@@ -309,3 +309,30 @@ func equal(a, b []string) bool {
 	}
 	return true
 }
+
+// O seed grava o override; o worker lê; tirar a chave do YAML apaga a linha.
+func TestUpsertCurated_PhotoOverride(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	ingestRepo := postgres.NewIngestRepository(pool)
+	s := sp("Turdus rufiventris", "Sabiá-laranjeira", nil)
+	s.PhotoOverride = &domain.PhotoOverride{PrimaryObservationID: "123456", PrimaryPhotoID: "219317614", ExcludedIDs: []string{"5"}}
+	seed(t, repo, s)
+
+	got, err := ingestRepo.PhotoOverride(ctx, s.ID)
+	if err != nil || got.PrimaryPhotoID != "219317614" || got.PrimaryObservationID != "123456" || !got.Excludes("5") {
+		t.Fatalf("override lido: %+v %v", got, err)
+	}
+
+	s.PhotoOverride = &domain.PhotoOverride{ExcludedIDs: []string{"9"}} // só exclusão
+	seed(t, repo, s)
+	if got, _ = ingestRepo.PhotoOverride(ctx, s.ID); got.HasPrimary() || !got.Excludes("9") || got.Excludes("5") {
+		t.Fatalf("o seed deveria trocar o override inteiro: %+v", got)
+	}
+
+	s.PhotoOverride = nil // a chave photos: saiu do YAML
+	seed(t, repo, s)
+	if got, err = ingestRepo.PhotoOverride(ctx, s.ID); err != nil || got.HasPrimary() || len(got.ExcludedIDs) != 0 {
+		t.Fatalf("sem a chave, o override deveria sumir: %+v %v", got, err)
+	}
+}

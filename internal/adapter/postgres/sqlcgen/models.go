@@ -57,6 +57,16 @@ func (ns NullBiome) Value() (driver.Value, error) {
 	return string(ns.Biome), nil
 }
 
+type CurationReport struct {
+	ID             int64
+	SpeciesID      string
+	RanAt          pgtype.Timestamptz
+	ModelVersion   string
+	PrimaryPhotoID pgtype.Text
+	Candidates     []byte
+	Flags          []string
+}
+
 type IngestionJob struct {
 	ID        int64
 	SpeciesID string
@@ -66,25 +76,30 @@ type IngestionJob struct {
 	NextRunAt pgtype.Timestamptz
 	LastError string
 	UpdatedAt pgtype.Timestamptz
+	Deferrals int32
 }
 
 type Medium struct {
-	ID         int64
-	SpeciesID  string
-	Kind       string
-	Position   int32
-	ThumbKey   string
-	MediumKey  string
-	LargeKey   string
-	AudioKey   string
-	Width      int32
-	Height     int32
-	DurationMs int32
-	Author     string
-	License    string
-	Source     string
-	SourceUrl  string
-	CreatedAt  pgtype.Timestamptz
+	ID            int64
+	SpeciesID     string
+	Kind          string
+	Position      int32
+	ThumbKey      string
+	MediumKey     string
+	LargeKey      string
+	AudioKey      string
+	Width         int32
+	Height        int32
+	DurationMs    int32
+	Author        string
+	License       string
+	Source        string
+	SourceUrl     string
+	CreatedAt     pgtype.Timestamptz
+	SourcePhotoID pgtype.Text
+	Category      pgtype.Text
+	Score         pgtype.Float4
+	ModelVersion  pgtype.Text
 }
 
 type OccurrenceCluster struct {
@@ -93,6 +108,13 @@ type OccurrenceCluster struct {
 	Lng       float64
 	Count     int32
 	Precision float64
+}
+
+type PhotoOverride struct {
+	SpeciesID            string
+	PrimaryObservationID pgtype.Text
+	PrimaryPhotoID       pgtype.Text
+	ExcludedIds          []string
 }
 
 type Species struct {

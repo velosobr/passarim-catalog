@@ -222,3 +222,24 @@ func TestJobQueue_ReleaseReturnsJobWithoutSpendingAttempt(t *testing.T) {
 		t.Fatalf("Release: status=%s attempts=%d", status, attempts)
 	}
 }
+
+// ReplacePhotos grava os campos da curadoria, e a leitura da espécie os devolve.
+func TestReplacePhotos_StoresCurationFields(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil))
+	q := postgres.NewIngestRepository(pool)
+	photo := domain.Photo{ThumbKey: "t", MediumKey: "m", LargeKey: "l", Width: 800, Height: 600,
+		Credit:        domain.Credit{Author: "A", License: "CC-BY", Source: "inaturalist", SourceURL: "https://x"},
+		SourcePhotoID: "219317614", Category: domain.PhotoSingleBird, Score: 0.75, ModelVersion: "m@2"}
+	if err := q.ReplacePhotos(ctx, "turdus-rufiventris", []domain.Photo{photo}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := repo.GetSpecies(ctx, "turdus-rufiventris")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Photos) != 1 || got.Photos[0] != photo {
+		t.Fatalf("foto lida diferente da gravada:\n got %+v\nwant %+v", got.Photos, photo)
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -18,23 +19,59 @@ import (
 // speciesFile espelha o formato do YAML. As tags `yaml:"..."` dizem qual
 // chave do arquivo vai para qual campo.
 type speciesFile struct {
-	ScientificName       string     `yaml:"scientific_name"`
-	CommonNamePt         string     `yaml:"common_name_pt"`
-	Family               string     `yaml:"family"`
-	SizeCm               *int       `yaml:"size_cm"`
-	Diet                 *string    `yaml:"diet"`
-	ConservationStatus   string     `yaml:"conservation_status"`
-	Biomes               []string   `yaml:"biomes"`
-	States               []string   `yaml:"states"`
-	Description          string     `yaml:"description"`
-	DescriptionSourceURL string     `yaml:"description_source_url"`
-	Facts                []factFile `yaml:"facts"`
+	ScientificName       string      `yaml:"scientific_name"`
+	CommonNamePt         string      `yaml:"common_name_pt"`
+	Family               string      `yaml:"family"`
+	SizeCm               *int        `yaml:"size_cm"`
+	Diet                 *string     `yaml:"diet"`
+	ConservationStatus   string      `yaml:"conservation_status"`
+	Biomes               []string    `yaml:"biomes"`
+	States               []string    `yaml:"states"`
+	Description          string      `yaml:"description"`
+	DescriptionSourceURL string      `yaml:"description_source_url"`
+	Facts                []factFile  `yaml:"facts"`
+	Photos               *photosFile `yaml:"photos"` // nil = sem a chave
 }
 
 // factFile é uma curiosidade no YAML.
 type factFile struct {
 	Text   string `yaml:"text"`
 	Source string `yaml:"source"`
+}
+
+// photosFile é a chave photos: do YAML, a escolha manual de fotos:
+//
+//	photos:
+//	  primary: { observation: 123456, photo: 219317614 }
+//	  exclude: [219317615, 219317616]
+//
+// Os ids são números no YAML (é como o iNaturalist os mostra) e viram texto no
+// domínio. O KnownFields(true) do decoder vale também aqui dentro.
+type photosFile struct {
+	Primary *primaryFile `yaml:"primary"`
+	Exclude []int64      `yaml:"exclude"`
+}
+
+// primaryFile é a foto principal: a observação e a foto dentro dela. As
+// duas são necessárias porque a API do iNaturalist não busca foto pelo id
+// sozinho, só a observação inteira.
+type primaryFile struct {
+	Observation int64 `yaml:"observation"`
+	Photo       int64 `yaml:"photo"`
+}
+
+// toDomain converte a chave do YAML no override do domínio. A validação
+// (ids positivos, principal fora das exclusões) fica no domínio.
+func (p photosFile) toDomain() *domain.PhotoOverride {
+	o := &domain.PhotoOverride{}
+	if p.Primary != nil {
+		o.PrimaryObservationID = strconv.FormatInt(p.Primary.Observation, 10)
+		o.PrimaryPhotoID = strconv.FormatInt(p.Primary.Photo, 10)
+	}
+	for _, id := range p.Exclude {
+		o.ExcludedIDs = append(o.ExcludedIDs, strconv.FormatInt(id, 10))
+	}
+	return o
 }
 
 // LoadDir lê todos os .yaml da pasta, valida cada um e devolve a lista
@@ -97,6 +134,9 @@ func loadFile(path string) (domain.Species, error) {
 	}
 	for _, fact := range f.Facts {
 		s.Facts = append(s.Facts, domain.Fact{Text: strings.TrimSpace(fact.Text), Source: strings.TrimSpace(fact.Source)})
+	}
+	if f.Photos != nil {
+		s.PhotoOverride = f.Photos.toDomain()
 	}
 	if err := s.Validate(); err != nil {
 		return domain.Species{}, err

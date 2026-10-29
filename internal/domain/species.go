@@ -162,6 +162,12 @@ type Photo struct {
 	ThumbKey, MediumKey, LargeKey string
 	Width, Height                 int
 	Credit                        Credit
+	// Campos da curadoria (frente A). Ficam vazios nas fotos gravadas antes
+	// da migração 0004, até a reingestão.
+	SourcePhotoID string        // id da foto no iNaturalist
+	Category      PhotoCategory // o que o curador viu na foto
+	Score         float64       // pontuação da escolha, de 0 a 1
+	ModelVersion  string        // versão do modelo que classificou
 }
 
 // Audio é a gravação do canto.
@@ -212,6 +218,8 @@ type Species struct {
 	Photos             []Photo
 	Audio              *Audio
 	Clusters           []OccurrenceCluster
+	// PhotoOverride é a escolha manual de fotos do YAML (nil = sem a chave photos:).
+	PhotoOverride *PhotoOverride
 }
 
 // Validate verifica as regras que toda espécie precisa cumprir antes
@@ -252,6 +260,11 @@ func (s Species) Validate() error {
 	for i, f := range s.Facts {
 		if strings.TrimSpace(f.Text) == "" || strings.TrimSpace(f.Source) == "" {
 			return invalid("facts", fmt.Sprintf("curiosidade %d precisa de texto e fonte", i+1))
+		}
+	}
+	if s.PhotoOverride != nil {
+		if err := s.PhotoOverride.Validate(); err != nil {
+			return err
 		}
 	}
 	return nil

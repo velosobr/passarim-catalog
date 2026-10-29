@@ -5,10 +5,13 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/velosobr/passarim-catalog/internal/adapter/postgres/sqlcgen"
@@ -115,7 +118,13 @@ func (r *IngestRepository) ReplacePhotos(ctx context.Context, speciesID string, 
 		rows[i] = sqlcgen.InsertMediaParams{SpeciesID: speciesID, Kind: "photo", Position: toInt32(i),
 			ThumbKey: p.ThumbKey, MediumKey: p.MediumKey, LargeKey: p.LargeKey,
 			Width: toInt32(p.Width), Height: toInt32(p.Height),
-			Author: p.Credit.Author, License: p.Credit.License, Source: p.Credit.Source, SourceUrl: p.Credit.SourceURL}
+			Author: p.Credit.Author, License: p.Credit.License, Source: p.Credit.Source, SourceUrl: p.Credit.SourceURL,
+			// pgtype.Text e pgtype.Float4 representam colunas que aceitam NULL:
+			// Valid=false grava NULL. Foto sem categoria (antes da curadoria) fica NULL.
+			SourcePhotoID: pgtype.Text{String: p.SourcePhotoID, Valid: p.SourcePhotoID != ""},
+			Category:      pgtype.Text{String: string(p.Category), Valid: p.Category != ""},
+			Score:         pgtype.Float4{Float32: float32(p.Score), Valid: p.Category != ""},
+			ModelVersion:  pgtype.Text{String: p.ModelVersion, Valid: p.ModelVersion != ""}}
 	}
 	return r.replaceMedia(ctx, speciesID, "photo", rows)
 }
@@ -149,4 +158,18 @@ func (r *IngestRepository) ReplaceClusters(ctx context.Context, speciesID string
 		}
 	}
 	return tx.Commit(ctx)
+}
+
+// PhotoOverride lê a escolha manual de fotos da espécie. Sem linha (o YAML
+// não tem a chave photos:), devolve o override vazio, sem erro.
+func (r *IngestRepository) PhotoOverride(ctx context.Context, speciesID string) (domain.PhotoOverride, error) {
+	row, err := r.q.GetPhotoOverride(ctx, speciesID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.PhotoOverride{}, nil
+	}
+	if err != nil {
+		return domain.PhotoOverride{}, fmt.Errorf("ler override: %w", err)
+	}
+	return domain.PhotoOverride{PrimaryObservationID: row.PrimaryObservationID.String,
+		PrimaryPhotoID: row.PrimaryPhotoID.String, ExcludedIDs: row.ExcludedIds}, nil
 }

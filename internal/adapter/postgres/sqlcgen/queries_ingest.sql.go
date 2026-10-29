@@ -7,6 +7,8 @@ package sqlcgen
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const claimDueJobs = `-- name: ClaimDueJobs :many
@@ -150,6 +152,24 @@ func (q *Queries) FailJob(ctx context.Context, arg FailJobParams) error {
 	return err
 }
 
+const getPhotoOverride = `-- name: GetPhotoOverride :one
+SELECT primary_observation_id, primary_photo_id, excluded_ids FROM photo_override WHERE species_id = $1
+`
+
+type GetPhotoOverrideRow struct {
+	PrimaryObservationID pgtype.Text
+	PrimaryPhotoID       pgtype.Text
+	ExcludedIds          []string
+}
+
+// A escolha manual de fotos da espécie, lida pelo worker antes da curadoria.
+func (q *Queries) GetPhotoOverride(ctx context.Context, speciesID string) (GetPhotoOverrideRow, error) {
+	row := q.db.QueryRow(ctx, getPhotoOverride, speciesID)
+	var i GetPhotoOverrideRow
+	err := row.Scan(&i.PrimaryObservationID, &i.PrimaryPhotoID, &i.ExcludedIds)
+	return i, err
+}
+
 const insertCluster = `-- name: InsertCluster :exec
 INSERT INTO occurrence_cluster (species_id, lat, lng, count, precision) VALUES ($1, $2, $3, $4, $5)
 `
@@ -176,28 +196,34 @@ func (q *Queries) InsertCluster(ctx context.Context, arg InsertClusterParams) er
 
 const insertMedia = `-- name: InsertMedia :exec
 INSERT INTO media (species_id, kind, position, thumb_key, medium_key, large_key, audio_key,
-                   width, height, duration_ms, author, license, source, source_url)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                   width, height, duration_ms, author, license, source, source_url,
+                   source_photo_id, category, score, model_version)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 `
 
 type InsertMediaParams struct {
-	SpeciesID  string
-	Kind       string
-	Position   int32
-	ThumbKey   string
-	MediumKey  string
-	LargeKey   string
-	AudioKey   string
-	Width      int32
-	Height     int32
-	DurationMs int32
-	Author     string
-	License    string
-	Source     string
-	SourceUrl  string
+	SpeciesID     string
+	Kind          string
+	Position      int32
+	ThumbKey      string
+	MediumKey     string
+	LargeKey      string
+	AudioKey      string
+	Width         int32
+	Height        int32
+	DurationMs    int32
+	Author        string
+	License       string
+	Source        string
+	SourceUrl     string
+	SourcePhotoID pgtype.Text
+	Category      pgtype.Text
+	Score         pgtype.Float4
+	ModelVersion  pgtype.Text
 }
 
-// Grava uma foto ou um canto, com o crédito.
+// Grava uma foto ou um canto, com o crédito. Os 4 últimos campos são da
+// curadoria (só fotos; NULL no canto).
 func (q *Queries) InsertMedia(ctx context.Context, arg InsertMediaParams) error {
 	_, err := q.db.Exec(ctx, insertMedia,
 		arg.SpeciesID,
@@ -214,6 +240,10 @@ func (q *Queries) InsertMedia(ctx context.Context, arg InsertMediaParams) error 
 		arg.License,
 		arg.Source,
 		arg.SourceUrl,
+		arg.SourcePhotoID,
+		arg.Category,
+		arg.Score,
+		arg.ModelVersion,
 	)
 	return err
 }

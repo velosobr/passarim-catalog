@@ -10,7 +10,7 @@ linters:
     misspell:
       # O código é comentado em português; estas palavras são portuguesas
       # legítimas que o misspell confunde com erros de inglês.
-      ignore-rules: [variantes, argumentos, problemas, exponencial, convers, candidatas, autor, persistente, eles, programas]
+      ignore-rules: [variantes, argumentos, problemas, exponencial, convers, candidatas, autor, persistente, eles, programas, comando]
   exclusions:
     paths:
       - internal/adapter/postgres/sqlcgen   # código gerado

@@ -95,3 +95,17 @@ DELETE FROM species_state WHERE species_id = $1;
 -- name: InsertState :exec
 -- Grava uma UF da espécie.
 INSERT INTO species_state (species_id, uf) VALUES ($1, $2);
+
+-- name: UpsertPhotoOverride :exec
+-- Grava a escolha manual de fotos do YAML (chave photos:). EXCLUDED.x é o
+-- valor que a linha nova traria: no conflito, a linha inteira é trocada.
+INSERT INTO photo_override (species_id, primary_observation_id, primary_photo_id, excluded_ids)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (species_id) DO UPDATE SET
+    primary_observation_id = EXCLUDED.primary_observation_id,
+    primary_photo_id = EXCLUDED.primary_photo_id,
+    excluded_ids = EXCLUDED.excluded_ids;
+
+-- name: DeletePhotoOverride :exec
+-- O YAML deixou de ter a chave photos: a escolha manual some.
+DELETE FROM photo_override WHERE species_id = $1;

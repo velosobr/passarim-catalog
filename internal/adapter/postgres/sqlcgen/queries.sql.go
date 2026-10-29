@@ -92,6 +92,16 @@ func (q *Queries) DeleteFacts(ctx context.Context, speciesID string) error {
 	return err
 }
 
+const deletePhotoOverride = `-- name: DeletePhotoOverride :exec
+DELETE FROM photo_override WHERE species_id = $1
+`
+
+// O YAML deixou de ter a chave photos: a escolha manual some.
+func (q *Queries) DeletePhotoOverride(ctx context.Context, speciesID string) error {
+	_, err := q.db.Exec(ctx, deletePhotoOverride, speciesID)
+	return err
+}
+
 const deleteStates = `-- name: DeleteStates :exec
 DELETE FROM species_state WHERE species_id = $1
 `
@@ -278,7 +288,7 @@ func (q *Queries) ListFacts(ctx context.Context, speciesID string) ([]ListFactsR
 }
 
 const listMedia = `-- name: ListMedia :many
-SELECT id, species_id, kind, position, thumb_key, medium_key, large_key, audio_key, width, height, duration_ms, author, license, source, source_url, created_at FROM media WHERE species_id = $1 ORDER BY kind, position
+SELECT id, species_id, kind, position, thumb_key, medium_key, large_key, audio_key, width, height, duration_ms, author, license, source, source_url, created_at, source_photo_id, category, score, model_version FROM media WHERE species_id = $1 ORDER BY kind, position
 `
 
 // Fotos e canto da espécie, em ordem de tipo e de posição (a foto 0 é a
@@ -309,6 +319,10 @@ func (q *Queries) ListMedia(ctx context.Context, speciesID string) ([]Medium, er
 			&i.Source,
 			&i.SourceUrl,
 			&i.CreatedAt,
+			&i.SourcePhotoID,
+			&i.Category,
+			&i.Score,
+			&i.ModelVersion,
 		); err != nil {
 			return nil, err
 		}
@@ -419,6 +433,34 @@ func (q *Queries) ListStates(ctx context.Context, speciesID string) ([]string, e
 		return nil, err
 	}
 	return items, nil
+}
+
+const upsertPhotoOverride = `-- name: UpsertPhotoOverride :exec
+INSERT INTO photo_override (species_id, primary_observation_id, primary_photo_id, excluded_ids)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (species_id) DO UPDATE SET
+    primary_observation_id = EXCLUDED.primary_observation_id,
+    primary_photo_id = EXCLUDED.primary_photo_id,
+    excluded_ids = EXCLUDED.excluded_ids
+`
+
+type UpsertPhotoOverrideParams struct {
+	SpeciesID            string
+	PrimaryObservationID pgtype.Text
+	PrimaryPhotoID       pgtype.Text
+	ExcludedIds          []string
+}
+
+// Grava a escolha manual de fotos do YAML (chave photos:). EXCLUDED.x é o
+// valor que a linha nova traria: no conflito, a linha inteira é trocada.
+func (q *Queries) UpsertPhotoOverride(ctx context.Context, arg UpsertPhotoOverrideParams) error {
+	_, err := q.db.Exec(ctx, upsertPhotoOverride,
+		arg.SpeciesID,
+		arg.PrimaryObservationID,
+		arg.PrimaryPhotoID,
+		arg.ExcludedIds,
+	)
+	return err
 }
 
 const upsertSpecies = `-- name: UpsertSpecies :exec

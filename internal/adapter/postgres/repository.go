@@ -141,7 +141,10 @@ func (r *Repository) GetSpecies(ctx context.Context, id string) (domain.Species,
 		switch m.Kind {
 		case "photo":
 			s.Photos = append(s.Photos, domain.Photo{ThumbKey: m.ThumbKey, MediumKey: m.MediumKey, LargeKey: m.LargeKey,
-				Width: int(m.Width), Height: int(m.Height), Credit: credit})
+				Width: int(m.Width), Height: int(m.Height), Credit: credit,
+				// .String de um pgtype.Text NULL é "", e .Float32 de um NULL é 0.
+				SourcePhotoID: m.SourcePhotoID.String, Category: domain.PhotoCategory(m.Category.String),
+				Score: float64(m.Score.Float32), ModelVersion: m.ModelVersion.String})
 		case "audio":
 			if s.Audio == nil { // a primeira gravação (menor position) é a escolhida
 				s.Audio = &domain.Audio{Key: m.AudioKey, DurationMs: int(m.DurationMs), Credit: credit}
@@ -240,6 +243,24 @@ func (r *Repository) UpsertCurated(ctx context.Context, s domain.Species) error 
 	}
 	for _, uf := range s.States {
 		if err := q.InsertState(ctx, sqlcgen.InsertStateParams{SpeciesID: s.ID, Uf: uf}); err != nil {
+			return err
+		}
+	}
+	// O override de fotos também é conteúdo curado: segue o YAML, inclusive
+	// sumindo quando a chave photos: sai do arquivo.
+	if s.PhotoOverride == nil {
+		if err := q.DeletePhotoOverride(ctx, s.ID); err != nil {
+			return err
+		}
+	} else {
+		o := s.PhotoOverride
+		// A coluna é NOT NULL: uma lista nil viraria NULL no pgx, então
+		// mandamos uma lista vazia de verdade.
+		excluded := append([]string{}, o.ExcludedIDs...)
+		if err := q.UpsertPhotoOverride(ctx, sqlcgen.UpsertPhotoOverrideParams{SpeciesID: s.ID,
+			PrimaryObservationID: pgtype.Text{String: o.PrimaryObservationID, Valid: o.HasPrimary()},
+			PrimaryPhotoID:       pgtype.Text{String: o.PrimaryPhotoID, Valid: o.HasPrimary()},
+			ExcludedIds:          excluded}); err != nil {
 			return err
 		}
 	}
