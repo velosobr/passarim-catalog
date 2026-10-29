@@ -63,3 +63,25 @@ func TestLoadWorker_ErrorNeverContainsSecretValues(t *testing.T) {
 		t.Fatalf("erro não pode conter segredos: %v", err)
 	}
 }
+
+// As variáveis da curadoria: padrões e valores inválidos.
+func TestLoadWorker_Curation(t *testing.T) {
+	c, err := config.LoadWorker(env(required()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.CuratorAddr != "photo-curator:50061" || c.PhotoJobTimeout != 6*time.Minute || c.LowConfidence != config.DefaultLowConfidence {
+		t.Fatalf("padrões: %+v", c)
+	}
+	for _, bad := range []map[string]string{
+		{"PHOTO_JOB_TIMEOUT": "0s"}, {"LOW_CONFIDENCE": "1.5"}, {"LOW_CONFIDENCE": "0"}, {"LOW_CONFIDENCE": "abc"},
+	} {
+		m := required()
+		for k, v := range bad {
+			m[k] = v
+		}
+		if _, err := config.LoadWorker(env(m)); err == nil {
+			t.Errorf("deveria recusar %v", bad)
+		}
+	}
+}

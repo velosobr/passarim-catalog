@@ -11,6 +11,7 @@ package ingest
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/velosobr/passarim-catalog/internal/domain"
@@ -35,6 +36,7 @@ type Job struct {
 	ScientificName string
 	Source         Source
 	Attempts       int
+	Deferrals      int // quantas vezes foi adiado (curador fora do ar)
 }
 
 // JobQueue é a fila persistente (tabela ingestion_job).
@@ -55,13 +57,18 @@ type JobQueue interface {
 	// Fail registra o erro e conta uma tentativa. Com giveUp, status = failed;
 	// senão volta para pending com next_run_at = agora + retryIn.
 	Fail(ctx context.Context, jobID int64, cause string, retryIn time.Duration, giveUp bool) error
+	// Defer devolve o job à fila para daqui a retryIn SEM contar tentativa
+	// (o problema foi nosso, não da espécie) e soma um adiamento.
+	Defer(ctx context.Context, jobID int64, cause string, retryIn time.Duration) error
 }
 
 // MediaRepository grava o resultado da ingestão. "Replace" = apaga o que
 // havia DAQUELE tipo para a espécie e grava o novo, numa transação.
 // Assim reprocessar nunca duplica nada.
 type MediaRepository interface {
-	ReplacePhotos(ctx context.Context, speciesID string, photos []domain.Photo) error
+	// ReplacePhotos troca as fotos da espécie e grava a linha do relatório
+	// de curadoria, as duas coisas numa transação só.
+	ReplacePhotos(ctx context.Context, speciesID string, photos []domain.Photo, report domain.CurationReport) error
 	ReplaceAudio(ctx context.Context, speciesID string, audio *domain.Audio) error
 	ReplaceClusters(ctx context.Context, speciesID string, clusters []domain.OccurrenceCluster) error
 }
@@ -131,9 +138,16 @@ type PhotoVariants struct {
 	Width, Height        int // dimensões da versão Large
 }
 
-// ImageProcessor gera as três versões WebP de uma foto original.
+// ImageProcessor gera as versões WebP de uma foto original, em dois passos:
+// a medium de todas as candidatas (é ela que vai ao curador) e a thumb e a
+// large só das escolhidas. Assim as ~40 candidatas não custam 3 conversões
+// cada.
 type ImageProcessor interface {
-	Process(ctx context.Context, original []byte) (PhotoVariants, error)
+	// Medium gera só a variante de 800 px.
+	Medium(ctx context.Context, original []byte) ([]byte, error)
+	// ThumbAndLarge gera a thumb (320 px) e a large (1600 px), com as
+	// dimensões da large. O campo Medium volta vazio.
+	ThumbAndLarge(ctx context.Context, original []byte) (PhotoVariants, error)
 }
 
 // AudioProcessor converte gravações para o formato do app.
@@ -149,4 +163,45 @@ type MediaStore interface {
 	List(ctx context.Context, prefix string) ([]string, error)
 	// Delete apaga as chaves dadas (chave inexistente não é erro).
 	Delete(ctx context.Context, keys []string) error
+}
+
+// ErrCuratorUnavailable: o curador está fora do ar, subindo ou não
+// respondeu no prazo. O job de fotos devolve este erro ANTES de trocar
+// qualquer foto, e o Runner adia o job sem gastar tentativa (é uma falha
+// do nosso lado, não da espécie).
+var ErrCuratorUnavailable = errors.New("curador indisponível")
+
+// MaxCuratorBatch é o maior lote que o curador aceita (o contrato diz 8).
+const MaxCuratorBatch = 8
+
+// CuratorPhoto é uma foto mandada ao curador: o id (ecoado na resposta) e
+// os bytes WebP da variante medium.
+type CuratorPhoto struct {
+	PhotoID string
+	Image   []byte
+}
+
+// PhotoVerdict é o que o curador diz de uma foto (espelha o PhotoVerdict do
+// curator.proto, sem tipos do gRPC).
+type PhotoVerdict struct {
+	PhotoID         string
+	Category        domain.PhotoCategory
+	BirdCount       int
+	LargestBirdArea float64 // fração da foto ocupada pela maior ave, de 0 a 1
+	LargestBirdCut  bool    // a maior ave encosta na borda
+	Sharpness       float64 // de 0 a 1
+	Confidence      float64 // de 0 a 1
+}
+
+// PhotoCurator classifica até MaxCuratorBatch fotos por chamada. Devolve os
+// vereditos na ordem do pedido e a versão do modelo. Curador fora do ar ou
+// sem resposta no prazo: ErrCuratorUnavailable.
+type PhotoCurator interface {
+	ClassifyPhotos(ctx context.Context, photos []CuratorPhoto) ([]PhotoVerdict, string, error)
+}
+
+// OverrideSource lê a escolha manual de fotos (chave photos: do YAML, que o
+// seed grava). Sem escolha, devolve o override vazio.
+type OverrideSource interface {
+	PhotoOverride(ctx context.Context, speciesID string) (domain.PhotoOverride, error)
 }

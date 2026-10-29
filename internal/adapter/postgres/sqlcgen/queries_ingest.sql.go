@@ -20,7 +20,7 @@ WHERE j.species_id = s.id AND j.id IN (
     ORDER BY next_run_at
     LIMIT $1
     FOR UPDATE SKIP LOCKED)
-RETURNING j.id, j.species_id, s.scientific_name, j.source, j.attempts
+RETURNING j.id, j.species_id, s.scientific_name, j.source, j.attempts, j.deferrals
 `
 
 type ClaimDueJobsRow struct {
@@ -29,6 +29,7 @@ type ClaimDueJobsRow struct {
 	ScientificName string
 	Source         string
 	Attempts       int32
+	Deferrals      int32
 }
 
 // FOR UPDATE trava as linhas escolhidas até o fim da transação; SKIP LOCKED
@@ -51,6 +52,7 @@ func (q *Queries) ClaimDueJobs(ctx context.Context, lim int32) ([]ClaimDueJobsRo
 			&i.ScientificName,
 			&i.Source,
 			&i.Attempts,
+			&i.Deferrals,
 		); err != nil {
 			return nil, err
 		}
@@ -63,10 +65,10 @@ func (q *Queries) ClaimDueJobs(ctx context.Context, lim int32) ([]ClaimDueJobsRo
 }
 
 const completeJob = `-- name: CompleteJob :exec
-UPDATE ingestion_job SET status = 'done', last_error = '', updated_at = now() WHERE id = $1
+UPDATE ingestion_job SET status = 'done', last_error = '', deferrals = 0, updated_at = now() WHERE id = $1
 `
 
-// Marca o job como concluído e limpa o último erro.
+// Marca o job como concluído, limpa o último erro e zera os adiamentos.
 func (q *Queries) CompleteJob(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, completeJob, id)
 	return err
@@ -82,6 +84,30 @@ func (q *Queries) CountPendingJobs(ctx context.Context) (int32, error) {
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const deferJob = `-- name: DeferJob :exec
+UPDATE ingestion_job SET
+    status = 'pending',
+    deferrals = deferrals + 1,
+    last_error = $1,
+    next_run_at = now() + make_interval(secs => $2::double precision),
+    updated_at = now()
+WHERE id = $3
+`
+
+type DeferJobParams struct {
+	LastError   string
+	RetryInSecs float64
+	ID          int64
+}
+
+// Adia o job porque o curador está fora do ar: volta para 'pending' daqui a
+// retry_in_secs segundos, SEM somar tentativa (attempts) e somando um
+// adiamento (deferrals), que é o que faz a espera crescer.
+func (q *Queries) DeferJob(ctx context.Context, arg DeferJobParams) error {
+	_, err := q.db.Exec(ctx, deferJob, arg.LastError, arg.RetryInSecs, arg.ID)
+	return err
 }
 
 const deleteClusters = `-- name: DeleteClusters :exec
@@ -194,6 +220,32 @@ func (q *Queries) InsertCluster(ctx context.Context, arg InsertClusterParams) er
 	return err
 }
 
+const insertCurationReport = `-- name: InsertCurationReport :exec
+INSERT INTO curation_report (species_id, model_version, primary_photo_id, candidates, flags)
+VALUES ($1, $2, $3, $4, $5)
+`
+
+type InsertCurationReportParams struct {
+	SpeciesID      string
+	ModelVersion   string
+	PrimaryPhotoID pgtype.Text
+	Candidates     []byte
+	Flags          []string
+}
+
+// Uma linha do relatório de curadoria: o que o curador disse de cada
+// candidata, a principal escolhida e as marcas para o dono conferir.
+func (q *Queries) InsertCurationReport(ctx context.Context, arg InsertCurationReportParams) error {
+	_, err := q.db.Exec(ctx, insertCurationReport,
+		arg.SpeciesID,
+		arg.ModelVersion,
+		arg.PrimaryPhotoID,
+		arg.Candidates,
+		arg.Flags,
+	)
+	return err
+}
+
 const insertMedia = `-- name: InsertMedia :exec
 INSERT INTO media (species_id, kind, position, thumb_key, medium_key, large_key, audio_key,
                    width, height, duration_ms, author, license, source, source_url,
@@ -248,6 +300,54 @@ func (q *Queries) InsertMedia(ctx context.Context, arg InsertMediaParams) error 
 	return err
 }
 
+const latestCurationReports = `-- name: LatestCurationReports :many
+SELECT DISTINCT ON (r.species_id) r.species_id, s.common_name_pt, r.ran_at, r.model_version,
+       r.primary_photo_id, r.candidates, r.flags
+FROM curation_report r JOIN species s ON s.id = r.species_id
+ORDER BY r.species_id, r.ran_at DESC, r.id DESC
+`
+
+type LatestCurationReportsRow struct {
+	SpeciesID      string
+	CommonNamePt   string
+	RanAt          pgtype.Timestamptz
+	ModelVersion   string
+	PrimaryPhotoID pgtype.Text
+	Candidates     []byte
+	Flags          []string
+}
+
+// A última execução da curadoria de cada espécie. DISTINCT ON (species_id)
+// fica com a PRIMEIRA linha de cada espécie na ordem do ORDER BY, ou seja,
+// a mais recente; o id desempata duas execuções no mesmo instante.
+func (q *Queries) LatestCurationReports(ctx context.Context) ([]LatestCurationReportsRow, error) {
+	rows, err := q.db.Query(ctx, latestCurationReports)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LatestCurationReportsRow
+	for rows.Next() {
+		var i LatestCurationReportsRow
+		if err := rows.Scan(
+			&i.SpeciesID,
+			&i.CommonNamePt,
+			&i.RanAt,
+			&i.ModelVersion,
+			&i.PrimaryPhotoID,
+			&i.Candidates,
+			&i.Flags,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const releaseJob = `-- name: ReleaseJob :exec
 UPDATE ingestion_job SET status = 'pending', updated_at = now() WHERE id = $1 AND status = 'running'
 `
@@ -259,7 +359,7 @@ func (q *Queries) ReleaseJob(ctx context.Context, id int64) error {
 }
 
 const reopenFailedJobs = `-- name: ReopenFailedJobs :exec
-UPDATE ingestion_job SET status = 'pending', attempts = 0, next_run_at = now(), updated_at = now()
+UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, next_run_at = now(), updated_at = now()
 WHERE status = 'failed' AND updated_at < now() - interval '24 hours'
 `
 
@@ -268,6 +368,39 @@ WHERE status = 'failed' AND updated_at < now() - interval '24 hours'
 func (q *Queries) ReopenFailedJobs(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, reopenFailedJobs)
 	return err
+}
+
+const requeuePhotoJobs = `-- name: RequeuePhotoJobs :many
+UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, last_error = '',
+    next_run_at = now(), updated_at = now()
+WHERE source = 'inaturalist' AND status <> 'running'
+  AND (cardinality($1::text[]) = 0 OR species_id = ANY($1::text[]))
+RETURNING species_id
+`
+
+// Comando "worker requeue": devolve à fila, agora, os jobs de fotos das
+// espécies dadas (lista vazia = todas), sem esperar os 30 dias do refresh.
+// Zera tentativas e adiamentos. Não mexe em job 'running': outro worker
+// está com ele, e reenfileirar faria dois pegarem a mesma espécie.
+// cardinality(lista) é o tamanho da lista; "= ANY(lista)" é "está na lista".
+func (q *Queries) RequeuePhotoJobs(ctx context.Context, speciesIds []string) ([]string, error) {
+	rows, err := q.db.Query(ctx, requeuePhotoJobs, speciesIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var species_id string
+		if err := rows.Scan(&species_id); err != nil {
+			return nil, err
+		}
+		items = append(items, species_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const requeueStuckJobs = `-- name: RequeueStuckJobs :exec
@@ -289,7 +422,7 @@ func (q *Queries) RequeueStuckJobs(ctx context.Context) error {
 }
 
 const rescheduleStaleJobs = `-- name: RescheduleStaleJobs :exec
-UPDATE ingestion_job SET status = 'pending', attempts = 0, next_run_at = now(), updated_at = now()
+UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, next_run_at = now(), updated_at = now()
 WHERE status = 'done' AND updated_at < now() - make_interval(secs => $1::double precision)
 `
 

@@ -16,6 +16,8 @@ import (
 // aceita licenças NC, rodadas a cada 1 min com 5 jobs, métricas em :9092,
 // "ffmpeg" no PATH e um User-Agent que identifica o projeto. Mandar um
 // User-Agent com contato é uma regra de boa educação das APIs públicas.
+// Curadoria: o curador em photo-curator:50061, prazo de 6 min por job de
+// fotos e LOW_CONFIDENCE calibrado no conjunto de referência do curador.
 type WorkerConfig struct {
 	DatabaseURL     string
 	S3Endpoint      string
@@ -30,7 +32,16 @@ type WorkerConfig struct {
 	MetricsAddr     string
 	FFmpegPath      string
 	UserAgent       string
+	CuratorAddr     string        // endereço gRPC do passarim-photo-curator
+	PhotoJobTimeout time.Duration // prazo de um job de fotos
+	LowConfidence   float64       // abaixo disso, a principal é marcada no relatório
 }
+
+// DefaultLowConfidence é o percentil 20 da confiança das fotos que o curador
+// chama de ave sozinha na metade de calibração do conjunto de referência
+// (scripts/low_confidence.py do passarim-photo-curator), medido com
+// rtdetr-r50vd+openclip-b32@2. Recalcule quando o MODEL_VERSION do curador mudar.
+const DefaultLowConfidence = 0.872
 
 // LoadWorker lê o ambiente. Os erros das obrigatórias citam só o NOME da
 // variável, nunca o valor: segredos não podem vazar para logs. Só os
@@ -46,6 +57,7 @@ func LoadWorker(getenv func(string) string) (WorkerConfig, error) {
 		MetricsAddr:     or(getenv("METRICS_ADDR"), ":9092"),
 		FFmpegPath:      or(getenv("FFMPEG_PATH"), "ffmpeg"),
 		UserAgent:       or(getenv("USER_AGENT"), "Passarim/0.1 (+https://github.com/velosobr/passarim-docs)"),
+		CuratorAddr:     or(getenv("CURATOR_ADDR"), "photo-curator:50061"),
 	}
 	for name, v := range map[string]string{
 		"DATABASE_URL": c.DatabaseURL, "S3_ENDPOINT": c.S3Endpoint, "S3_ACCESS_KEY": c.S3AccessKey,
@@ -69,6 +81,16 @@ func LoadWorker(getenv func(string) string) (WorkerConfig, error) {
 		c.BatchSize = 5
 	} else if c.BatchSize, err = strconv.Atoi(v); err != nil || c.BatchSize < 1 {
 		return c, errors.New("WORKER_BATCH_SIZE: esperava um inteiro positivo")
+	}
+	if c.PhotoJobTimeout, err = durationVar(getenv, "PHOTO_JOB_TIMEOUT", 6*time.Minute); err != nil {
+		return c, err
+	}
+	c.LowConfidence = DefaultLowConfidence
+	if v := getenv("LOW_CONFIDENCE"); v != "" {
+		// Uma probabilidade: estritamente entre 0 e 1 (0 não marcaria nada; 1 marcaria tudo).
+		if c.LowConfidence, err = strconv.ParseFloat(v, 64); err != nil || c.LowConfidence <= 0 || c.LowConfidence >= 1 {
+			return c, errors.New("LOW_CONFIDENCE: esperava um número entre 0 e 1, ex.: 0.8")
+		}
 	}
 	return c, nil
 }

@@ -5,6 +5,7 @@ package ingest
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -24,6 +25,11 @@ type Runner struct {
 	MaxAttempts  int
 	RefreshAfter time.Duration
 	Observe      func(source Source, ok bool) // métrica; opcional
+	// MaxPerRound limita quantos jobs de uma fonte rodam por rodada. O job de
+	// fotos é longo (40 downloads, o curador, o ffmpeg): com 1 por rodada,
+	// ele não disputa o prazo da rodada com outro igual. Os que passam do
+	// limite voltam para a fila sem gastar tentativa e saem na rodada seguinte.
+	MaxPerRound map[Source]int
 }
 
 // RunOnce enfileira o que falta, pega um lote e executa. Devolve quantos jobs
@@ -37,21 +43,27 @@ func (r Runner) RunOnce(ctx context.Context) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("pegar jobs: %w", err)
 	}
+	perSource := map[Source]int{}
 	for _, job := range jobs {
-		if ctx.Err() != nil {
-			// O lote acabou (tempo ou shutdown): devolvemos o job sem rodar,
-			// sem gastar tentativa e sem sujar a métrica de erros.
+		limit, limited := r.MaxPerRound[job.Source]
+		if ctx.Err() != nil || (limited && perSource[job.Source] >= limit) {
+			// O prazo da rodada acabou (o worker não cancela no SIGTERM, só no
+			// fim do prazo), ou a fonte já rodou o seu
+			// limite nesta rodada: devolvemos o job sem rodar, sem gastar
+			// tentativa e sem sujar a métrica de erros.
 			_ = r.finishCtx(ctx, func(c context.Context) error { return r.Queue.Release(c, job.ID) })
 			continue
 		}
+		perSource[job.Source]++
 		r.runJob(ctx, job)
 	}
 	return len(jobs), nil
 }
 
-// runJob executa um job e grava o resultado na fila. Na falha, a próxima
-// tentativa é agendada com backoff exponencial; depois de MaxAttempts (ou
-// se a fonte não tem handler), o job desiste.
+// runJob executa um job e grava o resultado na fila. Curador indisponível
+// adia o job (sem gastar tentativa). Na falha, a próxima tentativa é
+// agendada com backoff exponencial; depois de MaxAttempts (ou se a fonte não
+// tem handler), o job desiste.
 func (r Runner) runJob(ctx context.Context, job Job) {
 	var err error
 	if h, ok := r.Handlers[job.Source]; ok {
@@ -64,6 +76,14 @@ func (r Runner) runJob(ctx context.Context, job Job) {
 	}
 	if err == nil {
 		_ = r.finishCtx(ctx, func(c context.Context) error { return r.Queue.Complete(c, job.ID) })
+		return
+	}
+	if errors.Is(err, ErrCuratorUnavailable) {
+		// Curador fora do ar: adiar, não falhar. A espera cresce com os
+		// adiamentos (1, 2, 4... min), não com as tentativas.
+		_ = r.finishCtx(ctx, func(c context.Context) error {
+			return r.Queue.Defer(c, job.ID, err.Error(), domain.NextAttemptDelay(job.Deferrals))
+		})
 		return
 	}
 	_, known := r.Handlers[job.Source]

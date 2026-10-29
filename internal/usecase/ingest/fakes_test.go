@@ -15,7 +15,6 @@ import (
 
 // Fakes simples e escritos à mão: guardam o que receberam para o teste conferir.
 
-// As três fontes falsas devolvem a lista e o erro configurados.
 // fakePhotoSource devolve as candidatas e o erro configurados. primary é a
 // resposta do FindObservationPhoto, por id da foto (ausente = não achou).
 type fakePhotoSource struct {
@@ -33,6 +32,7 @@ func (f fakePhotoSource) FindObservationPhoto(_ context.Context, _, photoID stri
 	return c, ok, nil
 }
 
+// fakeAudioSource e a fonte de avistamentos falsa devolvem a lista e o erro configurados.
 type fakeAudioSource struct {
 	cands []ingest.AudioCandidate
 	err   error
@@ -69,15 +69,35 @@ func (f *fakeDownloader) Fetch(_ context.Context, url string, _ ingest.DownloadK
 	return b, "image/jpeg", nil
 }
 
-// fakeImages "converte" sem ffmpeg: devolve variantes fixas ("t", "m",
-// "l", 1600×1000) ou o erro configurado.
-type fakeImages struct{ err error }
+// fakeImages "converte" sem ffmpeg: a medium é "m:" + os bytes originais
+// (o curador falso usa isso para saber de que foto se trata); thumb e
+// large são fixas, 1600×1000. failMedium faz a medium falhar para os
+// originais listados; thumbAndLarge conta as chamadas.
+type fakeImages struct {
+	err           error
+	failMedium    map[string]bool
+	delay         time.Duration
+	mu            sync.Mutex
+	thumbAndLarge int
+}
 
-func (f fakeImages) Process(_ context.Context, orig []byte) (ingest.PhotoVariants, error) {
+func (f *fakeImages) Medium(_ context.Context, orig []byte) ([]byte, error) {
+	time.Sleep(f.delay)
+	if f.err != nil || f.failMedium[string(orig)] {
+		return nil, errors.New("conversão falhou")
+	}
+	return []byte("m:" + string(orig)), nil
+}
+
+func (f *fakeImages) ThumbAndLarge(_ context.Context, _ []byte) (ingest.PhotoVariants, error) {
+	time.Sleep(f.delay)
+	f.mu.Lock()
+	f.thumbAndLarge++
+	f.mu.Unlock()
 	if f.err != nil {
 		return ingest.PhotoVariants{}, f.err
 	}
-	return ingest.PhotoVariants{Thumb: []byte("t"), Medium: []byte("m"), Large: []byte("l"), Width: 1600, Height: 1000}, nil
+	return ingest.PhotoVariants{Thumb: []byte("t"), Large: []byte("l"), Width: 1600, Height: 1000}, nil
 }
 
 // fakeAudio falha para os bytes listados em failFor (para testar o fallback).
@@ -132,6 +152,7 @@ func (f *fakeStore) Put(_ context.Context, key, ct string, data []byte) error {
 // fakeRepo guarda o último valor gravado de cada tipo.
 type fakeRepo struct {
 	photos       []domain.Photo
+	report       domain.CurationReport
 	audio        *domain.Audio
 	clusters     []domain.OccurrenceCluster
 	photoCalls   int
@@ -142,12 +163,12 @@ type fakeRepo struct {
 
 // Os três Replace* contam a chamada e guardam o valor recebido. ReplacePhotos
 // e ReplaceAudio devolvem replaceErr, se configurado; ReplaceClusters nunca falha.
-func (f *fakeRepo) ReplacePhotos(_ context.Context, _ string, p []domain.Photo) error {
+func (f *fakeRepo) ReplacePhotos(_ context.Context, _ string, p []domain.Photo, r domain.CurationReport) error {
 	f.photoCalls++
 	if f.replaceErr != nil {
 		return f.replaceErr
 	}
-	f.photos = p
+	f.photos, f.report = p, r
 	return nil
 }
 
@@ -182,8 +203,15 @@ type fakeQueue struct {
 	completed []int64
 	failed    []failCall
 	released  []int64
+	deferred  []failCall
 	// ctxErrOnFinish guarda ctx.Err() visto por Complete/Fail (deve ser nil).
 	ctxErrOnFinish []error
+}
+
+func (f *fakeQueue) Defer(ctx context.Context, id int64, cause string, retryIn time.Duration) error {
+	f.ctxErrOnFinish = append(f.ctxErrOnFinish, ctx.Err())
+	f.deferred = append(f.deferred, failCall{id: id, cause: cause, retryIn: retryIn})
+	return nil
 }
 
 func (f *fakeQueue) EnqueueMissing(context.Context, []ingest.Source, time.Duration) (int, error) {
@@ -212,4 +240,44 @@ func (f *fakeQueue) Fail(ctx context.Context, id int64, cause string, retryIn ti
 func (f *fakeQueue) Release(_ context.Context, id int64) error {
 	f.released = append(f.released, id)
 	return nil
+}
+
+// fakeCurator classifica pela medium: a medium do fakeImages é "m:" + os
+// bytes originais, e os originais dos testes são "img-<id>". verdicts dá o
+// veredito de cada id; sem entrada, a foto é uma ave sozinha comum. err faz
+// todas as chamadas falharem; batches guarda o tamanho de cada lote.
+type fakeCurator struct {
+	verdicts map[string]ingest.PhotoVerdict
+	err      error
+	delay    time.Duration
+	mu       sync.Mutex
+	batches  []int
+}
+
+func (f *fakeCurator) ClassifyPhotos(_ context.Context, photos []ingest.CuratorPhoto) ([]ingest.PhotoVerdict, string, error) {
+	time.Sleep(f.delay)
+	f.mu.Lock()
+	f.batches = append(f.batches, len(photos))
+	f.mu.Unlock()
+	if f.err != nil {
+		return nil, "", f.err
+	}
+	out := make([]ingest.PhotoVerdict, len(photos))
+	for i, p := range photos {
+		id := strings.TrimPrefix(string(p.Image), "m:img-")
+		v, ok := f.verdicts[id]
+		if !ok {
+			v = ingest.PhotoVerdict{Category: domain.PhotoSingleBird, LargestBirdArea: 0.1, Sharpness: 0.5, Confidence: 0.5}
+		}
+		v.PhotoID = p.PhotoID
+		out[i] = v
+	}
+	return out, "fake@1", nil
+}
+
+// fakeOverrides devolve o override configurado para qualquer espécie.
+type fakeOverrides struct{ o domain.PhotoOverride }
+
+func (f fakeOverrides) PhotoOverride(context.Context, string) (domain.PhotoOverride, error) {
+	return f.o, nil
 }

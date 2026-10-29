@@ -62,6 +62,16 @@ O `cmd/worker` busca, para cada ave, **fotos** (iNaturalist), o **canto** (xeno-
 - **Anti-SSRF:** downloads só por HTTPS, de hosts de uma allowlist, com checagem do IP na hora da conexão (vale também para redirecionamentos) e limites de tamanho e tipo.
 - **Imagem própria:** Alpine + ffmpeg, sem root ([ADR-0014](https://github.com/velosobr/passarim-docs/blob/main/docs/adr/0014-imagem-do-worker-com-ffmpeg.md)). Storage: SeaweedFS local / R2 em produção ([ADR-0006](https://github.com/velosobr/passarim-docs/blob/main/docs/adr/0006-midia-em-object-storage.md)).
 
+### Curadoria de fotos
+
+O job de fotos manda as candidatas ao `passarim-photo-curator` (gRPC, `CURATOR_ADDR`) e só publica uma ave sozinha como principal. Curador fora do ar adia o job sem gastar tentativa. Variáveis: `CURATOR_ADDR` (padrão `photo-curator:50061`), `PHOTO_JOB_TIMEOUT` (`6m`) e `LOW_CONFIDENCE`.
+
+Os comandos rodam a partir do `passarim-docs`, onde está o compose:
+
+- `docker compose run --rm catalog-worker requeue [species-id...]` reenfileira as fotos (todas, sem argumento).
+- `docker compose run --rm catalog-worker curation-report > relatorio.md` imprime a última curadoria de cada espécie, com as marcadas primeiro.
+- A chave `photos:` no YAML escolhe a principal (`primary: { observation, photo }`) ou tira fotos (`exclude: [...]`).
+
 ## Rodando
 | Comando | O que faz |
 |---|---|

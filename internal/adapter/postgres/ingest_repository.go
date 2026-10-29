@@ -5,6 +5,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -29,6 +30,7 @@ type IngestRepository struct {
 var (
 	_ ingest.JobQueue        = (*IngestRepository)(nil)
 	_ ingest.MediaRepository = (*IngestRepository)(nil)
+	_ ingest.OverrideSource  = (*IngestRepository)(nil)
 )
 
 // NewIngestRepository cria o repositório sobre o pool de conexões.
@@ -69,7 +71,7 @@ func (r *IngestRepository) ClaimDue(ctx context.Context, limit int) ([]ingest.Jo
 	jobs := make([]ingest.Job, len(rows))
 	for i, row := range rows {
 		jobs[i] = ingest.Job{ID: row.ID, SpeciesID: row.SpeciesID, ScientificName: row.ScientificName,
-			Source: ingest.Source(row.Source), Attempts: int(row.Attempts)}
+			Source: ingest.Source(row.Source), Attempts: int(row.Attempts), Deferrals: int(row.Deferrals)}
 	}
 	return jobs, nil
 }
@@ -92,8 +94,19 @@ func (r *IngestRepository) Fail(ctx context.Context, jobID int64, cause string, 
 	return r.q.FailJob(ctx, sqlcgen.FailJobParams{ID: jobID, GiveUp: giveUp, LastError: cause, RetryInSecs: retryIn.Seconds()})
 }
 
+// Defer adia o job sem contar tentativa (curador fora do ar). A mensagem é
+// cortada como no Fail.
+func (r *IngestRepository) Defer(ctx context.Context, jobID int64, cause string, retryIn time.Duration) error {
+	if len(cause) > 500 {
+		cause = strings.ToValidUTF8(cause[:500], "")
+	}
+	return r.q.DeferJob(ctx, sqlcgen.DeferJobParams{ID: jobID, LastError: cause, RetryInSecs: retryIn.Seconds()})
+}
+
 // replaceMedia apaga a mídia de um tipo e grava a nova, numa transação.
-func (r *IngestRepository) replaceMedia(ctx context.Context, speciesID, kind string, rows []sqlcgen.InsertMediaParams) error {
+// extra (opcional) roda dentro da mesma transação, antes do Commit.
+func (r *IngestRepository) replaceMedia(ctx context.Context, speciesID, kind string, rows []sqlcgen.InsertMediaParams,
+	extra func(*sqlcgen.Queries) error) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -108,25 +121,63 @@ func (r *IngestRepository) replaceMedia(ctx context.Context, speciesID, kind str
 			return err
 		}
 	}
+	if extra != nil {
+		if err := extra(q); err != nil {
+			return err
+		}
+	}
 	return tx.Commit(ctx)
 }
 
-// ReplacePhotos grava as fotos na ordem recebida: a posição 0 é a principal.
-func (r *IngestRepository) ReplacePhotos(ctx context.Context, speciesID string, photos []domain.Photo) error {
+// ReplacePhotos grava as fotos na ordem recebida (a posição 0 é a principal)
+// e a linha do relatório de curadoria, na mesma transação: ou as duas
+// coisas ficam, ou nenhuma.
+func (r *IngestRepository) ReplacePhotos(ctx context.Context, speciesID string, photos []domain.Photo, report domain.CurationReport) error {
 	rows := make([]sqlcgen.InsertMediaParams, len(photos))
 	for i, p := range photos {
 		rows[i] = sqlcgen.InsertMediaParams{SpeciesID: speciesID, Kind: "photo", Position: toInt32(i),
 			ThumbKey: p.ThumbKey, MediumKey: p.MediumKey, LargeKey: p.LargeKey,
 			Width: toInt32(p.Width), Height: toInt32(p.Height),
 			Author: p.Credit.Author, License: p.Credit.License, Source: p.Credit.Source, SourceUrl: p.Credit.SourceURL,
-			// pgtype.Text e pgtype.Float4 representam colunas que aceitam NULL:
-			// Valid=false grava NULL. Foto sem categoria (antes da curadoria) fica NULL.
 			SourcePhotoID: pgtype.Text{String: p.SourcePhotoID, Valid: p.SourcePhotoID != ""},
 			Category:      pgtype.Text{String: string(p.Category), Valid: p.Category != ""},
 			Score:         pgtype.Float4{Float32: float32(p.Score), Valid: p.Category != ""},
 			ModelVersion:  pgtype.Text{String: p.ModelVersion, Valid: p.ModelVersion != ""}}
 	}
-	return r.replaceMedia(ctx, speciesID, "photo", rows)
+	candidates, err := candidatesToJSON(report.Candidates)
+	if err != nil {
+		return err
+	}
+	flags := make([]string, 0, len(report.Flags)) // NOT NULL: lista vazia, nunca nil
+	for _, f := range report.Flags {
+		flags = append(flags, string(f))
+	}
+	return r.replaceMedia(ctx, speciesID, "photo", rows, func(q *sqlcgen.Queries) error {
+		return q.InsertCurationReport(ctx, sqlcgen.InsertCurationReportParams{SpeciesID: speciesID,
+			ModelVersion:   report.ModelVersion,
+			PrimaryPhotoID: pgtype.Text{String: report.PrimaryPhotoID, Valid: report.PrimaryPhotoID != ""},
+			Candidates:     candidates, Flags: flags})
+	})
+}
+
+// candidateDTO é o formato JSON de uma candidata na coluna candidates. As
+// tags `json:"..."` ficam aqui no adapter: o domínio não sabe de JSON.
+type candidateDTO struct {
+	PhotoID       string  `json:"photo_id"`
+	ObservationID string  `json:"observation_id"`
+	Category      string  `json:"category"`
+	Score         float64 `json:"score"`
+	Confidence    float64 `json:"confidence"`
+}
+
+// candidatesToJSON converte as candidatas do domínio no JSON da coluna.
+func candidatesToJSON(cs []domain.CuratedCandidate) ([]byte, error) {
+	out := make([]candidateDTO, len(cs)) // nunca nil: vira [] e não null
+	for i, c := range cs {
+		out[i] = candidateDTO{PhotoID: c.PhotoID, ObservationID: c.ObservationID, Category: string(c.Category),
+			Score: c.Score, Confidence: c.Confidence}
+	}
+	return json.Marshal(out)
 }
 
 // ReplaceAudio grava o canto (ou nenhum, com nil).
@@ -137,7 +188,7 @@ func (r *IngestRepository) ReplaceAudio(ctx context.Context, speciesID string, a
 			AudioKey: a.Key, DurationMs: toInt32(a.DurationMs),
 			Author: a.Credit.Author, License: a.Credit.License, Source: a.Credit.Source, SourceUrl: a.Credit.SourceURL})
 	}
-	return r.replaceMedia(ctx, speciesID, "audio", rows)
+	return r.replaceMedia(ctx, speciesID, "audio", rows, nil)
 }
 
 // ReplaceClusters troca os grupos de avistamentos numa transação.
@@ -172,4 +223,40 @@ func (r *IngestRepository) PhotoOverride(ctx context.Context, speciesID string) 
 	}
 	return domain.PhotoOverride{PrimaryObservationID: row.PrimaryObservationID.String,
 		PrimaryPhotoID: row.PrimaryPhotoID.String, ExcludedIDs: row.ExcludedIds}, nil
+}
+
+// RequeuePhotoJobs reenfileira os jobs de fotos das espécies dadas (nil =
+// todas). Antes cria os jobs de fotos que faltam, para o comando funcionar
+// mesmo num banco em que o worker ainda não rodou. Devolve as espécies
+// reenfileiradas; quem chama compara com as pedidas.
+func (r *IngestRepository) RequeuePhotoJobs(ctx context.Context, speciesIDs []string) ([]string, error) {
+	if err := r.q.EnqueueMissingJobs(ctx, []string{string(ingest.SourceINaturalist)}); err != nil {
+		return nil, fmt.Errorf("enfileirar: %w", err)
+	}
+	return r.q.RequeuePhotoJobs(ctx, append([]string{}, speciesIDs...)) // nil viraria NULL, e cardinality(NULL) é NULL
+}
+
+// LatestCurationReports lê a última execução da curadoria de cada espécie.
+func (r *IngestRepository) LatestCurationReports(ctx context.Context) ([]domain.CurationReportEntry, error) {
+	rows, err := r.q.LatestCurationReports(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.CurationReportEntry, len(rows))
+	for i, row := range rows {
+		var dtos []candidateDTO
+		if err := json.Unmarshal(row.Candidates, &dtos); err != nil {
+			return nil, fmt.Errorf("relatório de %s: %w", row.SpeciesID, err)
+		}
+		report := domain.CurationReport{ModelVersion: row.ModelVersion, PrimaryPhotoID: row.PrimaryPhotoID.String}
+		for _, d := range dtos {
+			report.Candidates = append(report.Candidates, domain.CuratedCandidate{PhotoID: d.PhotoID, ObservationID: d.ObservationID,
+				Category: domain.PhotoCategory(d.Category), Score: d.Score, Confidence: d.Confidence})
+		}
+		for _, f := range row.Flags {
+			report.Flags = append(report.Flags, domain.CurationFlag(f))
+		}
+		out[i] = domain.CurationReportEntry{SpeciesID: row.SpeciesID, CommonName: row.CommonNamePt, RanAt: row.RanAt.Time, Report: report}
+	}
+	return out, nil
 }

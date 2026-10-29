@@ -5,6 +5,8 @@ package postgres_test
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -124,7 +126,7 @@ func TestMediaRepository_ReplaceIsIdempotent(t *testing.T) {
 	audio := &domain.Audio{Key: "a.aac", DurationMs: 30000, Credit: domain.Credit{Author: "B", License: "CC-BY-NC-SA", Source: "xeno-canto", SourceURL: "https://xeno-canto.org/1"}}
 	clusters := []domain.OccurrenceCluster{{Lat: -23.5, Lng: -46.6, Count: 3, Precision: 1}}
 	for i := 0; i < 2; i++ { // duas vezes = reprocessamento
-		if err := m.ReplacePhotos(ctx, "turdus-rufiventris", photos); err != nil {
+		if err := m.ReplacePhotos(ctx, "turdus-rufiventris", photos, domain.CurationReport{ModelVersion: "m@2"}); err != nil {
 			t.Fatal(err)
 		}
 		if err := m.ReplaceAudio(ctx, "turdus-rufiventris", audio); err != nil {
@@ -139,7 +141,7 @@ func TestMediaRepository_ReplaceIsIdempotent(t *testing.T) {
 		t.Fatalf("depois de 2 replaces: photos=%d audio=%+v clusters=%d", len(s.Photos), s.Audio, len(s.Clusters))
 	}
 	// Trocar fotos não apaga o áudio (cada fonte cuida do seu tipo).
-	_ = m.ReplacePhotos(ctx, "turdus-rufiventris", photos[:1])
+	_ = m.ReplacePhotos(ctx, "turdus-rufiventris", photos[:1], domain.CurationReport{ModelVersion: "m@2"})
 	s, _ = repo.GetSpecies(ctx, "turdus-rufiventris")
 	if len(s.Photos) != 1 || s.Audio == nil {
 		t.Fatalf("replace de fotos afetou o áudio: %+v", s)
@@ -232,7 +234,7 @@ func TestReplacePhotos_StoresCurationFields(t *testing.T) {
 	photo := domain.Photo{ThumbKey: "t", MediumKey: "m", LargeKey: "l", Width: 800, Height: 600,
 		Credit:        domain.Credit{Author: "A", License: "CC-BY", Source: "inaturalist", SourceURL: "https://x"},
 		SourcePhotoID: "219317614", Category: domain.PhotoSingleBird, Score: 0.75, ModelVersion: "m@2"}
-	if err := q.ReplacePhotos(ctx, "turdus-rufiventris", []domain.Photo{photo}); err != nil {
+	if err := q.ReplacePhotos(ctx, "turdus-rufiventris", []domain.Photo{photo}, domain.CurationReport{ModelVersion: "m@2"}); err != nil {
 		t.Fatal(err)
 	}
 	got, err := repo.GetSpecies(ctx, "turdus-rufiventris")
@@ -241,5 +243,109 @@ func TestReplacePhotos_StoresCurationFields(t *testing.T) {
 	}
 	if len(got.Photos) != 1 || got.Photos[0] != photo {
 		t.Fatalf("foto lida diferente da gravada:\n got %+v\nwant %+v", got.Photos, photo)
+	}
+}
+
+// ReplacePhotos grava a linha do relatório junto, com as candidatas em JSON e as marcas.
+func TestReplacePhotos_WritesCurationReport(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil))
+	q := postgres.NewIngestRepository(pool)
+	report := domain.CurationReport{ModelVersion: "m@2", PrimaryPhotoID: "11",
+		Candidates: []domain.CuratedCandidate{{PhotoID: "11", ObservationID: "1001", Category: domain.PhotoSingleBird, Score: 0.5, Confidence: 0.25}},
+		Flags:      []domain.CurationFlag{domain.FlagLowConfidence}}
+	if err := q.ReplacePhotos(ctx, "turdus-rufiventris", nil, report); err != nil {
+		t.Fatal(err)
+	}
+	var version, primary, category string
+	var flags []string
+	err := pool.QueryRow(ctx, `SELECT model_version, primary_photo_id, candidates->0->>'category', flags
+		FROM curation_report WHERE species_id = 'turdus-rufiventris'`).Scan(&version, &primary, &category, &flags)
+	if err != nil || version != "m@2" || primary != "11" || category != "single_bird" || len(flags) != 1 || flags[0] != "low_confidence" {
+		t.Fatalf("relatório gravado: %q %q %q %v %v", version, primary, category, flags, err)
+	}
+}
+
+// Defer reagenda sem somar tentativa e soma um adiamento; o sucesso zera.
+func TestJobQueue_Defer(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil))
+	q := postgres.NewIngestRepository(pool)
+	if _, err := q.EnqueueMissing(ctx, []ingest.Source{ingest.SourceINaturalist}, time.Hour); err != nil {
+		t.Fatal(err)
+	}
+	jobs, _ := q.ClaimDue(ctx, 1)
+	if err := q.Defer(ctx, jobs[0].ID, "curador indisponível", time.Hour); err != nil {
+		t.Fatal(err)
+	}
+	var status string
+	var attempts, deferrals int
+	_ = pool.QueryRow(ctx, "SELECT status, attempts, deferrals FROM ingestion_job WHERE id=$1", jobs[0].ID).Scan(&status, &attempts, &deferrals)
+	if status != "pending" || attempts != 0 || deferrals != 1 {
+		t.Fatalf("depois de Defer: %s attempts=%d deferrals=%d", status, attempts, deferrals)
+	}
+	if due, _ := q.ClaimDue(ctx, 1); len(due) != 0 {
+		t.Fatal("adiado para daqui a 1 h não pode estar vencido")
+	}
+	_, _ = pool.Exec(ctx, "UPDATE ingestion_job SET next_run_at = now() WHERE id=$1", jobs[0].ID)
+	again, _ := q.ClaimDue(ctx, 1)
+	if len(again) != 1 || again[0].Deferrals != 1 {
+		t.Fatalf("ClaimDue deveria trazer os adiamentos: %+v", again)
+	}
+	_ = q.Complete(ctx, again[0].ID)
+	_ = pool.QueryRow(ctx, "SELECT deferrals FROM ingestion_job WHERE id=$1", jobs[0].ID).Scan(&deferrals)
+	if deferrals != 0 {
+		t.Fatalf("o sucesso deveria zerar os adiamentos, veio %d", deferrals)
+	}
+}
+
+// requeue: só as espécies dadas, ou todas; nunca um job rodando.
+func TestRequeuePhotoJobs(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil), sp("Pitangus sulphuratus", "Bem-te-vi", nil),
+		sp("Crotophaga ani", "Anu-preto", nil))
+	q := postgres.NewIngestRepository(pool)
+	// Sem rodar o EnqueueMissing antes: o requeue cria os jobs que faltam.
+	_, _ = pool.Exec(ctx, `UPDATE ingestion_job SET status = 'done'`)
+	got, err := q.RequeuePhotoJobs(ctx, []string{"crotophaga-ani"})
+	if err != nil || fmt.Sprint(got) != "[crotophaga-ani]" {
+		t.Fatalf("só a dada: %v %v", got, err)
+	}
+	_, _ = pool.Exec(ctx, `UPDATE ingestion_job SET status = 'done'`)
+	_, _ = pool.Exec(ctx, `UPDATE ingestion_job SET status = 'running' WHERE species_id = 'pitangus-sulphuratus'`)
+	got, _ = q.RequeuePhotoJobs(ctx, nil)
+	slices.Sort(got)
+	if fmt.Sprint(got) != "[crotophaga-ani turdus-rufiventris]" {
+		t.Fatalf("todas menos a que está rodando: %v", got)
+	}
+	var otherSources int
+	_ = pool.QueryRow(ctx, `SELECT count(*) FROM ingestion_job WHERE source <> 'inaturalist'`).Scan(&otherSources)
+	if otherSources != 0 {
+		t.Fatalf("requeue só cria e mexe em jobs de fotos, achou %d de outras fontes", otherSources)
+	}
+}
+
+// O relatório traz só a última execução de cada espécie, com o nome popular.
+func TestLatestCurationReports(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil))
+	q := postgres.NewIngestRepository(pool)
+	_ = q.ReplacePhotos(ctx, "turdus-rufiventris", nil, domain.CurationReport{ModelVersion: "old"})
+	_ = q.ReplacePhotos(ctx, "turdus-rufiventris", nil, domain.CurationReport{ModelVersion: "new", PrimaryPhotoID: "11",
+		Candidates: []domain.CuratedCandidate{{PhotoID: "11", ObservationID: "1", Category: domain.PhotoSingleBird, Score: 0.5, Confidence: 0.25}},
+		Flags:      []domain.CurationFlag{domain.FlagLowConfidence}})
+	got, err := q.LatestCurationReports(ctx)
+	if err != nil || len(got) != 1 {
+		t.Fatalf("got %+v %v", got, err)
+	}
+	e := got[0]
+	if e.CommonName != "Sabiá-laranjeira" || e.Report.ModelVersion != "new" || e.Report.PrimaryPhotoID != "11" ||
+		len(e.Report.Candidates) != 1 || e.Report.Candidates[0].Category != domain.PhotoSingleBird ||
+		len(e.Report.Flags) != 1 || e.RanAt.IsZero() {
+		t.Fatalf("entrada: %+v", e)
 	}
 }
