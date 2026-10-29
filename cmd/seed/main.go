@@ -19,8 +19,8 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/adapter/postgres"
 )
 
-// main lê a pasta (o padrão pode ser trocado com "-dir"), valida tudo e grava
-// espécie por espécie. Qualquer erro encerra com código 1, para o docker
+// main lê a pasta (o padrão pode ser trocado com "-dir"), valida tudo, grava
+// espécie por espécie e apaga as que não estão mais na pasta. Qualquer erro encerra com código 1, para o docker
 // compose e a CI perceberem.
 func main() {
 	dir := flag.String("dir", "content/species", "pasta com os arquivos .yaml")
@@ -52,5 +52,16 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	log.Info("seed concluído", "especies", len(species))
+	// Espécie cujo YAML saiu da pasta também sai do banco, para o banco
+	// ficar igual ao conteúdo curado (o upsert sozinho nunca apaga nada).
+	ids := make([]string, len(species))
+	for i, s := range species {
+		ids[i] = s.ID
+	}
+	removed, err := repo.DeleteSpeciesNotIn(ctx, ids)
+	if err != nil {
+		log.Error("apagar espécies que saíram do conteúdo", "error", err)
+		os.Exit(1)
+	}
+	log.Info("seed concluído", "especies", len(species), "removidas", removed)
 }

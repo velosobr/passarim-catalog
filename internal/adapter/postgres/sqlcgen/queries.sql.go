@@ -102,6 +102,33 @@ func (q *Queries) DeletePhotoOverride(ctx context.Context, speciesID string) err
 	return err
 }
 
+const deleteSpeciesNotIn = `-- name: DeleteSpeciesNotIn :many
+DELETE FROM species WHERE id <> ALL($1::text[]) RETURNING id
+`
+
+// O seed apaga as espécies cujo YAML saiu da pasta de conteúdo. "<> ALL(lista)"
+// é "diferente de todos os da lista". As tabelas filhas (mídia, fatos, jobs,
+// relatório) têm ON DELETE CASCADE e somem junto.
+func (q *Queries) DeleteSpeciesNotIn(ctx context.Context, keepIds []string) ([]string, error) {
+	rows, err := q.db.Query(ctx, deleteSpeciesNotIn, keepIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const deleteStates = `-- name: DeleteStates :exec
 DELETE FROM species_state WHERE species_id = $1
 `

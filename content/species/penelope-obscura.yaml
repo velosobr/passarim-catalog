@@ -1,0 +1,22 @@
+scientific_name: Penelope obscura
+common_name_pt: Jacuguaçu
+family: Cracidae
+size_cm: 68
+diet: Principalmente frutos, além de folhas, flores, brotos e pequenos invertebrados.
+conservation_status: LC
+biomes: [mata_atlantica]
+states: [BA, MG, ES, RJ, SP, PR, SC, RS]
+description: >
+  O jacuguaçu é um jacu grande, de quase 70 centímetros, com a plumagem escura,
+  as asas com bordas cor de ferrugem e uma pequena barbela vermelha na
+  garganta. Vive em florestas da Mata Atlântica, inclusive nas matas de
+  araucária, e passa boa parte do tempo nas árvores comendo frutos, que são
+  a maior parte da sua dieta, além de folhas e flores.
+description_source_url: https://pt.wikipedia.org/wiki/Jacugua%C3%A7u
+facts:
+  - text: O nome vem do tupi e quer dizer "jacu grande".
+    source: https://pt.wikipedia.org/wiki/Jacugua%C3%A7u
+  - text: No namoro, o macho acha comida escondida no chão e a oferece à fêmea, às vezes colocando direto no bico dela.
+    source: https://pt.wikipedia.org/wiki/Jacugua%C3%A7u
+  - text: Costuma beber a água que fica acumulada dentro das bromélias.
+    source: https://pt.wikipedia.org/wiki/Jacugua%C3%A7u

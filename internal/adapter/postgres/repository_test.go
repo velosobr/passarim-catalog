@@ -336,3 +336,21 @@ func TestUpsertCurated_PhotoOverride(t *testing.T) {
 		t.Fatalf("sem a chave, o override deveria sumir: %+v %v", got, err)
 	}
 }
+
+// O seed apaga as espécies que saíram da pasta de conteúdo, e só elas.
+func TestDeleteSpeciesNotIn(t *testing.T) {
+	repo, _ := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil), sp("Pitangus sulphuratus", "Bem-te-vi", nil))
+	removed, err := repo.DeleteSpeciesNotIn(ctx, []string{"turdus-rufiventris"})
+	if err != nil || len(removed) != 1 || removed[0] != "pitangus-sulphuratus" {
+		t.Fatalf("removidas: %v %v", removed, err)
+	}
+	if _, err := repo.GetSpecies(ctx, "turdus-rufiventris"); err != nil {
+		t.Fatalf("a espécie que ficou na pasta não podia sumir: %v", err)
+	}
+	// Uma pasta vazia nunca apaga o catálogo inteiro.
+	if _, err := repo.DeleteSpeciesNotIn(ctx, nil); err == nil {
+		t.Fatal("lista vazia deveria ser recusada")
+	}
+}

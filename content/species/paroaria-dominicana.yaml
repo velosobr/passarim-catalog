@@ -1,0 +1,22 @@
+scientific_name: Paroaria dominicana
+common_name_pt: Cardeal-do-nordeste
+family: Thraupidae
+size_cm: 17
+diet: Sementes, bagas e insetos.
+conservation_status: LC
+biomes: [caatinga, cerrado]
+states: [MA, PI, CE, RN, PB, PE, AL, SE, BA, GO, TO]
+description: >
+  O cardeal-do-nordeste tem a cabeça e a garganta de um vermelho vivo, sem
+  topete, o peito branco e as costas acinzentadas. Só existe no Brasil e é
+  um dos pássaros mais conhecidos da Caatinga, onde anda em bandos e procura
+  sementes, bagas e insetos. Também aparece nas beiras de rios do Cerrado,
+  em Goiás e no Tocantins.
+description_source_url: https://pt.wikipedia.org/wiki/Cardeal-do-nordeste
+facts:
+  - text: No Nordeste ele é mais chamado de galo-da-campina ou cabeça-vermelha; "cardeal-do-nordeste" é o nome adotado pelo Comitê Brasileiro de Registros Ornitológicos.
+    source: https://pt.wikipedia.org/wiki/Cardeal-do-nordeste
+  - text: O nome científico "dominicana" lembra as roupas pretas e brancas dos frades da Ordem Dominicana.
+    source: https://pt.wikipedia.org/wiki/Cardeal-do-nordeste
+  - text: Foi levado pelo homem para o Sudeste, onde hoje é comum até em cidades, mas lá ele não é nativo.
+    source: https://www.wikiaves.com.br/wiki/cardeal-do-nordeste

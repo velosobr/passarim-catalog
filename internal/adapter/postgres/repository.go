@@ -266,3 +266,13 @@ func (r *Repository) UpsertCurated(ctx context.Context, s domain.Species) error 
 	}
 	return tx.Commit(ctx)
 }
+
+// DeleteSpeciesNotIn apaga as espécies que não estão em keepIDs (as que
+// saíram do conteúdo curado) e devolve os ids apagados. Uma lista vazia é
+// recusada: ela viria de uma pasta vazia ou errada, e apagaria o catálogo todo.
+func (r *Repository) DeleteSpeciesNotIn(ctx context.Context, keepIDs []string) ([]string, error) {
+	if len(keepIDs) == 0 {
+		return nil, errors.New("nenhuma espécie para manter: o seed não apaga o catálogo inteiro")
+	}
+	return r.q.DeleteSpeciesNotIn(ctx, keepIDs)
+}

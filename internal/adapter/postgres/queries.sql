@@ -109,3 +109,9 @@ ON CONFLICT (species_id) DO UPDATE SET
 -- name: DeletePhotoOverride :exec
 -- O YAML deixou de ter a chave photos: a escolha manual some.
 DELETE FROM photo_override WHERE species_id = $1;
+
+-- name: DeleteSpeciesNotIn :many
+-- O seed apaga as espécies cujo YAML saiu da pasta de conteúdo. "<> ALL(lista)"
+-- é "diferente de todos os da lista". As tabelas filhas (mídia, fatos, jobs,
+-- relatório) têm ON DELETE CASCADE e somem junto.
+DELETE FROM species WHERE id <> ALL(sqlc.arg('keep_ids')::text[]) RETURNING id;

@@ -1,0 +1,22 @@
+scientific_name: Ramphastos dicolorus
+common_name_pt: Tucano-de-bico-verde
+family: Ramphastidae
+size_cm: 48
+diet: Frutos, insetos e outros artrópodes e pequenos vertebrados, inclusive ovos e filhotes de outras aves.
+conservation_status: LC
+biomes: [mata_atlantica]
+states: [MG, ES, RJ, SP, PR, SC, RS]
+description: >
+  O tucano-de-bico-verde tem o bico grande verde-claro, a garganta e o peito
+  amarelos e a barriga vermelha, por isso também é chamado de
+  tucano-de-peito-vermelho. Vive nas florestas da Mata Atlântica do Sul e do
+  Sudeste, principalmente nas serras, onde anda em pequenos bandos comendo
+  frutos, insetos e, às vezes, ovos e filhotes de outras aves.
+description_source_url: https://pt.wikipedia.org/wiki/Tucano-de-bico-verde
+facts:
+  - text: A palavra "tucano" vem do tupi antigo.
+    source: https://pt.wikipedia.org/wiki/Tucano-de-bico-verde
+  - text: A fêmea põe de 2 a 5 ovos, que ficam 19 dias sendo chocados.
+    source: https://pt.wikipedia.org/wiki/Tucano-de-bico-verde
+  - text: Já foi estampado em um selo dos Correios do Brasil, em 1983.
+    source: https://pt.wikipedia.org/wiki/Tucano-de-bico-verde
