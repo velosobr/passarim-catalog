@@ -354,3 +354,44 @@ func TestDeleteSpeciesNotIn(t *testing.T) {
 		t.Fatal("lista vazia deveria ser recusada")
 	}
 }
+
+// withKids devolve a espécie com bioma principal e bloco Kids válidos.
+func withKids(s domain.Species) domain.Species {
+	s.PrimaryBiome = s.Biomes[0]
+	s.Kids = &domain.KidsContent{Description: "Descrição kids.", DidYouKnow: "Você sabia.",
+		Facts: []domain.KidsFact{{Text: "Fato kids.", SourceFact: 1}}, GeneratedBy: "claude-opus-5-5", SourceHash: "sha256:abc"}
+	return s
+}
+
+// O seed grava o bioma principal e o conteúdo Kids (só o que o app mostra:
+// generated_by e source_hash ficam só no YAML).
+func TestUpsertCurated_KidsAndPrimaryBiome(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, withKids(sp("Turdus rufiventris", "Sabiá-laranjeira", []domain.Biome{domain.BiomeMataAtlantica})))
+	var biome, desc, fact string
+	var hasHash bool
+	err := pool.QueryRow(ctx, `SELECT primary_biome::text, kids->>'description', kids->'facts'->0->>'text', kids ? 'source_hash'
+		FROM species WHERE id = 'turdus-rufiventris'`).Scan(&biome, &desc, &fact, &hasHash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if biome != "mata_atlantica" || desc != "Descrição kids." || fact != "Fato kids." || hasHash {
+		t.Fatalf("bioma=%q desc=%q fato=%q hash no banco=%v", biome, desc, fact, hasHash)
+	}
+}
+
+// Tirar o bloco kids: do YAML e rodar o seed de novo grava NULL: a espécie
+// sai do Kids e da "Ave do dia".
+func TestUpsertCurated_KidsRemovedBecomesNull(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	s := withKids(sp("Turdus rufiventris", "Sabiá-laranjeira", []domain.Biome{domain.BiomeMataAtlantica}))
+	seed(t, repo, s)
+	s.Kids, s.PrimaryBiome = nil, ""
+	seed(t, repo, s)
+	var nulls bool
+	if err := pool.QueryRow(ctx, `SELECT kids IS NULL AND primary_biome IS NULL FROM species WHERE id = 'turdus-rufiventris'`).Scan(&nulls); err != nil || !nulls {
+		t.Fatalf("esperava kids e primary_biome NULL, err=%v", err)
+	}
+}

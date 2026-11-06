@@ -30,7 +30,9 @@ type speciesFile struct {
 	Description          string      `yaml:"description"`
 	DescriptionSourceURL string      `yaml:"description_source_url"`
 	Facts                []factFile  `yaml:"facts"`
-	Photos               *photosFile `yaml:"photos"` // nil = sem a chave
+	Photos               *photosFile `yaml:"photos"`        // nil = sem a chave
+	PrimaryBiome         string      `yaml:"primary_biome"` // "" = sem a chave
+	Kids                 *kidsFile   `yaml:"kids"`          // nil = sem a chave
 }
 
 // factFile é uma curiosidade no YAML.
@@ -58,6 +60,44 @@ type photosFile struct {
 type primaryFile struct {
 	Observation int64 `yaml:"observation"`
 	Photo       int64 `yaml:"photo"`
+}
+
+// kidsFile é o bloco kids: do YAML, o conteúdo para crianças (frente B):
+//
+//	kids:
+//	  description: >
+//	    Frases curtas para quem tem de 8 a 12 anos.
+//	  facts:
+//	    - text: Um fato curto.
+//	      source_fact: 0      # posição do fato adulto de origem
+//	  did_you_know: O balão "Você sabia?".
+//	  generated_by: claude-opus-5-5
+//	  source_hash: sha256:...
+//
+// O kidsgen escreve este bloco; a validação da estrutura fica no domínio.
+type kidsFile struct {
+	Description string         `yaml:"description"`
+	Facts       []kidsFactFile `yaml:"facts"`
+	DidYouKnow  string         `yaml:"did_you_know"`
+	GeneratedBy string         `yaml:"generated_by"`
+	SourceHash  string         `yaml:"source_hash"`
+}
+
+// kidsFactFile é um fato Kids no YAML.
+type kidsFactFile struct {
+	Text       string `yaml:"text"`
+	SourceFact int    `yaml:"source_fact"`
+}
+
+// toDomain converte o bloco do YAML no tipo do domínio, aparando os
+// espaços (o estilo ">" do YAML deixa uma quebra de linha no fim).
+func (k kidsFile) toDomain() *domain.KidsContent {
+	out := &domain.KidsContent{Description: strings.TrimSpace(k.Description), DidYouKnow: strings.TrimSpace(k.DidYouKnow),
+		GeneratedBy: strings.TrimSpace(k.GeneratedBy), SourceHash: strings.TrimSpace(k.SourceHash)}
+	for _, f := range k.Facts {
+		out.Facts = append(out.Facts, domain.KidsFact{Text: strings.TrimSpace(f.Text), SourceFact: f.SourceFact})
+	}
+	return out
 }
 
 // toDomain converte a chave do YAML no override do domínio. A validação
@@ -137,6 +177,10 @@ func loadFile(path string) (domain.Species, error) {
 	}
 	if f.Photos != nil {
 		s.PhotoOverride = f.Photos.toDomain()
+	}
+	s.PrimaryBiome = domain.Biome(strings.TrimSpace(f.PrimaryBiome))
+	if f.Kids != nil {
+		s.Kids = f.Kids.toDomain()
 	}
 	if err := s.Validate(); err != nil {
 		return domain.Species{}, err

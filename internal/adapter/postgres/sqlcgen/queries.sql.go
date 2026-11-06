@@ -496,8 +496,8 @@ func (q *Queries) UpsertPhotoOverride(ctx context.Context, arg UpsertPhotoOverri
 const upsertSpecies = `-- name: UpsertSpecies :exec
 INSERT INTO species (id, scientific_name, common_name_pt, family, size_cm, diet, conservation_status,
                      description, description_author, description_license, description_source,
-                     description_source_url, is_curated, sort_name, search_text)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true, $13, $14)
+                     description_source_url, is_curated, sort_name, search_text, primary_biome, kids)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true, $13, $14, $15, $16)
 ON CONFLICT (id) DO UPDATE SET
     scientific_name = EXCLUDED.scientific_name, common_name_pt = EXCLUDED.common_name_pt,
     family = EXCLUDED.family, size_cm = EXCLUDED.size_cm, diet = EXCLUDED.diet,
@@ -505,6 +505,7 @@ ON CONFLICT (id) DO UPDATE SET
     description_author = EXCLUDED.description_author, description_license = EXCLUDED.description_license,
     description_source = EXCLUDED.description_source, description_source_url = EXCLUDED.description_source_url,
     is_curated = true, sort_name = EXCLUDED.sort_name, search_text = EXCLUDED.search_text,
+    primary_biome = EXCLUDED.primary_biome, kids = EXCLUDED.kids,
     updated_at = now()
 `
 
@@ -523,10 +524,13 @@ type UpsertSpeciesParams struct {
 	DescriptionSourceUrl string
 	SortName             string
 	SearchText           string
+	PrimaryBiome         NullBiome
+	Kids                 []byte
 }
 
 // "Upsert" = insere, ou atualiza se o id já existir. Só mexe nos campos
-// curados; created_at é preservado.
+// curados; created_at é preservado. primary_biome e kids (frente B) também
+// são curados: um YAML sem as chaves grava NULL, e a espécie sai do Kids.
 func (q *Queries) UpsertSpecies(ctx context.Context, arg UpsertSpeciesParams) error {
 	_, err := q.db.Exec(ctx, upsertSpecies,
 		arg.ID,
@@ -543,6 +547,8 @@ func (q *Queries) UpsertSpecies(ctx context.Context, arg UpsertSpeciesParams) er
 		arg.DescriptionSourceUrl,
 		arg.SortName,
 		arg.SearchText,
+		arg.PrimaryBiome,
+		arg.Kids,
 	)
 	return err
 }

@@ -216,6 +216,11 @@ func (r *Repository) UpsertCurated(ctx context.Context, s domain.Species) error 
 	if s.Diet != nil {
 		params.Diet = pgtype.Text{String: *s.Diet, Valid: true}
 	}
+	// Bioma principal e conteúdo Kids (frente B). Vazio e nil viram NULL.
+	params.PrimaryBiome = sqlcgen.NullBiome{Biome: sqlcgen.Biome(s.PrimaryBiome), Valid: s.PrimaryBiome != ""}
+	if params.Kids, err = kidsToJSON(s.Kids); err != nil {
+		return err
+	}
 	if err := q.UpsertSpecies(ctx, params); err != nil {
 		return fmt.Errorf("upsert %s: %w", s.ID, err)
 	}
