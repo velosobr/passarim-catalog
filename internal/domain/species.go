@@ -191,6 +191,8 @@ type SpeciesSummary struct {
 	CommonNamePt       string
 	ThumbnailKey       string
 	ConservationStatus ConservationStatus
+	// PrimaryBiome é o "mundo" da ave no Kids ("" = ainda sem conteúdo Kids).
+	PrimaryBiome Biome
 	// SortName é o sort_name GRAVADO no banco (não recalculado). O cursor de
 	// paginação precisa encodar exatamente o valor com o qual o SQL comparou
 	// (ORDER BY sort_name, id) — se a aplicação recalculasse a partir de
@@ -220,6 +222,10 @@ type Species struct {
 	Clusters           []OccurrenceCluster
 	// PhotoOverride é a escolha manual de fotos do YAML (nil = sem a chave photos:).
 	PhotoOverride *PhotoOverride
+	// PrimaryBiome é o bioma principal, o "mundo" da ave no Kids ("" = ainda
+	// não escolhido). Kids é o conteúdo para crianças (nil = sem bloco kids:).
+	PrimaryBiome Biome
+	Kids         *KidsContent
 }
 
 // Validate verifica as regras que toda espécie precisa cumprir antes
@@ -266,6 +272,9 @@ func (s Species) Validate() error {
 		if err := s.PhotoOverride.Validate(); err != nil {
 			return err
 		}
+	}
+	if err := s.validateKids(); err != nil {
+		return err
 	}
 	return nil
 }

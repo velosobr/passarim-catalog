@@ -140,7 +140,7 @@ func (q *Queries) DeleteStates(ctx context.Context, speciesID string) error {
 }
 
 const getSpecies = `-- name: GetSpecies :one
-SELECT id, scientific_name, common_name_pt, family, size_cm, diet, conservation_status, description, description_author, description_license, description_source, description_source_url, is_curated, sort_name, search_text, created_at, updated_at FROM species WHERE id = $1
+SELECT id, scientific_name, common_name_pt, family, size_cm, diet, conservation_status, description, description_author, description_license, description_source, description_source_url, is_curated, sort_name, search_text, created_at, updated_at, primary_biome, kids FROM species WHERE id = $1
 `
 
 // A linha da espécie pelo id. As listas (fatos, biomas, UFs, mídia e
@@ -166,6 +166,8 @@ func (q *Queries) GetSpecies(ctx context.Context, id string) (Species, error) {
 		&i.SearchText,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PrimaryBiome,
+		&i.Kids,
 	)
 	return i, err
 }
@@ -315,7 +317,7 @@ func (q *Queries) ListFacts(ctx context.Context, speciesID string) ([]ListFactsR
 }
 
 const listMedia = `-- name: ListMedia :many
-SELECT id, species_id, kind, position, thumb_key, medium_key, large_key, audio_key, width, height, duration_ms, author, license, source, source_url, created_at, source_photo_id, category, score, model_version FROM media WHERE species_id = $1 ORDER BY kind, position
+SELECT id, species_id, kind, position, thumb_key, medium_key, large_key, audio_key, width, height, duration_ms, author, license, source, source_url, created_at, source_photo_id, category, score, model_version, peaks FROM media WHERE species_id = $1 ORDER BY kind, position
 `
 
 // Fotos e canto da espécie, em ordem de tipo e de posição (a foto 0 é a
@@ -350,6 +352,7 @@ func (q *Queries) ListMedia(ctx context.Context, speciesID string) ([]Medium, er
 			&i.Category,
 			&i.Score,
 			&i.ModelVersion,
+			&i.Peaks,
 		); err != nil {
 			return nil, err
 		}
