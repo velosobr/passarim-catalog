@@ -3,19 +3,25 @@
 -- Cada filtro é opcional: "(parâmetro IS NULL OR condição)".
 -- A miniatura é a thumb da foto de menor position ('' se não houver foto).
 -- ESCAPE '\' declara a barra como escape do LIKE (o Go já escapou % e _).
+-- kids_only (frente B) deixa só as espécies com conteúdo Kids, e
+-- primary_biome filtra pelo "mundo" do Kids, diferente de biome, que filtra
+-- por qualquer bioma em que a ave vive.
 -- "(s.sort_name, s.id) > (after_sort, after_id)" compara os pares em ordem
 -- (sort_name e, no empate, id): começa logo depois do último item da página
 -- anterior e usa o índice species_sort_idx.
 SELECT s.id, s.scientific_name, s.common_name_pt, s.conservation_status, s.sort_name,
        COALESCE((SELECT m.thumb_key FROM media m
                  WHERE m.species_id = s.id AND m.kind = 'photo'
-                 ORDER BY m.position LIMIT 1), '')::text AS thumbnail_key
+                 ORDER BY m.position LIMIT 1), '')::text AS thumbnail_key,
+       COALESCE(s.primary_biome::text, '')::text AS primary_biome
 FROM species s
 WHERE (sqlc.narg('query')::text IS NULL OR s.search_text LIKE '%' || sqlc.narg('query')::text || '%' ESCAPE '\')
   AND (sqlc.narg('biome')::biome IS NULL OR EXISTS (
         SELECT 1 FROM species_biome b WHERE b.species_id = s.id AND b.biome = sqlc.narg('biome')::biome))
   AND (sqlc.narg('state')::text IS NULL OR EXISTS (
         SELECT 1 FROM species_state st WHERE st.species_id = s.id AND st.uf = sqlc.narg('state')::text))
+  AND (NOT sqlc.arg('kids_only')::bool OR s.kids IS NOT NULL)
+  AND (sqlc.narg('primary_biome')::biome IS NULL OR s.primary_biome = sqlc.narg('primary_biome')::biome)
   AND (sqlc.narg('after_sort')::text IS NULL
        OR (s.sort_name, s.id) > (sqlc.narg('after_sort')::text, sqlc.narg('after_id')::text))
 ORDER BY s.sort_name, s.id
@@ -48,12 +54,27 @@ SELECT * FROM media WHERE species_id = $1 ORDER BY kind, position;
 SELECT lat, lng, count, precision FROM occurrence_cluster WHERE species_id = $1 ORDER BY count DESC;
 
 -- name: CountByBiome :many
--- Quantas espécies há em cada bioma (os filtros do Explorar).
-SELECT biome, count(*)::int AS total FROM species_biome GROUP BY biome;
+-- Quantas espécies há em cada bioma (os filtros do Explorar). Com
+-- kids_only, só as que têm conteúdo Kids.
+SELECT b.biome, count(*)::int AS total
+FROM species_biome b JOIN species s ON s.id = b.species_id
+WHERE NOT sqlc.arg('kids_only')::bool OR s.kids IS NOT NULL
+GROUP BY b.biome;
 
 -- name: CountByState :many
--- Quantas espécies há em cada UF.
-SELECT uf::text AS uf, count(*)::int AS total FROM species_state GROUP BY uf;
+-- Quantas espécies há em cada UF, com o mesmo kids_only.
+SELECT st.uf::text AS uf, count(*)::int AS total
+FROM species_state st JOIN species s ON s.id = st.species_id
+WHERE NOT sqlc.arg('kids_only')::bool OR s.kids IS NOT NULL
+GROUP BY st.uf;
+
+-- name: CountByPrimaryBiome :many
+-- Quantas espécies há em cada bioma principal ("mundo" do Kids): é a conta
+-- do álbum. Espécies sem bioma principal não entram.
+SELECT COALESCE(primary_biome::text, '')::text AS biome, count(*)::int AS total
+FROM species
+WHERE primary_biome IS NOT NULL AND (NOT sqlc.arg('kids_only')::bool OR kids IS NOT NULL)
+GROUP BY primary_biome;
 
 -- name: UpsertSpecies :exec
 -- "Upsert" = insere, ou atualiza se o id já existir. Só mexe nos campos

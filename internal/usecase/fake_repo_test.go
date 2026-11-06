@@ -14,9 +14,10 @@ import (
 // fakeRepo imita o banco em memória. Testar casos de uso com um "fake"
 // (e não com o PostgreSQL real) deixa os testes rápidos e focados na regra.
 type fakeRepo struct {
-	species   []domain.Species
-	lastQuery usecase.ListFilter
-	err       error
+	species      []domain.Species
+	lastQuery    usecase.ListFilter
+	err          error
+	lastKidsOnly bool // o kidsOnly da última contagem
 	// sortNameOverride simula um sort_name GRAVADO no banco que diverge do
 	// que domain.NormalizeForSearch(CommonNamePt) recalcularia agora —
 	// prova que o cursor vem do valor devolvido pelo repo, não de um
@@ -70,14 +71,22 @@ func (f *fakeRepo) GetSpecies(_ context.Context, id string) (domain.Species, err
 	return domain.Species{}, domain.ErrNotFound
 }
 
-// CountByBiome e CountByState devolvem contagens fixas (não olham f.species),
-// junto com o erro configurado.
-func (f *fakeRepo) CountByBiome(context.Context) (map[domain.Biome]int, error) {
+// CountByBiome, CountByState e CountByPrimaryBiome devolvem contagens fixas
+// (não olham f.species), junto com o erro configurado. lastKidsOnly guarda o
+// kidsOnly recebido, para o teste conferir que o filtro chegou.
+func (f *fakeRepo) CountByBiome(_ context.Context, kidsOnly bool) (map[domain.Biome]int, error) {
+	f.lastKidsOnly = kidsOnly
 	return map[domain.Biome]int{domain.BiomePantanal: 2, domain.BiomeAmazonia: 1}, f.err
 }
 
-func (f *fakeRepo) CountByState(context.Context) (map[string]int, error) {
+func (f *fakeRepo) CountByState(_ context.Context, kidsOnly bool) (map[string]int, error) {
+	f.lastKidsOnly = kidsOnly
 	return map[string]int{"SP": 3, "AM": 1}, f.err
+}
+
+func (f *fakeRepo) CountByPrimaryBiome(_ context.Context, kidsOnly bool) (map[domain.Biome]int, error) {
+	f.lastKidsOnly = kidsOnly
+	return map[domain.Biome]int{domain.BiomePampa: 1, domain.BiomeCerrado: 4, domain.BiomeCaatinga: 0}, f.err
 }
 
 // birds cria n espécies com nomes "Ave Aa", "Ave Ab"..., já em ordem alfabética.

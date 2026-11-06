@@ -70,6 +70,10 @@ func (r *Repository) ListSpecies(ctx context.Context, f usecase.ListFilter) ([]d
 	if f.Biome != "" {
 		params.Biome = sqlcgen.NullBiome{Biome: sqlcgen.Biome(f.Biome), Valid: true}
 	}
+	params.KidsOnly = f.KidsOnly
+	if f.PrimaryBiome != "" {
+		params.PrimaryBiome = sqlcgen.NullBiome{Biome: sqlcgen.Biome(f.PrimaryBiome), Valid: true}
+	}
 	if f.After != nil {
 		params.AfterSort = text(f.After.SortName)
 		params.AfterID = text(f.After.ID)
@@ -84,7 +88,7 @@ func (r *Repository) ListSpecies(ctx context.Context, f usecase.ListFilter) ([]d
 		out[i] = domain.SpeciesSummary{
 			ID: row.ID, ScientificName: row.ScientificName, CommonNamePt: row.CommonNamePt,
 			ThumbnailKey: row.ThumbnailKey, ConservationStatus: domain.ConservationStatus(row.ConservationStatus),
-			SortName: row.SortName,
+			SortName: row.SortName, PrimaryBiome: domain.Biome(row.PrimaryBiome),
 		}
 	}
 	return out, nil
@@ -113,6 +117,12 @@ func (r *Repository) GetSpecies(ctx context.Context, id string) (domain.Species,
 	if row.Diet.Valid {
 		v := row.Diet.String
 		s.Diet = &v
+	}
+	if row.PrimaryBiome.Valid {
+		s.PrimaryBiome = domain.Biome(row.PrimaryBiome.Biome)
+	}
+	if s.Kids, err = kidsFromJSON(row.Kids); err != nil {
+		return s, err
 	}
 
 	facts, err := r.q.ListFacts(ctx, id)
@@ -161,9 +171,10 @@ func (r *Repository) GetSpecies(ctx context.Context, id string) (domain.Species,
 	return s, nil
 }
 
-// CountByBiome e CountByState devolvem as contagens como mapas.
-func (r *Repository) CountByBiome(ctx context.Context) (map[domain.Biome]int, error) {
-	rows, err := r.q.CountByBiome(ctx)
+// CountByBiome, CountByState e CountByPrimaryBiome devolvem as contagens
+// como mapas. kidsOnly = só as espécies com conteúdo Kids.
+func (r *Repository) CountByBiome(ctx context.Context, kidsOnly bool) (map[domain.Biome]int, error) {
+	rows, err := r.q.CountByBiome(ctx, kidsOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -174,14 +185,26 @@ func (r *Repository) CountByBiome(ctx context.Context) (map[domain.Biome]int, er
 	return out, nil
 }
 
-func (r *Repository) CountByState(ctx context.Context) (map[string]int, error) {
-	rows, err := r.q.CountByState(ctx)
+func (r *Repository) CountByState(ctx context.Context, kidsOnly bool) (map[string]int, error) {
+	rows, err := r.q.CountByState(ctx, kidsOnly)
 	if err != nil {
 		return nil, err
 	}
 	out := make(map[string]int, len(rows))
 	for _, row := range rows {
 		out[row.Uf] = int(row.Total)
+	}
+	return out, nil
+}
+
+func (r *Repository) CountByPrimaryBiome(ctx context.Context, kidsOnly bool) (map[domain.Biome]int, error) {
+	rows, err := r.q.CountByPrimaryBiome(ctx, kidsOnly)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[domain.Biome]int, len(rows))
+	for _, row := range rows {
+		out[domain.Biome(row.Biome)] = int(row.Total)
 	}
 	return out, nil
 }
