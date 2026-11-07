@@ -5,6 +5,7 @@ size_cm: 35
 diet: Artrópodes, como gafanhotos, percevejos e aranhas; pequenos vertebrados, como lagartos, camundongos, peixes, cobras e rãs; além de frutos, bagas e sementes.
 conservation_status: LC
 biomes: [amazonia, mata_atlantica, cerrado, caatinga, pantanal, pampa]
+primary_biome: cerrado
 states: [AM, PA, CE, BA, GO, MS, SP, RS]
 description: >
   O anu-preto é um pássaro inteiramente negro, de cauda longa e bico alto e
@@ -21,3 +22,18 @@ facts:
     source: https://pt.wikipedia.org/wiki/Anu-preto
   - text: Tem um odor corporal forte e característico, que pode atrair morcegos e outros animais carnívoros.
     source: https://pt.wikipedia.org/wiki/Anu-preto
+kids:
+  description: >
+    O anu-preto é todo negro, com cauda longa e bico alto e curvo. Vive em
+    campos abertos e beiras de mata em quase todo o Brasil. Ele caça em grupo e
+    divide até o ninho com outros casais.
+  facts:
+    - text: Vários casais podem dividir um ninho com mais de 20 ovos!
+      source_fact: 0
+    - text: O bando se espalha em semicírculo e espera um inseto aparecer.
+      source_fact: 1
+    - text: Tem um cheiro forte, que pode atrair morcegos e outros bichos.
+      source_fact: 2
+  did_you_know: O anu-preto também pode fazer ninho só de um casal.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:69d80b8f2143ad583a5ae18047cecf6e7148a353425e35ef987ef575fd3bfd44

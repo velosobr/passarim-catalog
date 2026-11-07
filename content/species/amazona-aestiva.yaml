@@ -5,6 +5,7 @@ size_cm: 37
 diet: Sementes, frutos e folhas.
 conservation_status: NT
 biomes: [caatinga, cerrado, pantanal]
+primary_biome: cerrado
 states: [PI, PE, BA, SP, MG, RJ, SC, RS]
 description: >
   O papagaio-verdadeiro é um psitacídeo de plumagem predominantemente verde,
@@ -23,3 +24,19 @@ facts:
     source: https://www.wikiaves.com.br/wiki/papagaio-verdadeiro
   - text: Tem se tornado cada vez mais comum em áreas urbanas de cidades como São Paulo e Rio de Janeiro.
     source: https://www.wikiaves.com.br/wiki/papagaio-verdadeiro
+kids:
+  description: >
+    O papagaio-verdadeiro é quase todo verde, com cabeça amarela e ombros
+    vermelhos. Vive no interior do Brasil, do Nordeste ao Sul, em florestas,
+    savanas e matas. É um dos papagaios de estimação mais populares do país.
+    Pessoas tiram essas aves da natureza, e isso é proibido.
+  facts:
+    - text: Os filhotes ficam cerca de dois meses no ninho, em buracos ou ocos de árvores.
+      source_fact: 0
+    - text: O casal voa tão junto que parece uma única ave de quatro asas.
+      source_fact: 1
+    - text: Está cada vez mais comum em cidades como São Paulo e Rio de Janeiro.
+      source_fact: 2
+  did_you_know: À noite, os papagaios se reúnem em bandos para dormir.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:1fdd9f91cd185e114914ddb21b83235cb017c13d6e90fd44bddc4622f0970f3d

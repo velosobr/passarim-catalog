@@ -5,6 +5,7 @@ size_cm: 14
 diet: Frutos de palmeira, goiaba, mamão e outras frutas, além de insetos e suas larvas.
 conservation_status: LC
 biomes: [mata_atlantica]
+primary_biome: mata_atlantica
 states: [BA, ES, RJ, SP, PR, SC, RS, MG]
 description: >
   A saíra-sete-cores é um passarinho pequeno e extremamente colorido, com
@@ -19,3 +20,15 @@ facts:
     source: https://pt.wikipedia.org/wiki/Sa%C3%ADra-sete-cores
   - text: O casal é monogâmico e constrói o ninho juntos, em formato de tigela, com os filhotes deixando o ninho entre 14 e 18 dias após a eclosão.
     source: https://pt.wikipedia.org/wiki/Sa%C3%ADra-sete-cores
+kids:
+  description: >
+    A saíra-sete-cores é um passarinho pequeno e muito colorido da Mata
+    Atlântica. Tem penas turquesa, amarelo-alaranjadas e azuis. Vive do leste da
+    Bahia até o Rio Grande do Sul, em matas e restingas. Come frutas como goiaba
+    e mamão, além de insetos.
+  facts:
+    - text: O casal constrói junto o ninho, que tem forma de tigela.
+      source_fact: 1
+  did_you_know: Os filhotes saem do ninho entre 14 e 18 dias depois de nascer.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:0c95034f71491d5f0be5ce3a1e4e62d64f013ec8db4c79e002ff5210d0c98146

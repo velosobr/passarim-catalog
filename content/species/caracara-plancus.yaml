@@ -5,6 +5,7 @@ size_cm: 55
 diet: Onívoro oportunista; caça lagartos, cobras, rãs e pequenos vertebrados, rouba filhotes de outras aves e também consome carniça e restos de origem humana.
 conservation_status: LC
 biomes: [amazonia, mata_atlantica, cerrado, caatinga, pantanal, pampa]
+primary_biome: caatinga
 states: [MT, MS, GO, BA, PE, SP, RJ, PR, RS]
 description: >
   O carcará é uma ave de rapina de hábitos terrestres, com longas pernas
@@ -21,3 +22,18 @@ facts:
     source: https://pt.wikipedia.org/wiki/Carcar%C3%A1
   - text: Foi adotado em 2006 como símbolo da Agência Brasileira de Inteligência (ABIN).
     source: https://pt.wikipedia.org/wiki/Carcar%C3%A1
+kids:
+  description: >
+    O carcará é uma ave de rapina que passa muito tempo no chão. Tem pernas
+    longas, boas para caminhar e correr atrás de comida. Come de tudo e caça
+    bichos pequenos. Vive em quase todo o Brasil, até nas cidades.
+  facts:
+    - text: O nome carcará vem do tupi e parece imitar o som do seu canto.
+      source_fact: 0
+    - text: Anda muito pelo chão, mas também é um ótimo voador.
+      source_fact: 1
+    - text: Desde 2006, é o símbolo da Agência Brasileira de Inteligência.
+      source_fact: 2
+  did_you_know: Ele também come animais que já morreram e ajuda a limpar a natureza.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:088e984281610cfcc1edb08db2e748b54779b51b6641ea6635b2f65090c66cb0

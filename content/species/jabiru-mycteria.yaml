@@ -5,6 +5,7 @@ size_cm: 140
 diet: Peixes, moluscos, répteis, insetos e pequenos mamíferos, caçados em águas rasas.
 conservation_status: LC
 biomes: [pantanal, amazonia]
+primary_biome: pantanal
 states: [MS, MT, AM, PA]
 description: >
   O tuiuiú, também chamado de jaburu, é a maior ave voadora do Pantanal e
@@ -19,3 +20,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Tuiui%C3%BA
   - text: Constrói ninhos em grupos de até seis casais, às vezes ao lado de garças e outras aves aquáticas, com a fêmea pondo de 2 a 5 ovos brancos.
     source: https://pt.wikipedia.org/wiki/Tuiui%C3%BA
+kids:
+  description: >
+    O tuiuiú, também chamado de jaburu, é a maior ave voadora do Pantanal. Ele é
+    o símbolo dessa região. Tem o pescoço preto e sem penas, com uma bolsa
+    vermelha na garganta. Come peixes, moluscos, répteis e pequenos mamíferos
+    que pega em águas rasas.
+  facts:
+    - text: As fêmeas costumam ser menores e mais leves que os machos.
+      source_fact: 0
+    - text: Faz ninhos em grupos de até seis casais, às vezes perto de garças.
+      source_fact: 1
+  did_you_know: Seus ninhos são enormes e usados por vários anos seguidos.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:e232b69a229a8842893372101b0396db07d39bc1d96f91fc829547f5063f8a3d

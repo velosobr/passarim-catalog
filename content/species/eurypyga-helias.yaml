@@ -5,6 +5,7 @@ size_cm: 46
 diet: Insetos, crustáceos, pequenos sapos e peixes.
 conservation_status: LC
 biomes: [amazonia, cerrado, pantanal, caatinga]
+primary_biome: amazonia
 states: [AM, PA, AC, RO, RR, AP, MT, MS, GO, MA, PI]
 description: >
   O pavãozinho-do-pará é uma ave discreta de hábitos solitários, encontrada
@@ -23,3 +24,18 @@ facts:
     source: https://pt.wikipedia.org/wiki/Pav%C3%A3ozinho-do-par%C3%A1
   - text: Comunidades indígenas historicamente retiravam um osso chamado "mocó" da ave para usar como talismã xamânico.
     source: https://pt.wikipedia.org/wiki/Pav%C3%A3ozinho-do-par%C3%A1
+kids:
+  description: >
+    O pavãozinho-do-pará é uma ave discreta que gosta de andar sozinha. Vive à
+    beira de igarapés e rios da Amazônia. Come insetos, pequenos sapos,
+    crustáceos e peixes que pega nas margens.
+  facts:
+    - text: É a ave símbolo oficial do estado do Pará.
+      source_fact: 0
+    - text: Quando se sente ameaçada, abre asas e cauda e mostra grandes manchas parecidas com olhos.
+      source_fact: 1
+    - text: É a única espécie da sua família de aves.
+      source_fact: 2
+  did_you_know: Além da Amazônia, ela aparece em áreas úmidas do Centro-Oeste e do Nordeste.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:f33c13c9b3a39698f8b5a97d346a0d0ccbf637fb14944630f88db0db8583384d

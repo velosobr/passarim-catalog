@@ -5,6 +5,7 @@ size_cm: 69
 diet: Dieta bastante variada, com destaque para invertebrados como aranhas, centopeias e insetos; também preda pequenos vertebrados, incluindo lagartixas, roedores, rãs, caramujos e cobras de pequeno porte.
 conservation_status: LC
 biomes: [amazonia, pantanal]
+primary_biome: pantanal
 states: [PA, MT, CE, RS]
 description: >
   A curicaca é uma ave vistosa da família dos íbis, com bico longo e
@@ -20,3 +21,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Curicaca
   - text: É a ave símbolo do município de São José dos Ausentes, no Rio Grande do Sul, reconhecida por lei municipal em dezembro de 2005.
     source: https://pt.wikipedia.org/wiki/Curicaca
+kids:
+  description: >
+    A curicaca é uma ave da família dos íbis, de bico longo e curvo. Tem o corpo
+    alaranjado, cinza e escuro, e pernas avermelhadas. Gosta de campos alagados
+    e beiras de lagoas. Anda em bandos barulhentos e caça bichos pequenos no
+    chão molhado.
+  facts:
+    - text: O nome curicaca vem da palavra tupi kurikaka.
+      source_fact: 0
+    - text: É a ave símbolo de São José dos Ausentes, no Rio Grande do Sul.
+      source_fact: 1
+  did_you_know: Em bando, ela cruza brejos e pantanais com voos fortes e sem pausa.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:58af05f9e4ec817242589e9428158ffcee5e56e1efd4437ceb013dc1af32eec7

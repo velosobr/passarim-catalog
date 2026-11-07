@@ -5,6 +5,7 @@ size_cm: 48
 diet: Frutos, insetos e outros artrópodes e pequenos vertebrados, inclusive ovos e filhotes de outras aves.
 conservation_status: LC
 biomes: [mata_atlantica]
+primary_biome: mata_atlantica
 states: [MG, ES, RJ, SP, PR, SC, RS]
 description: >
   O tucano-de-bico-verde tem o bico grande verde-claro, a garganta e o peito
@@ -20,3 +21,19 @@ facts:
     source: https://pt.wikipedia.org/wiki/Tucano-de-bico-verde
   - text: Já foi estampado em um selo dos Correios do Brasil, em 1983.
     source: https://pt.wikipedia.org/wiki/Tucano-de-bico-verde
+kids:
+  description: >
+    O tucano-de-bico-verde tem bico grande verde-claro, peito amarelo e barriga
+    vermelha. Por isso, também é chamado de tucano-de-peito-vermelho. Vive nas
+    florestas da Mata Atlântica do Sul e do Sudeste, principalmente nas serras.
+    Come frutos, insetos e, às vezes, ovos e filhotes de outras aves.
+  facts:
+    - text: A palavra "tucano" vem do tupi antigo.
+      source_fact: 0
+    - text: A fêmea põe de 2 a 5 ovos, chocados por 19 dias.
+      source_fact: 1
+    - text: Em 1983, ele apareceu em um selo dos Correios do Brasil.
+      source_fact: 2
+  did_you_know: Ele anda em pequenos bandos pelas florestas, procurando comida.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:0970aadc624857541c58bd5df399e43ee034662411659c8063e76b8bf6037074

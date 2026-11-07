@@ -5,6 +5,7 @@ size_cm: 34
 diet: Frutas, flores, brotos e sementes de diversas plantas, como caju, açaí, anani e murici.
 conservation_status: VU
 biomes: [amazonia]
+primary_biome: amazonia
 states: [MA, AM, PA, RO, MT]
 description: >
   A ararajuba é um papagaio inteiramente amarelo-dourado, com as asas
@@ -21,3 +22,19 @@ facts:
     source: https://pt.wikipedia.org/wiki/Guaruba_guarouba
   - text: É popular entre povos indígenas da região, que até hoje usam suas penas como moeda de troca em algumas tribos.
     source: https://pt.wikipedia.org/wiki/Guaruba_guarouba
+kids:
+  description: >
+    A ararajuba é um papagaio amarelo-dourado, com asas verdes. É um dos
+    papagaios mais vistosos do Brasil. Vive só na Amazônia, nas florestas perto
+    dos rios Tocantins e Xingu. Come frutas, flores, brotos e sementes de muitas
+    plantas.
+  facts:
+    - text: Outras aves do bando ajudam o casal a cuidar dos filhotes.
+      source_fact: 0
+    - text: Faz o ninho em túneis de até 2 metros dentro de árvores grandes.
+      source_fact: 1
+    - text: Alguns povos indígenas usam suas penas como moeda de troca.
+      source_fact: 2
+  did_you_know: Ela vive principalmente entre o Maranhão e o Pará.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:095f54bce5548941645c1e26764e546796fc3f2c04d0d5202c2fece2ebd287f2

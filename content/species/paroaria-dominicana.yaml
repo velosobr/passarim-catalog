@@ -5,6 +5,7 @@ size_cm: 17
 diet: Sementes, bagas e insetos.
 conservation_status: LC
 biomes: [caatinga, cerrado]
+primary_biome: caatinga
 states: [MA, PI, CE, RN, PB, PE, AL, SE, BA, GO, TO]
 description: >
   O cardeal-do-nordeste tem a cabeça e a garganta de um vermelho vivo, sem
@@ -20,3 +21,16 @@ facts:
     source: https://pt.wikipedia.org/wiki/Cardeal-do-nordeste
   - text: Foi levado pelo homem para o Sudeste, onde hoje é comum até em cidades, mas lá ele não é nativo.
     source: https://www.wikiaves.com.br/wiki/cardeal-do-nordeste
+kids:
+  description: >
+    O cardeal-do-nordeste tem cabeça e garganta vermelho vivo, peito branco e
+    costas acinzentadas. Só existe no Brasil e é um dos pássaros mais conhecidos
+    da Caatinga. Anda em bandos procurando sementes, bagas e insetos.
+  facts:
+    - text: No Nordeste, muita gente o chama de galo-da-campina ou cabeça-vermelha.
+      source_fact: 0
+    - text: Pessoas o levaram para o Sudeste, onde é comum nas cidades, mas não é nativo.
+      source_fact: 2
+  did_you_know: Ele também aparece nas beiras de rios do Cerrado, em Goiás e no Tocantins.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:a56662ac6c98180c34009e36d96b45a50c968a6ba919a3e96716f26634fc4436

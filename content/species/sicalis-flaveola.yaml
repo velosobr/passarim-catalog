@@ -4,6 +4,7 @@ family: Thraupidae
 diet: Sementes de gramíneas, como alpiste e painço, complementadas com insetos.
 conservation_status: LC
 biomes: [amazonia, caatinga, cerrado, mata_atlantica, pampa]
+primary_biome: cerrado
 states: [MA, PI, CE, MG, SP, RJ, RS, AM]
 description: >
   O canário-da-terra-verdadeiro é um passarinho amarelo-dourado com tons
@@ -17,3 +18,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Can%C3%A1rio-da-terra
   - text: As fêmeas podem realizar até 4 posturas por ano, com 4 a 6 ovos cada, totalizando cerca de 20 filhotes em uma única temporada.
     source: https://pt.wikipedia.org/wiki/Can%C3%A1rio-da-terra
+kids:
+  description: >
+    O canário-da-terra é um passarinho amarelo-dourado, com tons alaranjados na
+    cabeça. É muito popular no Brasil por causa do seu canto. Vive em quase todo
+    o país, de áreas abertas a quintais e jardins. Come principalmente sementes
+    de capim e também pequenos insetos.
+  facts:
+    - text: Os filhotes nascem cinzentos, e os machos só ficam amarelos por volta dos 9 meses.
+      source_fact: 0
+    - text: A fêmea pode ter cerca de 20 filhotes numa única temporada.
+      source_fact: 1
+  did_you_know: Alpiste e painço são sementes que ele come bastante.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:8adb3c83d1b2263dbf7acf9c60eb7f64a8ae4cb746e05049daf36d8004f83b52

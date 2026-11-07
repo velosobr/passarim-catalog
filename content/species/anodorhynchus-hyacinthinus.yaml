@@ -5,6 +5,7 @@ size_cm: 100
 diet: Sementes duras de palmeiras, como coco-de-urucuri e coco-de-espinho, quebradas com a força do bico.
 conservation_status: VU
 biomes: [pantanal, cerrado, amazonia]
+primary_biome: pantanal
 states: [MS, MT, GO, MA, PI, BA, TO, MG, PA, AM]
 description: >
   A arara-azul-grande é a maior espécie de arara do mundo, com plumagem
@@ -19,3 +20,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Arara-azul-grande
   - text: Já foram registradas usando folhas mastigadas ou pedaços de madeira como ferramentas para firmar as sementes enquanto se alimentam.
     source: https://pt.wikipedia.org/wiki/Arara-azul-grande
+kids:
+  description: >
+    A arara-azul-grande é a maior arara do mundo. Suas penas são azuis, com
+    amarelo em volta dos olhos e na base do bico. Vive em palmeirais e come
+    sementes duras de palmeiras, que quebra com seu bico fortíssimo. Pessoas
+    tiram essas aves da natureza, e isso é proibido.
+  facts:
+    - text: Os casais ficam juntos a vida toda e voltam sempre aos mesmos lugares.
+      source_fact: 0
+    - text: Ela já foi vista usando folhas mastigadas ou pedaços de madeira para segurar sementes.
+      source_fact: 1
+  did_you_know: Ela vive no Pantanal, no Cerrado e na Amazônia.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:1648a37a5bc072f20f250d029493e652b5d6d32f8f1c39222e3ffd9f330dde6d

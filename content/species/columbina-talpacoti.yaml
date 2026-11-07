@@ -5,6 +5,7 @@ size_cm: 17
 diet: Grãos e sementes catados no chão; frequenta comedouros com milho moído e outras sementes.
 conservation_status: LC
 biomes: [cerrado, mata_atlantica]
+primary_biome: cerrado
 states: [SP, MG, GO, DF, PR]
 description: >
   A rolinha-roxa é uma pomba pequena e comum, com o macho de penas
@@ -22,3 +23,18 @@ facts:
     source: https://pt.wikipedia.org/wiki/Rolinha-roxa
   - text: Em várias cidades brasileiras, vem sendo gradualmente substituída pela pomba-de-bando (Zenaida auriculata).
     source: https://pt.wikipedia.org/wiki/Rolinha-roxa
+kids:
+  description: >
+    A rolinha-roxa é uma pomba pequena e muito comum. O macho tem penas
+    avermelhadas e cabeça cinza-azulada, e a fêmea é toda parda. Hoje é a ave
+    silvestre mais comum em muitas cidades do Sudeste e do Centro-Oeste.
+  facts:
+    - text: Foi uma das primeiras aves do Brasil a se dar bem nas cidades.
+      source_fact: 0
+    - text: Defende seu espaço e sua comida dando pancadas com as asas em outras rolinhas.
+      source_fact: 1
+    - text: Em várias cidades, a pomba-de-bando está ocupando o lugar dela aos poucos.
+      source_fact: 2
+  did_you_know: Antes de chegar às cidades, ela vivia em cerrados e campos.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:3213f0664feb141713835995e0df78aff66da4a0ba151b8e5504ecd9528ccf17

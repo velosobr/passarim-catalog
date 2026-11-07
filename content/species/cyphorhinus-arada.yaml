@@ -5,6 +5,7 @@ size_cm: 13
 diet: Principalmente insetos, complementados com frutas.
 conservation_status: LC
 biomes: [amazonia]
+primary_biome: amazonia
 states: [AM, PA, AC, RO]
 description: >
   O uirapuru-verdadeiro é uma ave pequena e discreta da Amazônia, famosa
@@ -19,3 +20,16 @@ facts:
     source: https://pt.wikipedia.org/wiki/Uirapuru-verdadeiro
   - text: Inspirou o compositor Villa-Lobos, que em 1917 criou o poema sinfônico "Uirapuru" baseado em folclore brasileiro sobre a ave.
     source: https://pt.wikipedia.org/wiki/Uirapuru-verdadeiro
+kids:
+  description: >
+    O uirapuru-verdadeiro é uma ave pequena e discreta da Amazônia. Ele é famoso
+    pelo canto, um dos mais belos entre as aves brasileiras. Vive na parte baixa
+    de florestas úmidas e come insetos e frutas.
+  facts:
+    - text: Canta só cerca de 15 dias por ano, de 10 a 15 minutos cada vez.
+      source_fact: 0
+    - text: Em 1917, o compositor Villa-Lobos criou a obra "Uirapuru", inspirada nessa ave.
+      source_fact: 1
+  did_you_know: Já foram registrados sete cantos diferentes do uirapuru.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:130ebf5fd7443c1d497b96264709f3439ecfd074e06c6de2a97de3f991e7362d

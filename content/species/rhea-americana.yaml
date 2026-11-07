@@ -5,6 +5,7 @@ size_cm: 170
 diet: Onívora; come frutos, sementes, insetos, folhas e pequenos animais, como cobras e roedores.
 conservation_status: NT
 biomes: [cerrado, caatinga, pantanal, pampa]
+primary_biome: cerrado
 states: [GO, MT, MS, MA, PI, TO, RS]
 description: >
   A ema é a maior ave das Américas, podendo atingir 1,70 m de comprimento e
@@ -24,3 +25,21 @@ facts:
     source: https://pt.wikipedia.org/wiki/Rhea_americana
   - text: Dezenas de emas vivem soltas nos jardins do Palácio da Alvorada, residência oficial da Presidência da República em Brasília.
     source: https://pt.wikipedia.org/wiki/Rhea_americana
+kids:
+  description: >
+    A ema é a maior ave das Américas, mas não voa. Ela usa as asas só para se
+    equilibrar enquanto corre muito rápido. Vive em bandos nos campos abertos do
+    Cerrado, do Pantanal e do Pampa. Come frutos, sementes, insetos e pequenos
+    animais.
+  facts:
+    - text: Pode pesar até 36 kg e é a ave mais pesada das Américas.
+      source_fact: 0
+    - text: O pai é quem choca os ovos e cuida dos filhotes.
+      source_fact: 1
+    - text: Na época de reprodução, o macho dá um urro forte para chamar as fêmeas.
+      source_fact: 2
+    - text: Dezenas de emas vivem soltas nos jardins do Palácio da Alvorada, em Brasília.
+      source_fact: 3
+  did_you_know: Os filhotes que o pai cuida podem vir de várias mães diferentes!
+  generated_by: claude-opus-5-5
+  source_hash: sha256:25710b7f9a7acf826cd686a1419facf4f9288af045baed62baba15c2bdb0631a

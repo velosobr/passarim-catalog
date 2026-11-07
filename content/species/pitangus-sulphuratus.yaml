@@ -5,6 +5,7 @@ size_cm: 23
 diet: Insetos em grande quantidade, além de frutas, flores, pequenas cobras, lagartos, crustáceos, peixes e girinos.
 conservation_status: LC
 biomes: [amazonia, cerrado, mata_atlantica, pantanal, pampa]
+primary_biome: mata_atlantica
 states: [AM, PA, GO, MT, MS, MG, SP, RJ, PR, RS]
 description: >
   O bem-te-vi é uma ave robusta de cabeça preta com uma risca branca sobre os
@@ -19,3 +20,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Bem-te-vi
   - text: Costuma atacar em voos rasantes aves de rapina, como gaviões, que se aproximam demais do seu território durante a época de reprodução.
     source: https://pt.wikipedia.org/wiki/Bem-te-vi
+kids:
+  description: >
+    O bem-te-vi tem cabeça preta, uma risca branca sobre os olhos e peito
+    amarelo. Vive em quase todo o Brasil, das cidades às beiras de mata. Caça
+    insetos no ar, mas também come frutas, lagartos, peixes e girinos. Seu nome
+    vem do canto, que parece dizer bem-te-vi.
+  facts:
+    - text: Mora em quase todos os biomas e se dá muito bem nas cidades.
+      source_fact: 0
+    - text: Na época de reprodução, dá voos rasantes para espantar gaviões do seu território.
+      source_fact: 1
+  did_you_know: O bem-te-vi é uma ave robusta, que come de quase tudo.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:48d7615dbf0264fe51b577c99b3a9f86ee8bc68a41cd650267fc855e7fedcf5f

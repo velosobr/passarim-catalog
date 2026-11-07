@@ -5,6 +5,7 @@ size_cm: 65
 diet: Carniça e matéria orgânica em decomposição; também come frutos e, ocasionalmente, pequenos animais vivos incapazes de fugir.
 conservation_status: LC
 biomes: [amazonia, mata_atlantica, cerrado, caatinga, pantanal, pampa]
+primary_biome: cerrado
 states: [AM, PA, MT, MS, GO, BA, SP, RJ, PR, RS]
 description: >
   O urubu-de-cabeça-preta é um abutre de plumagem totalmente negra e cabeça
@@ -21,3 +22,18 @@ facts:
     source: https://www.wikiaves.com.br/wiki/urubu-preto
   - text: Os ovos, de cor cinza ou verde-pálida, são incubados por ambos os pais durante 32 a 40 dias, e os filhotes atingem a plumagem de adulto por volta dos 3 meses de idade.
     source: https://pt.wikipedia.org/wiki/Urubu-de-cabe%C3%A7a-preta
+kids:
+  description: >
+    O urubu-de-cabeça-preta tem penas todas pretas e a cabeça sem penas. Vive em
+    quase todo o Brasil, em pastos, beiras de mata e até nas cidades. Voa em
+    bandos e come animais que já morreram, ajudando a limpar a natureza.
+  facts:
+    - text: Ele vive do sul dos Estados Unidos até o centro do Chile.
+      source_fact: 0
+    - text: Entre os urubus das Américas, é o que tem as asas abertas mais curtas.
+      source_fact: 1
+    - text: O pai e a mãe chocam juntos os ovos, que são cinza ou verde-claros.
+      source_fact: 2
+  did_you_know: Ele prefere terrenos baixos e quase nunca aparece nas montanhas.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:78ba09993399590b30ecdfe0dc7596e858ca0fa70dd2ddbf05da68f1f03ca5e5

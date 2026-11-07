@@ -5,6 +5,7 @@ size_cm: 80
 diet: Onívora, come insetos, serpentes, lagartos, anfíbios, filhotes de outras aves e pequenos roedores, além de alguma matéria vegetal.
 conservation_status: LC
 biomes: [cerrado, caatinga]
+primary_biome: cerrado
 states: [BA, PI, MG, SP, GO, MT, PR, RS]
 description: >
   A seriema é uma ave terrestre de pernas e pescoço longos, mais vista
@@ -19,3 +20,16 @@ facts:
     source: https://pt.wikipedia.org/wiki/Seriema
   - text: Possui uma crista de penas na testa que é única entre as aves neotropicais, não encontrada em espécies semelhantes.
     source: https://pt.wikipedia.org/wiki/Seriema
+kids:
+  description: >
+    A seriema é uma ave de pernas e pescoço longos que vive no chão. Ela prefere
+    caminhar pelo campo, mas consegue voar quando se sente ameaçada. É comum em
+    áreas abertas do Cerrado e da Caatinga e em pastagens.
+  facts:
+    - text: É uma das maiores aves que vivem no chão, menor só que a ema.
+      source_fact: 0
+    - text: Tem na testa uma crista de penas que nenhuma ave parecida tem.
+      source_fact: 1
+  did_you_know: "A seriema come de tudo: insetos, lagartos e até pequenos roedores!"
+  generated_by: claude-opus-5-5
+  source_hash: sha256:2f0f097c43a1f559885772732fa3167dcdd1bb9b1c10c45d53425bed7319a78f

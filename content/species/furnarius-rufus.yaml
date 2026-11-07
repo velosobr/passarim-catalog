@@ -5,6 +5,7 @@ size_cm: 20
 diet: Insetos, larvas e aranhas capturados no chão ou em vegetação baixa; ocasionalmente sementes.
 conservation_status: LC
 biomes: [mata_atlantica, cerrado, caatinga, pampa, pantanal]
+primary_biome: mata_atlantica
 states: [PE, GO, MT, SP, RJ, MG, PR, SC, RS, BA]
 description: >
   O joão-de-barro é famoso por construir, com barro, palha e esterco, um
@@ -19,3 +20,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Jo%C3%A3o-de-barro
   - text: É a ave-símbolo nacional da Argentina desde 1928, onde é conhecida popularmente como "hornero".
     source: https://pt.wikipedia.org/wiki/Jo%C3%A3o-de-barro
+kids:
+  description: >
+    O joão-de-barro é famoso por fazer um ninho de barro em forma de forno. Usa
+    barro, palha e esterco, e o ninho pode pesar vários quilos. Vive em quase
+    todo o Brasil, menos na Amazônia, até em postes e muros. Come insetos,
+    larvas e aranhas que pega no chão.
+  facts:
+    - text: O ninho pode ficar pronto de 2 a 18 dias, conforme o material por perto.
+      source_fact: 0
+    - text: Na Argentina, ele é conhecido como hornero.
+      source_fact: 1
+  did_you_know: Desde 1928, ele é a ave-símbolo nacional da Argentina.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:e7c81347e5f9716bd95b0c4f8f989669ae4f765f06d15ca3f16d5259e4666bc3

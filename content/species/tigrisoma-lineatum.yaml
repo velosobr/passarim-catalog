@@ -5,6 +5,7 @@ size_cm: 71
 diet: Peixes, crustáceos, besouros aquáticos e larvas e adultos de libélula, além de gafanhotos.
 conservation_status: LC
 biomes: [amazonia, mata_atlantica]
+primary_biome: amazonia
 states: [AM, PA, SP, RJ, MG]
 description: >
   O socó-boi é uma garça de plumagem rajada em tons de castanho, o que a
@@ -23,3 +24,20 @@ facts:
     source: https://pt.wikipedia.org/wiki/Soc%C3%B3-boi
   - text: Foi documentado pela primeira vez em 1780 pelo naturalista francês Buffon, a partir de um espécime coletado na Guiana Francesa.
     source: https://pt.wikipedia.org/wiki/Soc%C3%B3-boi
+kids:
+  description: >
+    O socó-boi é uma garça com penas rajadas em tons de castanho. Essas cores o
+    deixam quase invisível no meio da vegetação dos brejos. Vive principalmente
+    na Amazônia e no Sudeste do Brasil.
+  facts:
+    - text: O jovem leva cerca de cinco anos para ter as penas completas de adulto.
+      source_fact: 0
+    - text: Fica curvado e parado em poças rasas, esperando a presa, ao amanhecer e ao entardecer.
+      source_fact: 1
+    - text: Vive sozinho e caça sem companhia nas áreas úmidas.
+      source_fact: 2
+    - text: Foi descrito pela primeira vez em 1780 pelo naturalista francês Buffon.
+      source_fact: 3
+  did_you_know: Suas penas rajadas funcionam como um disfarce entre as plantas.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:5149ea1acfee9ce469a28f8c54c835691af8973fc24b193ec25c4251cb3ada17

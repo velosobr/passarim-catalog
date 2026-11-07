@@ -4,6 +4,7 @@ family: Picidae
 size_cm: 34
 conservation_status: LC
 biomes: [amazonia, mata_atlantica]
+primary_biome: amazonia
 states: [AM, PA, SP, PR, SC, RS, MG]
 description: >
   O pica-pau-de-banda-branca é um dos maiores pica-paus do Brasil,
@@ -20,3 +21,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Pica-pau-de-banda-branca
   - text: Mede entre 31,5 e 36 cm de comprimento, uma das maiores espécies de pica-pau encontradas no Brasil.
     source: https://en.wikipedia.org/wiki/Lineated_woodpecker
+kids:
+  description: >
+    O pica-pau-de-banda-branca é um dos maiores pica-paus do Brasil. Tem um
+    topete vermelho e listras brancas dos lados do pescoço. Vive nas florestas
+    da Amazônia e também no Sudeste do país. O pai e a mãe cuidam juntos dos
+    ovos e dos filhotes.
+  facts:
+    - text: Ele cava o ninho em árvores mortas, com uma entrada de cerca de 9 centímetros.
+      source_fact: 0
+    - text: À noite, só o macho cuida do ninho.
+      source_fact: 1
+  did_you_know: No Sudeste vive um tipo dessa ave com o topete menor.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:f9711ed80833aac0b7d78a8b81a1a0b30f22115fd093e260423d25e910ea73ff
