@@ -94,3 +94,38 @@ func TestLoadDir_PrimaryExcludedIsError(t *testing.T) {
 		t.Fatalf("esperava erro em photos.exclude, veio %v", err)
 	}
 }
+
+// As chaves primary_biome: e kids: viram o bioma principal e o conteúdo Kids.
+func TestLoadDir_Kids(t *testing.T) {
+	species, err := curated.LoadDir("testdata/kids")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := species[0]
+	if s.PrimaryBiome != domain.BiomeMataAtlantica || s.Kids == nil {
+		t.Fatalf("bioma=%q kids=%v", s.PrimaryBiome, s.Kids)
+	}
+	k := s.Kids
+	if !strings.HasPrefix(k.Description, "O sabiá tem") || strings.HasSuffix(k.Description, "\n") {
+		t.Fatalf("descrição kids = %q (deveria vir aparada)", k.Description)
+	}
+	if len(k.Facts) != 1 || k.Facts[0].SourceFact != 0 || k.DidYouKnow == "" || k.GeneratedBy != "claude-opus-5-5" || k.SourceHash != "sha256:abc" {
+		t.Fatalf("bloco kids = %+v", k)
+	}
+}
+
+// Um bioma principal fora dos biomas é recusado mesmo sem o bloco kids:.
+func TestLoadDir_PrimaryBiomeOutsideBiomesFails(t *testing.T) {
+	_, err := curated.LoadDir("testdata/kids-bad-biome")
+	if err == nil || !strings.Contains(err.Error(), "primary_biome") {
+		t.Fatalf("esperava erro de primary_biome, veio %v", err)
+	}
+}
+
+// Sem as chaves novas, nada muda: o arquivo de sempre continua válido.
+func TestLoadDir_WithoutKidsKeepsWorking(t *testing.T) {
+	species, err := curated.LoadDir("testdata/valid")
+	if err != nil || species[0].Kids != nil || species[0].PrimaryBiome != "" {
+		t.Fatalf("err=%v kids=%v bioma=%q", err, species[0].Kids, species[0].PrimaryBiome)
+	}
+}

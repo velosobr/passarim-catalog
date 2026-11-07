@@ -22,16 +22,21 @@ type SpeciesRepository interface {
 	ListSpecies(ctx context.Context, filter ListFilter) ([]domain.SpeciesSummary, error)
 	// GetSpecies devolve domain.ErrNotFound se o id não existir.
 	GetSpecies(ctx context.Context, id string) (domain.Species, error)
-	// CountByBiome e CountByState contam as espécies de cada bioma e de cada UF.
-	CountByBiome(ctx context.Context) (map[domain.Biome]int, error)
-	CountByState(ctx context.Context) (map[string]int, error)
+	// CountByBiome e CountByState contam as espécies de cada bioma e de cada
+	// UF; CountByPrimaryBiome conta por bioma principal ("mundo" do Kids).
+	// Com kidsOnly, só entram as espécies com conteúdo Kids.
+	CountByBiome(ctx context.Context, kidsOnly bool) (map[domain.Biome]int, error)
+	CountByState(ctx context.Context, kidsOnly bool) (map[string]int, error)
+	CountByPrimaryBiome(ctx context.Context, kidsOnly bool) (map[domain.Biome]int, error)
 }
 
 // ListFilter chega ao repositório já validado e normalizado.
 type ListFilter struct {
-	Query string       // sem acentos e minúscula; vazio = sem busca
-	Biome domain.Biome // vazio = sem filtro
-	State string       // UF maiúscula; vazio = sem filtro
-	After *Cursor      // nil = primeira página
-	Limit int          // quantos itens buscar
+	Query        string       // sem acentos e minúscula; vazio = sem busca
+	Biome        domain.Biome // vazio = sem filtro
+	State        string       // UF maiúscula; vazio = sem filtro
+	KidsOnly     bool         // true = só espécies com conteúdo Kids
+	PrimaryBiome domain.Biome // vazio = sem filtro pelo bioma principal
+	After        *Cursor      // nil = primeira página
+	Limit        int          // quantos itens buscar
 }

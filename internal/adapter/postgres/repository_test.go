@@ -7,6 +7,7 @@ package postgres_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -194,8 +195,8 @@ func TestRepository(t *testing.T) {
 	})
 
 	t.Run("contagens", func(t *testing.T) {
-		b, _ := repo.CountByBiome(ctx)
-		s, _ := repo.CountByState(ctx)
+		b, _ := repo.CountByBiome(ctx, false)
+		s, _ := repo.CountByState(ctx, false)
 		if b[domain.BiomeCerrado] != 3 || b[domain.BiomePantanal] != 1 || s["SP"] != 2 || s["MS"] != 1 {
 			t.Fatalf("biomas=%v estados=%v", b, s)
 		}
@@ -352,5 +353,110 @@ func TestDeleteSpeciesNotIn(t *testing.T) {
 	// Uma pasta vazia nunca apaga o catálogo inteiro.
 	if _, err := repo.DeleteSpeciesNotIn(ctx, nil); err == nil {
 		t.Fatal("lista vazia deveria ser recusada")
+	}
+}
+
+// withKids devolve a espécie com bioma principal e bloco Kids válidos.
+func withKids(s domain.Species) domain.Species {
+	s.PrimaryBiome = s.Biomes[0]
+	s.Kids = &domain.KidsContent{Description: "Descrição kids.", DidYouKnow: "Você sabia.",
+		Facts: []domain.KidsFact{{Text: "Fato kids.", SourceFact: 1}}, GeneratedBy: "claude-opus-5-5", SourceHash: "sha256:abc"}
+	return s
+}
+
+// O seed grava o bioma principal e o conteúdo Kids (só o que o app mostra:
+// generated_by e source_hash ficam só no YAML).
+func TestUpsertCurated_KidsAndPrimaryBiome(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, withKids(sp("Turdus rufiventris", "Sabiá-laranjeira", []domain.Biome{domain.BiomeMataAtlantica})))
+	var biome, desc, fact string
+	var hasHash bool
+	err := pool.QueryRow(ctx, `SELECT primary_biome::text, kids->>'description', kids->'facts'->0->>'text', kids ? 'source_hash'
+		FROM species WHERE id = 'turdus-rufiventris'`).Scan(&biome, &desc, &fact, &hasHash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if biome != "mata_atlantica" || desc != "Descrição kids." || fact != "Fato kids." || hasHash {
+		t.Fatalf("bioma=%q desc=%q fato=%q hash no banco=%v", biome, desc, fact, hasHash)
+	}
+}
+
+// Tirar o bloco kids: do YAML e rodar o seed de novo grava NULL: a espécie
+// sai do Kids e da "Ave do dia".
+func TestUpsertCurated_KidsRemovedBecomesNull(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	s := withKids(sp("Turdus rufiventris", "Sabiá-laranjeira", []domain.Biome{domain.BiomeMataAtlantica}))
+	seed(t, repo, s)
+	s.Kids, s.PrimaryBiome = nil, ""
+	seed(t, repo, s)
+	var nulls bool
+	if err := pool.QueryRow(ctx, `SELECT kids IS NULL AND primary_biome IS NULL FROM species WHERE id = 'turdus-rufiventris'`).Scan(&nulls); err != nil || !nulls {
+		t.Fatalf("esperava kids e primary_biome NULL, err=%v", err)
+	}
+}
+
+// kids_only e o bioma principal filtram a lista e as contagens. O anu-preto
+// vive em dois biomas, mas o "mundo" dele é um só.
+func TestKidsFiltersAndCounts(t *testing.T) {
+	repo, _ := newRepo(t)
+	ctx := context.Background()
+	anu := withKids(sp("Crotophaga ani", "Anu-preto", []domain.Biome{domain.BiomeCerrado, domain.BiomePampa}, "SP"))
+	sabia := withKids(sp("Turdus rufiventris", "Sabiá-laranjeira", []domain.Biome{domain.BiomePampa}, "RS"))
+	semKids := sp("Pitangus sulphuratus", "Bem-te-vi", []domain.Biome{domain.BiomePampa}, "RS")
+	seed(t, repo, anu, sabia, semKids)
+
+	kids, _ := repo.ListSpecies(ctx, usecase.ListFilter{KidsOnly: true, Limit: 10})
+	if got := fmt.Sprint(ids(kids)); got != "[crotophaga-ani turdus-rufiventris]" {
+		t.Fatalf("kids_only: %s", got)
+	}
+	if kids[0].PrimaryBiome != domain.BiomeCerrado {
+		t.Fatalf("o resumo deveria trazer o bioma principal: %+v", kids[0])
+	}
+	pampa, _ := repo.ListSpecies(ctx, usecase.ListFilter{PrimaryBiome: domain.BiomePampa, Limit: 10})
+	if got := fmt.Sprint(ids(pampa)); got != "[turdus-rufiventris]" {
+		t.Fatalf("o anu-preto vive no pampa, mas o mundo dele é o cerrado: %s", got)
+	}
+
+	primary, _ := repo.CountByPrimaryBiome(ctx, true)
+	biomes, _ := repo.CountByBiome(ctx, true)
+	allBiomes, _ := repo.CountByBiome(ctx, false)
+	states, _ := repo.CountByState(ctx, true)
+	if primary[domain.BiomeCerrado] != 1 || primary[domain.BiomePampa] != 1 || biomes[domain.BiomePampa] != 2 ||
+		allBiomes[domain.BiomePampa] != 3 || states["RS"] != 1 {
+		t.Fatalf("principal=%v biomas(kids)=%v biomas=%v ufs(kids)=%v", primary, biomes, allBiomes, states)
+	}
+}
+
+// A página 2 com os filtros Kids continua do cursor sem repetir nem pular.
+func TestListSpecies_KidsFiltersPaginate(t *testing.T) {
+	repo, _ := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo,
+		withKids(sp("Crotophaga ani", "Anu-preto", []domain.Biome{domain.BiomePampa})),
+		withKids(sp("Pitangus sulphuratus", "Bem-te-vi", []domain.Biome{domain.BiomePampa})),
+		sp("Furnarius rufus", "João-de-barro", []domain.Biome{domain.BiomePampa}),
+		withKids(sp("Turdus rufiventris", "Sabiá-laranjeira", []domain.Biome{domain.BiomePampa})))
+	f := usecase.ListFilter{KidsOnly: true, PrimaryBiome: domain.BiomePampa, Limit: 2}
+	p1, _ := repo.ListSpecies(ctx, f)
+	f.After = &usecase.Cursor{SortName: p1[1].SortName, ID: p1[1].ID}
+	p2, _ := repo.ListSpecies(ctx, f)
+	if got := fmt.Sprint(ids(p1), ids(p2)); got != "[crotophaga-ani pitangus-sulphuratus] [turdus-rufiventris]" {
+		t.Fatalf("páginas: %s", got)
+	}
+}
+
+// O detalhe traz o bioma principal e o conteúdo Kids gravados pelo seed.
+func TestGetSpecies_Kids(t *testing.T) {
+	repo, _ := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, withKids(sp("Turdus rufiventris", "Sabiá-laranjeira", []domain.Biome{domain.BiomeMataAtlantica})))
+	s, err := repo.GetSpecies(ctx, "turdus-rufiventris")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.PrimaryBiome != domain.BiomeMataAtlantica || s.Kids == nil || s.Kids.Facts[0].SourceFact != 1 || s.Kids.DidYouKnow != "Você sabia." {
+		t.Fatalf("bioma=%q kids=%+v", s.PrimaryBiome, s.Kids)
 	}
 }

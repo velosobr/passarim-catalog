@@ -147,3 +147,24 @@ func assertInvalid(t *testing.T, err error, field string) {
 		t.Fatalf("esperava InvalidArgumentError(%s), veio %v", field, err)
 	}
 }
+
+// kids_only e o bioma principal chegam ao repositório já validados.
+func TestListSpecies_KidsFiltersReachRepo(t *testing.T) {
+	repo := &fakeRepo{species: birds(3)}
+	_, err := usecase.ListSpecies{Repo: repo}.Execute(context.Background(), usecase.ListSpeciesInput{KidsOnly: true, PrimaryBiome: "pampa"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !repo.lastQuery.KidsOnly || repo.lastQuery.PrimaryBiome != domain.BiomePampa {
+		t.Fatalf("filtro: %+v", repo.lastQuery)
+	}
+}
+
+// Um bioma principal desconhecido é recusado antes de ir ao banco.
+func TestListSpecies_UnknownPrimaryBiomeIsInvalid(t *testing.T) {
+	_, err := usecase.ListSpecies{Repo: &fakeRepo{}}.Execute(context.Background(), usecase.ListSpeciesInput{PrimaryBiome: "lua"})
+	var inv *domain.InvalidArgumentError
+	if !errors.As(err, &inv) || inv.Field != "primary_biome" {
+		t.Fatalf("esperava InvalidArgumentError em primary_biome, veio %v", err)
+	}
+}

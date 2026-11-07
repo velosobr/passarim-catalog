@@ -67,6 +67,12 @@ type CurationReport struct {
 	Flags          []string
 }
 
+type FeaturedDay struct {
+	Day       pgtype.Date
+	SpeciesID string
+	Cycle     int32
+}
+
 type IngestionJob struct {
 	ID        int64
 	SpeciesID string
@@ -100,6 +106,7 @@ type Medium struct {
 	Category      pgtype.Text
 	Score         pgtype.Float4
 	ModelVersion  pgtype.Text
+	Peaks         []float32
 }
 
 type OccurrenceCluster struct {
@@ -135,6 +142,8 @@ type Species struct {
 	SearchText           string
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
+	PrimaryBiome         NullBiome
+	Kids                 []byte
 }
 
 type SpeciesBiome struct {

@@ -65,6 +65,7 @@ func summaryToProto(s domain.SpeciesSummary) *catalogv1.SpeciesSummary {
 	return &catalogv1.SpeciesSummary{
 		Id: s.ID, ScientificName: s.ScientificName, CommonNamePt: s.CommonNamePt,
 		ThumbnailKey: s.ThumbnailKey, ConservationStatus: statusToProto[s.ConservationStatus],
+		PrimaryBiome: biomeToProto[s.PrimaryBiome],
 	}
 }
 
@@ -73,6 +74,7 @@ func speciesToProto(s domain.Species) *catalogv1.Species {
 		Id: s.ID, ScientificName: s.ScientificName, CommonNamePt: s.CommonNamePt, Family: s.Family,
 		ConservationStatus: statusToProto[s.ConservationStatus], Description: s.Description,
 		DescriptionCredit: creditToProto(s.DescriptionCredit), States: s.States, Diet: s.Diet,
+		PrimaryBiome: biomeToProto[s.PrimaryBiome], Kids: kidsToProto(s.Kids),
 	}
 	if s.SizeCm != nil {
 		v := toInt32(*s.SizeCm)
@@ -93,6 +95,20 @@ func speciesToProto(s domain.Species) *catalogv1.Species {
 	}
 	for _, c := range s.Clusters {
 		out.Clusters = append(out.Clusters, &catalogv1.OccurrenceCluster{Lat: c.Lat, Lng: c.Lng, Count: toInt32(c.Count), Precision: c.Precision})
+	}
+	return out
+}
+
+// kidsToProto monta o conteúdo Kids. nil (sem conteúdo Kids) vira nil, e o
+// campo fica ausente na resposta: é assim que o BFF e o app sabem que a
+// espécie não entra no Kids.
+func kidsToProto(k *domain.KidsContent) *catalogv1.KidsContent {
+	if k == nil {
+		return nil
+	}
+	out := &catalogv1.KidsContent{Description: k.Description, DidYouKnow: k.DidYouKnow}
+	for _, f := range k.Facts {
+		out.Facts = append(out.Facts, &catalogv1.KidsFact{Text: f.Text, SourceFact: toInt32(f.SourceFact)})
 	}
 	return out
 }

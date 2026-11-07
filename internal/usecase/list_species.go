@@ -20,11 +20,13 @@ const (
 
 // ListSpeciesInput é o pedido "cru", como veio de fora.
 type ListSpeciesInput struct {
-	Query     string
-	Biome     string
-	State     string
-	PageSize  int
-	PageToken string
+	Query        string
+	Biome        string
+	State        string
+	KidsOnly     bool
+	PrimaryBiome string // bioma principal ("mundo" do Kids); vazio = sem filtro
+	PageSize     int
+	PageToken    string
 }
 
 // ListSpeciesOutput traz a página e o token para pedir a próxima ("" = acabou).
@@ -87,6 +89,14 @@ func buildFilter(in ListSpeciesInput) (ListFilter, int, error) {
 			return f, 0, err
 		}
 		f.State = uf
+	}
+	f.KidsOnly = in.KidsOnly
+	if in.PrimaryBiome != "" {
+		b, err := domain.ParseBiome(in.PrimaryBiome)
+		if err != nil {
+			return f, 0, &domain.InvalidArgumentError{Field: "primary_biome", Reason: err.Error()}
+		}
+		f.PrimaryBiome = b
 	}
 
 	// page_size: negativo é erro, zero vira o padrão (20) e acima de 50 é

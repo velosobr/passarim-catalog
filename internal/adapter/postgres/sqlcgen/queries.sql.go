@@ -12,7 +12,10 @@ import (
 )
 
 const countByBiome = `-- name: CountByBiome :many
-SELECT biome, count(*)::int AS total FROM species_biome GROUP BY biome
+SELECT b.biome, count(*)::int AS total
+FROM species_biome b JOIN species s ON s.id = b.species_id
+WHERE NOT $1::bool OR s.kids IS NOT NULL
+GROUP BY b.biome
 `
 
 type CountByBiomeRow struct {
@@ -20,9 +23,10 @@ type CountByBiomeRow struct {
 	Total int32
 }
 
-// Quantas espécies há em cada bioma (os filtros do Explorar).
-func (q *Queries) CountByBiome(ctx context.Context) ([]CountByBiomeRow, error) {
-	rows, err := q.db.Query(ctx, countByBiome)
+// Quantas espécies há em cada bioma (os filtros do Explorar). Com
+// kids_only, só as que têm conteúdo Kids.
+func (q *Queries) CountByBiome(ctx context.Context, kidsOnly bool) ([]CountByBiomeRow, error) {
+	rows, err := q.db.Query(ctx, countByBiome, kidsOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -41,8 +45,45 @@ func (q *Queries) CountByBiome(ctx context.Context) ([]CountByBiomeRow, error) {
 	return items, nil
 }
 
+const countByPrimaryBiome = `-- name: CountByPrimaryBiome :many
+SELECT COALESCE(primary_biome::text, '')::text AS biome, count(*)::int AS total
+FROM species
+WHERE primary_biome IS NOT NULL AND (NOT $1::bool OR kids IS NOT NULL)
+GROUP BY primary_biome
+`
+
+type CountByPrimaryBiomeRow struct {
+	Biome string
+	Total int32
+}
+
+// Quantas espécies há em cada bioma principal ("mundo" do Kids): é a conta
+// do álbum. Espécies sem bioma principal não entram.
+func (q *Queries) CountByPrimaryBiome(ctx context.Context, kidsOnly bool) ([]CountByPrimaryBiomeRow, error) {
+	rows, err := q.db.Query(ctx, countByPrimaryBiome, kidsOnly)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CountByPrimaryBiomeRow
+	for rows.Next() {
+		var i CountByPrimaryBiomeRow
+		if err := rows.Scan(&i.Biome, &i.Total); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countByState = `-- name: CountByState :many
-SELECT uf::text AS uf, count(*)::int AS total FROM species_state GROUP BY uf
+SELECT st.uf::text AS uf, count(*)::int AS total
+FROM species_state st JOIN species s ON s.id = st.species_id
+WHERE NOT $1::bool OR s.kids IS NOT NULL
+GROUP BY st.uf
 `
 
 type CountByStateRow struct {
@@ -50,9 +91,9 @@ type CountByStateRow struct {
 	Total int32
 }
 
-// Quantas espécies há em cada UF.
-func (q *Queries) CountByState(ctx context.Context) ([]CountByStateRow, error) {
-	rows, err := q.db.Query(ctx, countByState)
+// Quantas espécies há em cada UF, com o mesmo kids_only.
+func (q *Queries) CountByState(ctx context.Context, kidsOnly bool) ([]CountByStateRow, error) {
+	rows, err := q.db.Query(ctx, countByState, kidsOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +181,7 @@ func (q *Queries) DeleteStates(ctx context.Context, speciesID string) error {
 }
 
 const getSpecies = `-- name: GetSpecies :one
-SELECT id, scientific_name, common_name_pt, family, size_cm, diet, conservation_status, description, description_author, description_license, description_source, description_source_url, is_curated, sort_name, search_text, created_at, updated_at FROM species WHERE id = $1
+SELECT id, scientific_name, common_name_pt, family, size_cm, diet, conservation_status, description, description_author, description_license, description_source, description_source_url, is_curated, sort_name, search_text, created_at, updated_at, primary_biome, kids FROM species WHERE id = $1
 `
 
 // A linha da espécie pelo id. As listas (fatos, biomas, UFs, mídia e
@@ -166,6 +207,8 @@ func (q *Queries) GetSpecies(ctx context.Context, id string) (Species, error) {
 		&i.SearchText,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PrimaryBiome,
+		&i.Kids,
 	)
 	return i, err
 }
@@ -315,7 +358,7 @@ func (q *Queries) ListFacts(ctx context.Context, speciesID string) ([]ListFactsR
 }
 
 const listMedia = `-- name: ListMedia :many
-SELECT id, species_id, kind, position, thumb_key, medium_key, large_key, audio_key, width, height, duration_ms, author, license, source, source_url, created_at, source_photo_id, category, score, model_version FROM media WHERE species_id = $1 ORDER BY kind, position
+SELECT id, species_id, kind, position, thumb_key, medium_key, large_key, audio_key, width, height, duration_ms, author, license, source, source_url, created_at, source_photo_id, category, score, model_version, peaks FROM media WHERE species_id = $1 ORDER BY kind, position
 `
 
 // Fotos e canto da espécie, em ordem de tipo e de posição (a foto 0 é a
@@ -350,6 +393,7 @@ func (q *Queries) ListMedia(ctx context.Context, speciesID string) ([]Medium, er
 			&i.Category,
 			&i.Score,
 			&i.ModelVersion,
+			&i.Peaks,
 		); err != nil {
 			return nil, err
 		}
@@ -365,26 +409,31 @@ const listSpecies = `-- name: ListSpecies :many
 SELECT s.id, s.scientific_name, s.common_name_pt, s.conservation_status, s.sort_name,
        COALESCE((SELECT m.thumb_key FROM media m
                  WHERE m.species_id = s.id AND m.kind = 'photo'
-                 ORDER BY m.position LIMIT 1), '')::text AS thumbnail_key
+                 ORDER BY m.position LIMIT 1), '')::text AS thumbnail_key,
+       COALESCE(s.primary_biome::text, '')::text AS primary_biome
 FROM species s
 WHERE ($1::text IS NULL OR s.search_text LIKE '%' || $1::text || '%' ESCAPE '\')
   AND ($2::biome IS NULL OR EXISTS (
         SELECT 1 FROM species_biome b WHERE b.species_id = s.id AND b.biome = $2::biome))
   AND ($3::text IS NULL OR EXISTS (
         SELECT 1 FROM species_state st WHERE st.species_id = s.id AND st.uf = $3::text))
-  AND ($4::text IS NULL
-       OR (s.sort_name, s.id) > ($4::text, $5::text))
+  AND (NOT $4::bool OR s.kids IS NOT NULL)
+  AND ($5::biome IS NULL OR s.primary_biome = $5::biome)
+  AND ($6::text IS NULL
+       OR (s.sort_name, s.id) > ($6::text, $7::text))
 ORDER BY s.sort_name, s.id
-LIMIT $6
+LIMIT $8
 `
 
 type ListSpeciesParams struct {
-	Query     pgtype.Text
-	Biome     NullBiome
-	State     pgtype.Text
-	AfterSort pgtype.Text
-	AfterID   pgtype.Text
-	Lim       int32
+	Query        pgtype.Text
+	Biome        NullBiome
+	State        pgtype.Text
+	KidsOnly     bool
+	PrimaryBiome NullBiome
+	AfterSort    pgtype.Text
+	AfterID      pgtype.Text
+	Lim          int32
 }
 
 type ListSpeciesRow struct {
@@ -394,12 +443,16 @@ type ListSpeciesRow struct {
 	ConservationStatus string
 	SortName           string
 	ThumbnailKey       string
+	PrimaryBiome       string
 }
 
 // Lista resumida com busca, filtros e paginação por cursor.
 // Cada filtro é opcional: "(parâmetro IS NULL OR condição)".
 // A miniatura é a thumb da foto de menor position (” se não houver foto).
 // ESCAPE '\' declara a barra como escape do LIKE (o Go já escapou % e _).
+// kids_only (frente B) deixa só as espécies com conteúdo Kids, e
+// primary_biome filtra pelo "mundo" do Kids, diferente de biome, que filtra
+// por qualquer bioma em que a ave vive.
 // "(s.sort_name, s.id) > (after_sort, after_id)" compara os pares em ordem
 // (sort_name e, no empate, id): começa logo depois do último item da página
 // anterior e usa o índice species_sort_idx.
@@ -408,6 +461,8 @@ func (q *Queries) ListSpecies(ctx context.Context, arg ListSpeciesParams) ([]Lis
 		arg.Query,
 		arg.Biome,
 		arg.State,
+		arg.KidsOnly,
+		arg.PrimaryBiome,
 		arg.AfterSort,
 		arg.AfterID,
 		arg.Lim,
@@ -426,6 +481,7 @@ func (q *Queries) ListSpecies(ctx context.Context, arg ListSpeciesParams) ([]Lis
 			&i.ConservationStatus,
 			&i.SortName,
 			&i.ThumbnailKey,
+			&i.PrimaryBiome,
 		); err != nil {
 			return nil, err
 		}
@@ -493,8 +549,8 @@ func (q *Queries) UpsertPhotoOverride(ctx context.Context, arg UpsertPhotoOverri
 const upsertSpecies = `-- name: UpsertSpecies :exec
 INSERT INTO species (id, scientific_name, common_name_pt, family, size_cm, diet, conservation_status,
                      description, description_author, description_license, description_source,
-                     description_source_url, is_curated, sort_name, search_text)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true, $13, $14)
+                     description_source_url, is_curated, sort_name, search_text, primary_biome, kids)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true, $13, $14, $15, $16)
 ON CONFLICT (id) DO UPDATE SET
     scientific_name = EXCLUDED.scientific_name, common_name_pt = EXCLUDED.common_name_pt,
     family = EXCLUDED.family, size_cm = EXCLUDED.size_cm, diet = EXCLUDED.diet,
@@ -502,6 +558,7 @@ ON CONFLICT (id) DO UPDATE SET
     description_author = EXCLUDED.description_author, description_license = EXCLUDED.description_license,
     description_source = EXCLUDED.description_source, description_source_url = EXCLUDED.description_source_url,
     is_curated = true, sort_name = EXCLUDED.sort_name, search_text = EXCLUDED.search_text,
+    primary_biome = EXCLUDED.primary_biome, kids = EXCLUDED.kids,
     updated_at = now()
 `
 
@@ -520,10 +577,13 @@ type UpsertSpeciesParams struct {
 	DescriptionSourceUrl string
 	SortName             string
 	SearchText           string
+	PrimaryBiome         NullBiome
+	Kids                 []byte
 }
 
 // "Upsert" = insere, ou atualiza se o id já existir. Só mexe nos campos
-// curados; created_at é preservado.
+// curados; created_at é preservado. primary_biome e kids (frente B) também
+// são curados: um YAML sem as chaves grava NULL, e a espécie sai do Kids.
 func (q *Queries) UpsertSpecies(ctx context.Context, arg UpsertSpeciesParams) error {
 	_, err := q.db.Exec(ctx, upsertSpecies,
 		arg.ID,
@@ -540,6 +600,8 @@ func (q *Queries) UpsertSpecies(ctx context.Context, arg UpsertSpeciesParams) er
 		arg.DescriptionSourceUrl,
 		arg.SortName,
 		arg.SearchText,
+		arg.PrimaryBiome,
+		arg.Kids,
 	)
 	return err
 }

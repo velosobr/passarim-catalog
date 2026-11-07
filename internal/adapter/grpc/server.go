@@ -25,7 +25,7 @@ type GetSpeciesUseCase interface {
 	Execute(context.Context, string) (domain.Species, error)
 }
 type ListFiltersUseCase interface {
-	Execute(context.Context) (usecase.Filters, error)
+	Execute(context.Context, usecase.ListFiltersInput) (usecase.Filters, error)
 }
 
 // Server implementa catalogv1.CatalogServiceServer.
@@ -52,8 +52,13 @@ func (s *Server) ListSpecies(ctx context.Context, req *catalogv1.ListSpeciesRequ
 	if !ok {
 		return nil, status.Error(codes.InvalidArgument, "biome: valor desconhecido")
 	}
+	primary, ok := biomeFromProto(req.GetPrimaryBiome())
+	if !ok {
+		return nil, status.Error(codes.InvalidArgument, "primary_biome: valor desconhecido")
+	}
 	out, err := s.list.Execute(ctx, usecase.ListSpeciesInput{
 		Query: req.GetQuery(), Biome: biome, State: req.GetState(),
+		KidsOnly: req.GetKidsOnly(), PrimaryBiome: primary,
 		PageSize: int(req.GetPageSize()), PageToken: req.GetPageToken(),
 	})
 	if err != nil {
@@ -75,9 +80,10 @@ func (s *Server) GetSpecies(ctx context.Context, req *catalogv1.GetSpeciesReques
 	return &catalogv1.GetSpeciesResponse{Species: speciesToProto(sp)}, nil
 }
 
-// ListFilters devolve as contagens por bioma e por UF.
-func (s *Server) ListFilters(ctx context.Context, _ *catalogv1.ListFiltersRequest) (*catalogv1.ListFiltersResponse, error) {
-	f, err := s.filters.Execute(ctx)
+// ListFilters devolve as contagens por bioma, por UF e por bioma principal.
+// kids_only = contar só as espécies com conteúdo Kids.
+func (s *Server) ListFilters(ctx context.Context, req *catalogv1.ListFiltersRequest) (*catalogv1.ListFiltersResponse, error) {
+	f, err := s.filters.Execute(ctx, usecase.ListFiltersInput{KidsOnly: req.GetKidsOnly()})
 	if err != nil {
 		return nil, s.toStatus(ctx, err)
 	}
@@ -87,6 +93,9 @@ func (s *Server) ListFilters(ctx context.Context, _ *catalogv1.ListFiltersReques
 	}
 	for _, st := range f.States {
 		resp.States = append(resp.States, &catalogv1.StateCount{State: st.State, SpeciesCount: toInt32(st.Count)})
+	}
+	for _, b := range f.PrimaryBiomes {
+		resp.PrimaryBiomeCounts = append(resp.PrimaryBiomeCounts, &catalogv1.BiomeCount{Biome: biomeToProto[b.Biome], SpeciesCount: toInt32(b.Count)})
 	}
 	return resp, nil
 }
