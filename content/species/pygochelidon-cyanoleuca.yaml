@@ -5,6 +5,7 @@ size_cm: 12
 diet: Insetos capturados em pleno voo; já foi registrada se alimentando em enxames de cupins e formigas aladas.
 conservation_status: LC
 biomes: [amazonia, mata_atlantica, cerrado, caatinga, pantanal, pampa]
+primary_biome: mata_atlantica
 states: [AM, BA, GO, MG, SP, RJ, PR, RS]
 description: >
   A andorinha-pequena-de-casa é uma ave de parte superior azul-escura e
@@ -21,3 +22,18 @@ facts:
     source: https://pt.wikipedia.org/wiki/Andorinha-pequena-de-casa
   - text: Casais migrantes costumam retornar e reutilizar o mesmo ninho em anos seguintes, criando até duas ninhadas por temporada.
     source: https://pt.wikipedia.org/wiki/Andorinha-pequena-de-casa
+kids:
+  description: >
+    A andorinha-pequena-de-casa tem as costas azul-escuras e a barriga branca. É
+    comum em quase todo o Brasil, em cidades, fazendas e campos abertos. Vive
+    perto das pessoas e faz parte do nosso dia a dia.
+  facts:
+    - text: Uma família come cerca de 1.500 insetos por dia para criar os filhotes.
+      source_fact: 0
+    - text: Ela faz viagens curtas e pode ficar o ano todo no mesmo lugar.
+      source_fact: 1
+    - text: Os casais costumam voltar e usar o mesmo ninho nos anos seguintes.
+      source_fact: 2
+  did_you_know: Em 20 dias criando filhotes, a família come mais de 200 mil insetos!
+  generated_by: claude-opus-5-5
+  source_hash: sha256:4e84ca0b90e122e97e2739d33606a9e06dbcfecb4cd96ec157ae13da174b8205

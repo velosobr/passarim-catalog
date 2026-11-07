@@ -5,6 +5,7 @@ size_cm: 21
 diet: Frutos, flores e néctar de diversas plantas, como paineira, jerivá, manga, jabuticaba, goiaba, laranja e mamão, além de sementes de girassol.
 conservation_status: LC
 biomes: [mata_atlantica]
+primary_biome: mata_atlantica
 states: [AL, PE, BA, RJ, SP, PR, RS]
 description: >
   O periquito-rico é um periquito verde, pequeno e barulhento, típico da
@@ -21,3 +22,19 @@ facts:
     source: https://pt.wikipedia.org/wiki/Periquito-rico
   - text: Pode viver em média 20 anos e atinge a maturidade sexual entre 1 e 2 anos de idade.
     source: https://pt.wikipedia.org/wiki/Periquito-rico
+kids:
+  description: >
+    O periquito-rico é um periquito verde, pequeno e barulhento da Mata
+    Atlântica. Vive em bandos que comem frutas no alto das árvores, até em
+    jardins. Quando se sente ameaçado, fica parado e quieto, escondido no meio
+    das folhas.
+  facts:
+    - text: Ele imita muito bem o canto de outras aves.
+      source_fact: 0
+    - text: O casal fica junto a vida toda, e um arruma as penas do outro.
+      source_fact: 1
+    - text: Ele pode viver em média 20 anos.
+      source_fact: 2
+  did_you_know: Ele vive do Nordeste até o Rio Grande do Sul.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:e8c76b3ba845c9c1b34ee777ee0d6118ae1ce061925ea08610d0e6a219b31eee

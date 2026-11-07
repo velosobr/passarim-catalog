@@ -5,6 +5,7 @@ size_cm: 90
 diet: Principalmente peixes e sapos, além de pequenos répteis, mamíferos e crustáceos.
 conservation_status: LC
 biomes: [pantanal, mata_atlantica, amazonia, caatinga]
+primary_biome: pantanal
 states: [MS, MT, SP, RJ, ES, BA, PE, PA, AM]
 description: >
   A garça-branca-grande é uma ave aquática toda branca, de pescoço longo e
@@ -19,3 +20,18 @@ facts:
     source: https://www.wikiaves.com.br/wiki/garca-branca-grande
   - text: A espécie é retratada na cédula brasileira de 5 reais, em reconhecimento à sua importância cultural e ambiental.
     source: https://pt.wikipedia.org/wiki/Gar%C3%A7a-branca-grande
+kids:
+  description: >
+    A garça-branca-grande é uma ave toda branca, de pescoço longo em forma de S.
+    Vive perto de rios, lagoas e áreas alagadas em quase todo o Brasil. Fica
+    parada ou anda devagar na água rasa, esperando peixes, sapos e pequenos
+    répteis. Na época de ter filhotes, ganha penas longas e enfeitadas nas
+    costas.
+  facts:
+    - text: Por muito tempo, pessoas caçaram essa garça por suas penas, mas ela se recuperou.
+      source_fact: 0
+    - text: Ela aparece na nota brasileira de 5 reais!
+      source_fact: 1
+  did_you_know: Ela pega a comida com uma bicada muito rápida do pescoço.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:57ba99df873557d24f7ac3da05a6f5231751f0faa7cdf24e87f57731bd7b9a87

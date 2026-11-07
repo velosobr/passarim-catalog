@@ -5,6 +5,7 @@ size_cm: 40
 diet: Insetos, frutos e pequenos invertebrados.
 conservation_status: NT
 biomes: [mata_atlantica]
+primary_biome: mata_atlantica
 states: [RJ, SP, PR, SC, RS]
 description: >
   A gralha-azul é uma ave de plumagem azulada e inteligência notável,
@@ -22,3 +23,18 @@ facts:
     source: https://pt.wikipedia.org/wiki/Gralha-azul
   - text: É o símbolo oficial do estado do Paraná desde 1984, e dá nome ao mascote do Paraná Clube e ao principal prêmio de teatro do estado.
     source: https://pt.wikipedia.org/wiki/Gralha-azul
+kids:
+  description: >
+    A gralha-azul é uma ave de penas azuladas e muito inteligente. Vive em
+    grupos de 4 a 15 aves, cada uma com seu lugar no grupo. Mora na Mata
+    Atlântica, mais nas matas baixas da Serra do Mar.
+  facts:
+    - text: Ela enterra pinhões no solo, e deles nascem novas araucárias.
+      source_fact: 0
+    - text: Usa pelo menos 14 sons diferentes para conversar com o grupo.
+      source_fact: 1
+    - text: É o símbolo oficial do estado do Paraná desde 1984.
+      source_fact: 2
+  did_you_know: Ela também dá nome ao principal prêmio de teatro do Paraná!
+  generated_by: claude-opus-5-5
+  source_hash: sha256:f85544780940d7c5966829e9e79ce3fd8c037b7dda1f213a60fbf57d2eea0f5b

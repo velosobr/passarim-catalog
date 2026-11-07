@@ -5,6 +5,7 @@ size_cm: 35
 diet: Insetos e outros pequenos invertebrados capturados no solo.
 conservation_status: LC
 biomes: [amazonia, cerrado, mata_atlantica, caatinga, pantanal, pampa]
+primary_biome: pampa
 states: [RS, SC, PR, SP, RJ, MG, GO, MS, BA, PA]
 description: >
   O quero-quero é uma ave inconfundível pelo grito estridente que parece
@@ -19,3 +20,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Quero-quero
   - text: Durante uma única estação reprodutiva, um casal pode produzir até três ninhadas, embora apenas cerca de 20% dos filhotes sobrevivam até a fase adulta.
     source: https://pt.wikipedia.org/wiki/Quero-quero
+kids:
+  description: >
+    O quero-quero tem um grito forte que parece repetir o próprio nome. Ele
+    defende o ninho dando voos rasantes em quem chega perto, até pessoas. Vive
+    em campos, praias, brejos e até em campos de futebol e aeroportos. Come
+    insetos e outros pequenos animais do chão.
+  facts:
+    - text: É a ave-símbolo do Rio Grande do Sul e do Uruguai.
+      source_fact: 0
+    - text: Um casal pode ter até três ninhadas numa só estação.
+      source_fact: 1
+  did_you_know: Ele aparece em lendas, músicas e histórias do Rio Grande do Sul e do Uruguai.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:973909ec0a260500b0f95c7490e6e08a6755e6561cccba4adf8e3f21e170aacf

@@ -4,6 +4,7 @@ family: Threskiornithidae
 diet: Caranguejos, moluscos bivalves, gastrópodes, vermes aquáticos, insetos, peixes e pequenos répteis.
 conservation_status: LC
 biomes: [amazonia, caatinga, cerrado, mata_atlantica]
+primary_biome: amazonia
 states: [AP, PA, MA, PI, CE, SE, BA, SP, PR, SC]
 description: >
   O guará é uma ave de brejos e manguezais, famosa pela plumagem
@@ -21,3 +22,19 @@ facts:
     source: https://pt.wikipedia.org/wiki/Guar%C3%A1_(ave)
   - text: Usa numerosas cavidades sensoriais na ponta do bico, organizadas como um favo de mel, para localizar presas escondidas na lama.
     source: https://pt.wikipedia.org/wiki/Eudocimus_ruber
+kids:
+  description: >
+    O guará vive em brejos e manguezais e tem penas vermelho-vivas. Essa cor vem
+    dos crustáceos que ele come. Vive principalmente no litoral do norte e do
+    nordeste do Brasil. Ele usa o bico sensível para achar comida escondida na
+    lama.
+  facts:
+    - text: Forma colônias de até 60 aves, junto com outras aves aquáticas.
+      source_fact: 0
+    - text: Pode ter filhotes com o íbis-branco-americano, de penas rosadas.
+      source_fact: 1
+    - text: A ponta do bico tem pequenas cavidades sensíveis, como um favo de mel.
+      source_fact: 2
+  did_you_know: Também há grupos de guarás mais ao sul, no Sudeste e no Sul.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:41c40ea2b8657f15f1db8f5e13952739c08d88da6502d22859b41f551c811de1

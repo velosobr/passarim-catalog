@@ -5,6 +5,7 @@ size_cm: 17
 diet: Néctar de flores, com papel importante na polinização, além de pequenos insetos capturados no ar.
 conservation_status: LC
 biomes: [caatinga, cerrado, mata_atlantica]
+primary_biome: cerrado
 states: [BA, PE, CE, GO, MG, SP, RJ, PR, SC]
 description: >
   O beija-flor-tesoura é facilmente reconhecido pela cauda longa e
@@ -19,3 +20,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Beija-flor-tesoura
   - text: A maior parte de sua distribuição está na Caatinga e no Cerrado, mas a espécie vem expandindo sua área ao longo das últimas décadas.
     source: https://en.wikipedia.org/wiki/Swallow-tailed_hummingbird
+kids:
+  description: >
+    O beija-flor-tesoura tem uma cauda longa e aberta que parece uma tesoura em
+    voo. Suas penas são verde-escuras, com cabeça e cauda azuladas. É um dos
+    beija-flores mais comuns do Brasil, visto em jardins e parques. Bebe néctar
+    e também caça pequenos insetos no ar.
+  facts:
+    - text: Ataca aves e mamíferos bem maiores que ele para defender seu território.
+      source_fact: 0
+    - text: Vive mais na Caatinga e no Cerrado, mas está ocupando novas áreas.
+      source_fact: 1
+  did_you_know: Ao visitar flores atrás de néctar, ele ajuda na polinização!
+  generated_by: claude-opus-5-5
+  source_hash: sha256:9ad87dc9d2c1b7465ed9ed7d588600a86342821355023777176a5494e1b0de8a

@@ -5,6 +5,7 @@ size_cm: 18
 diet: Grãos e pequenos artrópodes.
 conservation_status: LC
 biomes: [cerrado, pampa, mata_atlantica]
+primary_biome: pampa
 states: [MT, MS, PR, RS, SP]
 description: >
   O cardeal, também chamado de cardeal-de-topete-vermelho, galo-de-campina
@@ -25,3 +26,20 @@ facts:
     source: https://www.wikiaves.com.br/wiki/cardeal
   - text: Ocorre naturalmente em Mato Grosso, Mato Grosso do Sul, Paraná e Rio Grande do Sul, e foi introduzido na região Sudeste, principalmente em São Paulo; fora do Brasil, mantém populações estabelecidas no Havaí, em Porto Rico e no Chile.
     source: https://www.wikiaves.com.br/wiki/cardeal
+kids:
+  description: >
+    O cardeal é um pássaro muito bonito, nas penas e no canto. Vive em bordas de
+    arrozais, campos de capim alto e bordas de mata. Macho e fêmea são iguais
+    por fora.
+  facts:
+    - text: Os filhotes nascem pardos, com o topete cor de ferrugem.
+      source_fact: 0
+    - text: Pessoas tiram essas aves da natureza para criar em gaiola, e isso é proibido.
+      source_fact: 1
+    - text: Os filhotes saem do ovo cerca de 13 dias depois da postura.
+      source_fact: 2
+    - text: Fora do Brasil, também vive no Havaí, em Porto Rico e no Chile.
+      source_fact: 3
+  did_you_know: Um casal pode ter até 4 ninhadas numa só temporada!
+  generated_by: claude-opus-5-5
+  source_hash: sha256:8d5f455f1ce975798dc4ee11acca004800a62169049e862df07255b5ed31100a

@@ -5,6 +5,7 @@ size_cm: 100
 diet: Principalmente preguiças e macacos capturados no alto das árvores, além de aves maiores como araras.
 conservation_status: VU
 biomes: [amazonia, mata_atlantica]
+primary_biome: amazonia
 states: [AM, PA, AP, AC, RO, MT, ES, SP, PR, RJ]
 description: >
   O gavião-real é a maior e mais poderosa ave de rapina das Américas, com
@@ -19,3 +20,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Harpia_harpyja
   - text: Tem reprodução muito lenta, criando apenas um filhote a cada dois ou três anos e só atingindo maturidade reprodutiva entre 4 e 6 anos de idade.
     source: https://pt.wikipedia.org/wiki/Harpia_harpyja
+kids:
+  description: >
+    O gavião-real é a maior e mais forte ave de rapina das Américas. Vive
+    sobretudo na Amazônia, e alguns grupos restam na Mata Atlântica. Caça
+    preguiças, macacos e araras no alto das árvores. Está ameaçado pela perda
+    das florestas, e muita gente trabalha para protegê-lo.
+  facts:
+    - text: Faz ninho na mafumeira, árvore que muita gente acha azar cortar.
+      source_fact: 0
+    - text: Cria só um filhote a cada dois ou três anos.
+      source_fact: 1
+  did_you_know: Suas garras são maiores que as de qualquer outra águia viva!
+  generated_by: claude-opus-5-5
+  source_hash: sha256:169351b78f063b3c8ad106099f9c49584759952ed8a7c6f58e3a8a2b2a5fac51

@@ -5,6 +5,7 @@ size_cm: 20
 diet: Frutos, sementes, brotos e folhas tenras; ocasionalmente insetos.
 conservation_status: LC
 biomes: [mata_atlantica, cerrado, pampa]
+primary_biome: mata_atlantica
 states: [SP, RJ, MG, ES, BA, GO, PR, SC, RS, MS]
 description: >
   O trinca-ferro, também conhecido como trinca-ferro-verdadeiro, é um
@@ -20,3 +21,16 @@ facts:
     source: https://pt.wikipedia.org/wiki/Trinca-ferro
   - text: O nome popular vem do bico curto e robusto, capaz de quebrar sementes duras; o trinca-ferro também come brotos, folhas e frutos.
     source: https://pt.wikipedia.org/wiki/Trinca-ferro
+kids:
+  description: >
+    O trinca-ferro tem costas verde-oliva, peito cinzento e bico curto de ponta
+    laranja. Vive em bordas de mata e parques, quase sempre no alto das árvores.
+    É mais fácil ouvir seu canto forte e variado do que vê-lo.
+  facts:
+    - text: Pessoas tiram essas aves da natureza por causa do canto, e isso é proibido.
+      source_fact: 0
+    - text: O nome vem do bico forte, que consegue quebrar sementes duras.
+      source_fact: 1
+  did_you_know: Além de sementes, ele também come brotos, folhas e frutos.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:43760173abcc9c47c17835013baf76aa093ca80f92cd792a2ca24f8bc274d442

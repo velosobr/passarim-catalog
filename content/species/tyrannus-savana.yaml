@@ -5,6 +5,7 @@ size_cm: 40
 diet: Insetívora; captura insetos no ar durante voos acrobáticos e também consome frutos.
 conservation_status: LC
 biomes: [cerrado, pampa, amazonia]
+primary_biome: cerrado
 states: [RS, SC, PR, GO, MT, AM, PA]
 description: >
   A tesourinha é uma ave inconfundível pela cauda bifurcada e muito longa,
@@ -21,3 +22,18 @@ facts:
     source: https://pt.wikipedia.org/wiki/Tyrannus_savana
   - text: Migra aos milhares para a região amazônica durante o inverno austral, desaparecendo do sul do Brasil nesses meses.
     source: https://www.wikiaves.com.br/wiki/tesourinha
+kids:
+  description: >
+    A tesourinha tem uma cauda muito longa e bifurcada, aberta em pontas. É
+    dessa cauda que vem o seu nome. Vive em campos, cerrados e plantações. Mesmo
+    pequena, defende o ninho voando ao redor de bichos bem maiores.
+  facts:
+    - text: Faz acrobacias no ar, caindo em espiral com a cauda aberta.
+      source_fact: 0
+    - text: Mesmo sendo bem menor, consegue espantar o carcará!
+      source_fact: 1
+    - text: No inverno, milhares delas voam para a Amazônia e somem do sul.
+      source_fact: 2
+  did_you_know: Ao cair em espiral, suas asas lembram um paraquedas!
+  generated_by: claude-opus-5-5
+  source_hash: sha256:92c796f4c728b90ecbc8d6a94bc05a2b766b68f38a5d94d5f4ad72aaea34b03c

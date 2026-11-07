@@ -5,6 +5,7 @@ size_cm: 62
 diet: Folhas novas, flores e frutos de plantas da beira d'água, como aninga, embaúba e aguapé.
 conservation_status: LC
 biomes: [amazonia, pantanal]
+primary_biome: amazonia
 states: [AM, PA, MT]
 description: >
   A cigana parece uma ave pré-histórica: tem o rosto azul, olhos vermelhos e
@@ -20,3 +21,18 @@ facts:
     source: https://www.wikiaves.com.br/wiki/cigana
   - text: É a única espécie da sua família no mundo inteiro.
     source: https://pt.wikipedia.org/wiki/Opisthocomus_hoazin
+kids:
+  description: >
+    A cigana parece uma ave pré-histórica, de rosto azul e olhos vermelhos. Tem
+    uma crista de penas arrepiadas na cabeça pequena. Vive em grupos na beira de
+    rios, lagos e áreas alagadas. Come quase só folhas e voa pouco e mal.
+  facts:
+    - text: Os filhotes nascem com garras nas asas para escalar os galhos!
+      source_fact: 0
+    - text: Digere folhas como uma vaca, com ajuda de bactérias no papo.
+      source_fact: 1
+    - text: É a única espécie da sua família no mundo inteiro.
+      source_fact: 2
+  did_you_know: Seu papo pode ser até 50 vezes maior que o estômago!
+  generated_by: claude-opus-5-5
+  source_hash: sha256:4e5e29d3fa46bc795827ceade43271f5d4ec2f01fe5a7f9234d096f7eed8f9ce

@@ -5,6 +5,7 @@ size_cm: 17
 diet: Frutas, flores, folhas, néctar, além de aracnídeos e insetos capturados em voo.
 conservation_status: LC
 biomes: [mata_atlantica, caatinga]
+primary_biome: mata_atlantica
 states: [MA, PE, BA, MG, SP, RJ, PR, SC, RS]
 description: >
   O sanhaço-cinzento é uma das aves mais comuns do Brasil, com plumagem
@@ -19,3 +20,16 @@ facts:
     source: https://pt.wikipedia.org/wiki/Sanha%C3%A7o-cinzento
   - text: É extremamente adaptável, suportando climas desde úmidos até semiáridos, e já foi registrado vivendo em altitudes superiores a 3 mil metros.
     source: https://pt.wikipedia.org/wiki/Sanha%C3%A7o-cinzento
+kids:
+  description: >
+    O sanhaço-cinzento é uma das aves mais comuns do Brasil. Tem penas cinzentas
+    e azuladas e aparece em jardins, parques e cidades. Come frutas, flores,
+    folhas, néctar e pequenos insetos, às vezes caçados em pleno voo.
+  facts:
+    - text: Para conquistar a fêmea, o macho balança os ombros.
+      source_fact: 0
+    - text: Já foi visto vivendo a mais de 3 mil metros de altitude.
+      source_fact: 1
+  did_you_know: Ele aguenta climas bem úmidos e também lugares quase secos.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:c4e3b88fdd685623addb6aa9c0f5116ac26da8061ffc447ca233a03c30c1871a

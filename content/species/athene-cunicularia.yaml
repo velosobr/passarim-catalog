@@ -5,6 +5,7 @@ size_cm: 25
 diet: Insetos, pequenos roedores, anfíbios e outros vertebrados de pequeno porte.
 conservation_status: LC
 biomes: [mata_atlantica, cerrado, caatinga, pantanal, pampa]
+primary_biome: cerrado
 states: [SP, RJ, MG, PR, SC, RS, GO, MS, BA, DF]
 description: >
   A coruja-buraqueira é uma coruja pequena e de pernas compridas, com um
@@ -19,3 +20,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Coruja-buraqueira
   - text: Os filhotes, quando ameaçados dentro da toca, emitem um som que imita o chocalho de uma cascavel para afugentar predadores.
     source: https://pt.wikipedia.org/wiki/Coruja-buraqueira
+kids:
+  description: >
+    A coruja-buraqueira é uma coruja pequena, de pernas compridas, que vive numa
+    toca. Diferente de outras corujas, é fácil vê-la durante o dia, na entrada
+    da toca. Vive em campos, pastos, restingas e até em aeroportos e terrenos
+    baldios. Come insetos, pequenos roedores, anfíbios e outros bichos pequenos.
+  facts:
+    - text: Gosta de ficar apoiada numa perna só, algo que outras corujas não fazem.
+      source_fact: 0
+    - text: Na toca, os filhotes imitam o chocalho de uma cascavel para espantar inimigos.
+      source_fact: 1
+  did_you_know: Ela aparece em quase todo o Brasil, menos na Amazônia.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:d895c4122f73a92b94f0c3ba58b9fc68893df072ea15014fa6a7231a76d1117f

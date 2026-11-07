@@ -5,6 +5,7 @@ size_cm: 23
 diet: Artrópodes, larvas e minhocas, além de frutos maduros; eventualmente preda pequenos sapos e rãs jovens.
 conservation_status: LC
 biomes: [mata_atlantica, cerrado, caatinga, pantanal, pampa]
+primary_biome: mata_atlantica
 states: [SP, RJ, MG, PR, SC, RS, BA, GO, MS]
 description: >
   O sabiá-laranjeira é um pássaro de peito alaranjado e dorso pardo-oliva,
@@ -18,3 +19,17 @@ facts:
     source: https://pt.wikipedia.org/wiki/Sabi%C3%A1-laranjeira
   - text: O canto aflautado pode durar até dois minutos seguidos e ser ouvido a mais de um quilômetro de distância, e a ave ainda consegue imitar vocalizações de outras espécies.
     source: https://pt.wikipedia.org/wiki/Sabi%C3%A1-laranjeira
+kids:
+  description: >
+    O sabiá-laranjeira tem o peito alaranjado e as costas pardas. É muito comum
+    em quintais, parques e cidades de quase todo o Brasil. Procura minhocas,
+    insetos e frutas maduras no chão. Seu canto bonito anima as manhãs em várias
+    regiões do país.
+  facts:
+    - text: Em 2002, ele foi declarado a Ave Nacional do Brasil.
+      source_fact: 0
+    - text: Seu canto pode durar até dois minutos seguidos.
+      source_fact: 1
+  did_you_know: Ele também consegue imitar o canto de outras aves.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:a28ab8b0b13d5f3c08c4afb9d8764b6c5b7bf82bf5f58543c2abe3edb2c8167e

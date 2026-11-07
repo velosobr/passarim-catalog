@@ -5,6 +5,7 @@ size_cm: 90
 diet: Sementes e frutos, como buriti, cajuzinho, iriri, gabiroba e castanha-do-pará, partidos com a força do bico.
 conservation_status: LC
 biomes: [amazonia, cerrado, pantanal]
+primary_biome: amazonia
 states: [PA, AM, MT, MS, TO, MA, GO]
 description: >
   A arara-canindé tem plumagem azul nas costas e amarelo-dourada no peito,
@@ -19,3 +20,15 @@ facts:
     source: https://pt.wikipedia.org/wiki/Arara-canind%C3%A9
   - text: Em cativeiro, quando bem cuidada, pode viver até 70 anos, o que a torna uma das aves de estimação mais longevas e procuradas do mundo.
     source: https://pt.wikipedia.org/wiki/Arara-canind%C3%A9
+kids:
+  description: >
+    A arara-canindé tem as costas azuis e o peito amarelo-dourado. É uma das
+    araras mais conhecidas do Brasil. Vive na Amazônia e no Cerrado e come
+    sementes e frutos, como o buriti. Ela quebra a castanha-do-pará com a força
+    do bico!
+  facts:
+    - text: Espalha sementes do buriti e ajuda a manter o equilíbrio da natureza.
+      source_fact: 0
+  did_you_know: Quando vive com pessoas e é bem cuidada, pode chegar aos 70 anos!
+  generated_by: claude-opus-5-5
+  source_hash: sha256:32023f6261d260694ee466bef1f7c5cb1015d67581d3e40fd0f451f098275db4

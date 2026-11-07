@@ -5,6 +5,7 @@ size_cm: 15
 diet: Principalmente grãos, além de frutos; procura comida no chão ou perto de arbustos.
 conservation_status: LC
 biomes: [mata_atlantica, cerrado, caatinga, pantanal, pampa]
+primary_biome: mata_atlantica
 states: [AP, PA, MA, BA, MT, ES, RJ, SP, PR, SC, RS]
 description: >
   O tico-tico é um passarinho pardo, com listras pretas e cinzentas na
@@ -20,3 +21,19 @@ facts:
     source: https://pt.wikipedia.org/wiki/Tico-tico
   - text: Ele some das cidades muito urbanizadas, mas não é verdade que o pardal o expulse; o que pesa é a falta de áreas verdes.
     source: https://pt.wikipedia.org/wiki/Tico-tico
+kids:
+  description: >
+    O tico-tico é um passarinho pardo, com listras pretas e cinzentas na cabeça.
+    Tem um topetinho e uma mancha cor de ferrugem na nuca. Vive em campos,
+    cerrados, matas abertas e jardins de quase todo o Brasil. Pula pelo chão
+    catando grãos e frutinhas.
+  facts:
+    - text: Tico-ticos de lugares diferentes cantam diferente, como se tivessem sotaques.
+      source_fact: 0
+    - text: Ele deu nome à música "Tico-tico no Fubá", tocada até em filmes de Hollywood.
+      source_fact: 1
+    - text: Ele some das cidades onde faltam áreas verdes, e não por causa do pardal.
+      source_fact: 2
+  did_you_know: O canto curto do tico-tico é um dos mais ouvidos no país.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:5d343e276a8686f1f97134f3b2c23149049515c4b0ef43280a7ce4da4f6c1b6a

@@ -5,6 +5,7 @@ size_cm: 40
 diet: Principalmente peixes; eventualmente também caça invertebrados, caranguejos e crustáceos.
 conservation_status: LC
 biomes: [amazonia, cerrado, mata_atlantica, pantanal]
+primary_biome: pantanal
 states: [AM, PA, MT, MS, GO, CE, SP, RJ]
 description: >
   O martim-pescador-grande é o maior martim-pescador das Américas, com o
@@ -22,3 +23,18 @@ facts:
     source: https://pt.wikipedia.org/wiki/Martim-pescador-grande
   - text: Prefere áreas abertas com rios caudalosos e grandes lagoas, não se adaptando bem a lagos represados de hidrelétricas do Sul e do Sudeste.
     source: https://www.wikiaves.com.br/wiki/martim-pescador-grande
+kids:
+  description: >
+    O martim-pescador-grande é o maior martim-pescador das Américas. Vive perto
+    de rios, lagoas, açudes e manguezais em quase todo o Brasil. Gosta de águas
+    abertas e de rios com muita água.
+  facts:
+    - text: O macho tem o peito castanho, e a fêmea tem uma faixa cinza-azulada.
+      source_fact: 0
+    - text: No namoro, o macho oferece peixes para a fêmea.
+      source_fact: 1
+    - text: Ele não se adapta bem aos lagos das represas de hidrelétricas.
+      source_fact: 2
+  did_you_know: Dá para saber se é macho ou fêmea olhando de longe.
+  generated_by: claude-opus-5-5
+  source_hash: sha256:58e9a25ee6fe98cbca57c57d6aefdff648623ff659d3fa2922feb8dda5f6c91b
