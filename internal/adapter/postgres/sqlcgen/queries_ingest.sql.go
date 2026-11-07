@@ -373,21 +373,27 @@ func (q *Queries) ReopenFailedJobs(ctx context.Context) error {
 	return err
 }
 
-const requeuePhotoJobs = `-- name: RequeuePhotoJobs :many
+const requeueJobs = `-- name: RequeueJobs :many
 UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, last_error = '',
     next_run_at = now(), updated_at = now()
-WHERE source = 'inaturalist' AND status <> 'running'
-  AND (cardinality($1::text[]) = 0 OR species_id = ANY($1::text[]))
+WHERE source = $1::text AND status <> 'running'
+  AND (cardinality($2::text[]) = 0 OR species_id = ANY($2::text[]))
 RETURNING species_id
 `
 
-// Comando "worker requeue": devolve à fila, agora, os jobs de fotos das
-// espécies dadas (lista vazia = todas), sem esperar os 30 dias do refresh.
-// Zera tentativas e adiamentos. Não mexe em job 'running': outro worker
-// está com ele, e reenfileirar faria dois pegarem a mesma espécie.
+type RequeueJobsParams struct {
+	Source     string
+	SpeciesIds []string
+}
+
+// Comando "worker requeue": devolve à fila, agora, os jobs da fonte dada
+// ('inaturalist' para fotos, 'xenocanto' para cantos) das espécies dadas
+// (lista vazia = todas), sem esperar os 30 dias do refresh. Zera tentativas
+// e adiamentos. Não mexe em job 'running': outro worker está com ele, e
+// reenfileirar faria dois pegarem a mesma espécie.
 // cardinality(lista) é o tamanho da lista; "= ANY(lista)" é "está na lista".
-func (q *Queries) RequeuePhotoJobs(ctx context.Context, speciesIds []string) ([]string, error) {
-	rows, err := q.db.Query(ctx, requeuePhotoJobs, speciesIds)
+func (q *Queries) RequeueJobs(ctx context.Context, arg RequeueJobsParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, requeueJobs, arg.Source, arg.SpeciesIds)
 	if err != nil {
 		return nil, err
 	}

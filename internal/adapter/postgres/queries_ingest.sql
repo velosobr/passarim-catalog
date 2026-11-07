@@ -111,15 +111,16 @@ SELECT primary_observation_id, primary_photo_id, excluded_ids FROM photo_overrid
 INSERT INTO curation_report (species_id, model_version, primary_photo_id, candidates, flags)
 VALUES ($1, $2, $3, $4, $5);
 
--- name: RequeuePhotoJobs :many
--- Comando "worker requeue": devolve à fila, agora, os jobs de fotos das
--- espécies dadas (lista vazia = todas), sem esperar os 30 dias do refresh.
--- Zera tentativas e adiamentos. Não mexe em job 'running': outro worker
--- está com ele, e reenfileirar faria dois pegarem a mesma espécie.
+-- name: RequeueJobs :many
+-- Comando "worker requeue": devolve à fila, agora, os jobs da fonte dada
+-- ('inaturalist' para fotos, 'xenocanto' para cantos) das espécies dadas
+-- (lista vazia = todas), sem esperar os 30 dias do refresh. Zera tentativas
+-- e adiamentos. Não mexe em job 'running': outro worker está com ele, e
+-- reenfileirar faria dois pegarem a mesma espécie.
 -- cardinality(lista) é o tamanho da lista; "= ANY(lista)" é "está na lista".
 UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, last_error = '',
     next_run_at = now(), updated_at = now()
-WHERE source = 'inaturalist' AND status <> 'running'
+WHERE source = sqlc.arg('source')::text AND status <> 'running'
   AND (cardinality(sqlc.arg('species_ids')::text[]) = 0 OR species_id = ANY(sqlc.arg('species_ids')::text[]))
 RETURNING species_id;
 

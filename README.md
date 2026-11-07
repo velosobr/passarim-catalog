@@ -59,6 +59,7 @@ O `cmd/worker` busca, para cada ave, **fotos** (iNaturalist), o **canto** (xeno-
 - **Fila no PostgreSQL:** a tabela `ingestion_job` tem um job por (espécie, fonte). Vários workers podem rodar juntos: `FOR UPDATE SKIP LOCKED` garante que não peguem o mesmo job.
 - **Retry com backoff:** cada falha dobra a espera (1 min × 2^tentativa, teto de 6 h), até 5 tentativas. Uma fonte com defeito não bloqueia as outras.
 - **Licenças:** só CC0, CC-BY, CC-BY-SA, CC-BY-NC e CC-BY-NC-SA (NC pode ser desligado com `ALLOW_NC=false`). ND é sempre recusada, **antes** de baixar o arquivo ([ADR-0007](https://github.com/velosobr/passarim-docs/blob/main/docs/adr/0007-licencas-aceitas.md)).
+- **Forma de onda:** junto com o canto, o worker grava os 64 picos do AAC final (decodificado pelo ffmpeg), de 0 a 1. Para calcular nos cantos antigos: `requeue --source audio`.
 - **Anti-SSRF:** downloads só por HTTPS, de hosts de uma allowlist, com checagem do IP na hora da conexão (vale também para redirecionamentos) e limites de tamanho e tipo.
 - **Imagem própria:** Alpine + ffmpeg, sem root ([ADR-0014](https://github.com/velosobr/passarim-docs/blob/main/docs/adr/0014-imagem-do-worker-com-ffmpeg.md)). Storage: SeaweedFS local / R2 em produção ([ADR-0006](https://github.com/velosobr/passarim-docs/blob/main/docs/adr/0006-midia-em-object-storage.md)).
 
@@ -68,7 +69,7 @@ O job de fotos manda as candidatas ao `passarim-photo-curator` (gRPC, `CURATOR_A
 
 Os comandos rodam a partir do `passarim-docs`, onde está o compose:
 
-- `docker compose run --rm catalog-worker requeue [species-id...]` reenfileira as fotos (todas, sem argumento).
+- `docker compose run --rm catalog-worker requeue [--source photos|audio] [species-id...]` reenfileira as fotos (padrão) ou os cantos (todas as espécies, sem ids). O `--source` vem antes dos ids.
 - `docker compose run --rm catalog-worker curation-report > relatorio.md` imprime a última curadoria de cada espécie, com as marcadas primeiro.
 - A chave `photos:` no YAML escolhe a principal (`primary: { observation, photo }`) ou tira fotos (`exclude: [...]`).
 

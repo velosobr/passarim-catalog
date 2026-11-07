@@ -229,15 +229,16 @@ func (r *IngestRepository) PhotoOverride(ctx context.Context, speciesID string) 
 		PrimaryPhotoID: row.PrimaryPhotoID.String, ExcludedIDs: row.ExcludedIds}, nil
 }
 
-// RequeuePhotoJobs reenfileira os jobs de fotos das espécies dadas (nil =
-// todas). Antes cria os jobs de fotos que faltam, para o comando funcionar
-// mesmo num banco em que o worker ainda não rodou. Devolve as espécies
-// reenfileiradas; quem chama compara com as pedidas.
-func (r *IngestRepository) RequeuePhotoJobs(ctx context.Context, speciesIDs []string) ([]string, error) {
-	if err := r.q.EnqueueMissingJobs(ctx, []string{string(ingest.SourceINaturalist)}); err != nil {
+// RequeueJobs reenfileira os jobs de uma fonte (fotos ou cantos) das
+// espécies dadas (nil = todas). Antes cria os jobs dessa fonte que faltam,
+// para o comando funcionar mesmo num banco em que o worker ainda não rodou.
+// Devolve as espécies reenfileiradas; quem chama compara com as pedidas.
+func (r *IngestRepository) RequeueJobs(ctx context.Context, source ingest.Source, speciesIDs []string) ([]string, error) {
+	if err := r.q.EnqueueMissingJobs(ctx, []string{string(source)}); err != nil {
 		return nil, fmt.Errorf("enfileirar: %w", err)
 	}
-	return r.q.RequeuePhotoJobs(ctx, append([]string{}, speciesIDs...)) // nil viraria NULL, e cardinality(NULL) é NULL
+	// nil viraria NULL, e cardinality(NULL) é NULL: mandamos uma lista vazia de verdade.
+	return r.q.RequeueJobs(ctx, sqlcgen.RequeueJobsParams{Source: string(source), SpeciesIds: append([]string{}, speciesIDs...)})
 }
 
 // LatestCurationReports lê a última execução da curadoria de cada espécie.
