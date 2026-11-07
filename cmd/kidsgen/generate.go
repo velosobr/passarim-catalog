@@ -22,8 +22,8 @@ const modelID = "claude-opus-5-5"
 // maxAttempts é a primeira tentativa mais as 2 novas.
 const maxAttempts = 3
 
-// modelOutput é o que a ferramenta write_kids_content devolve. As tags json
-// dizem o nome de cada campo no JSON da ferramenta.
+// modelOutput é o JSON que o modelo devolve (o esquema está em
+// outputSchema). As tags json dizem o nome de cada campo nesse JSON.
 type modelOutput struct {
 	Description  string       `json:"description"`
 	Facts        []factOutput `json:"facts"`
@@ -39,7 +39,7 @@ type factOutput struct {
 
 // conversation é uma conversa com o modelo sobre UMA espécie. send manda a
 // mensagem (na primeira vez, o texto adulto; depois, os erros do validador)
-// e devolve a saída da ferramenta.
+// e devolve a resposta já lida do JSON.
 type conversation interface {
 	send(ctx context.Context, message string) (modelOutput, error)
 }
@@ -94,6 +94,6 @@ func feedback(problems []error) string {
 	for _, p := range problems {
 		b.WriteString("- " + p.Error() + "\n")
 	}
-	b.WriteString("Corrija só esses pontos e chame write_kids_content de novo com o conteúdo inteiro.")
+	b.WriteString("Corrija só esses pontos e responda de novo com o JSON inteiro.")
 	return b.String()
 }

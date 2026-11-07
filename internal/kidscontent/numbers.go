@@ -17,9 +17,11 @@ import (
 )
 
 // digitsPattern acha um número com algarismos, com "." e "," entre os grupos
-// ("2.000", "1,5", "2002"). Um ponto final logo depois não entra, porque o
-// padrão exige um algarismo depois de cada separador.
-var digitsPattern = regexp.MustCompile(`\d+(?:[.,]\d+)*`)
+// ("2.000", "1,5", "2002"), e a escala por extenso que vier logo depois
+// ("4 mil", "1,5 milhão"). Um ponto final logo depois não entra, porque o
+// padrão exige um algarismo depois de cada separador. \b é a fronteira de
+// palavra: "milhares" não é lido como "mil".
+var digitsPattern = regexp.MustCompile(`(\d+(?:[.,]\d+)*)(?:\s+(mil|milhão|milhao|milhões|milhoes)\b)?`)
 
 // wordValues são as palavras que valem um número sozinhas, já sem acento
 // (o texto passa por domain.NormalizeForSearch antes). "um" e "uma" não
@@ -38,16 +40,33 @@ var wordValues = map[string]float64{
 // scales multiplicam a parte que vem antes: "dois mil" = 2 × 1000.
 var scales = map[string]float64{"mil": 1e3, "milhao": 1e6, "milhoes": 1e6}
 
+// units são as palavras de medida depois das quais "meio" e "meia" são um
+// número ("meio metro", "meia hora"). Sem elas, "meio" é quase sempre outra
+// coisa: "no meio da mata", "meia-noite", "meio ambiente".
+var units = map[string]bool{
+	"metro": true, "metros": true, "centimetro": true, "centimetros": true, "quilometro": true, "quilometros": true,
+	"quilo": true, "quilos": true, "grama": true, "gramas": true, "litro": true, "litros": true,
+	"hora": true, "horas": true, "minuto": true, "minutos": true, "segundo": true, "segundos": true,
+	"dia": true, "dias": true, "ano": true, "anos": true,
+}
+
 // Numbers devolve os valores dos números do texto: primeiro os escritos com
-// algarismos, depois os por extenso, cada grupo na ordem do texto.
+// algarismos, depois os por extenso, cada grupo na ordem do texto. Um número
+// com algarismos e escala ("4 mil") vale um número só (4000); a escala sai
+// do texto antes da leitura por extenso, para não contar 1000 de novo.
 func Numbers(text string) []float64 {
 	var out []float64
-	for _, m := range digitsPattern.FindAllString(text, -1) {
-		if v, ok := parseDigits(m); ok {
-			out = append(out, v)
+	for _, m := range digitsPattern.FindAllStringSubmatch(text, -1) {
+		v, ok := parseDigits(m[1])
+		if !ok {
+			continue
 		}
+		if m[2] != "" {
+			v *= scales[domain.NormalizeForSearch(m[2])]
+		}
+		out = append(out, v)
 	}
-	return append(out, wordNumbers(text)...)
+	return append(out, wordNumbers(digitsPattern.ReplaceAllString(text, " "))...)
 }
 
 // parseDigits lê um número no padrão brasileiro: "," separa os decimais
@@ -117,11 +136,14 @@ func wordNumbers(text string) []float64 {
 				flush()
 			}
 		case w == "meio" || w == "meia":
-			if afterAnd { // "dois e meio"
+			switch {
+			case afterAnd: // "dois e meio"
 				current += 0.5
-			} else {
+			case units[next]: // "meio metro", "meia hora"
 				flush()
 				out = append(out, 0.5)
+			default: // "no meio da mata", "meia-noite"
+				flush()
 			}
 		case isValue:
 			in = true

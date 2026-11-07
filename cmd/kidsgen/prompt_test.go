@@ -38,7 +38,7 @@ func TestUserMessageGolden(t *testing.T) {
 
 // As regras do prompt citam os limites da spec.
 func TestSystemPromptRules(t *testing.T) {
-	for _, rule := range []string{"15 palavras", "de 2 a 4 frases", "write_kids_content", "Suavizar sem esconder", "carcaça"} {
+	for _, rule := range []string{"15 palavras", "de 2 a 4 frases", "JSON", "Suavizar sem esconder", "carcaça"} {
 		if !strings.Contains(strings.ToLower(systemPrompt), strings.ToLower(rule)) {
 			t.Errorf("o prompt deveria citar %q", rule)
 		}

@@ -16,5 +16,11 @@
   {"text": "Bota duas ou três vezes.", "want": [2, 3]},
   {"text": "Canta entre 13 e 14 horas.", "want": [13, 14]},
   {"text": "Vive até mil metros de altitude.", "want": [1000]},
-  {"text": "Mede 1.5 metro.", "want": [1.5]}
+  {"text": "Mede 1.5 metro.", "want": [1.5]},
+  {"text": "Voa a 4 mil metros de altitude.", "want": [4000]},
+  {"text": "Come 200 mil insetos por ano.", "want": [200000]},
+  {"text": "Restam 1,5 milhão de aves.", "want": [1500000]},
+  {"text": "Vive no meio da mata.", "want": []},
+  {"text": "Canta à meia-noite.", "want": []},
+  {"text": "Dorme meia hora.", "want": [0.5]}
 ]
