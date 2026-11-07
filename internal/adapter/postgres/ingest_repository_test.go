@@ -301,22 +301,22 @@ func TestJobQueue_Defer(t *testing.T) {
 	}
 }
 
-// requeue: só as espécies dadas, ou todas; nunca um job rodando.
-func TestRequeuePhotoJobs(t *testing.T) {
+// requeue: só as espécies dadas, ou todas; nunca um job rodando; e só a
+// fonte pedida (fotos ou cantos).
+func TestRequeueJobs(t *testing.T) {
 	repo, pool := newRepo(t)
 	ctx := context.Background()
 	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil), sp("Pitangus sulphuratus", "Bem-te-vi", nil),
 		sp("Crotophaga ani", "Anu-preto", nil))
 	q := postgres.NewIngestRepository(pool)
 	// Sem rodar o EnqueueMissing antes: o requeue cria os jobs que faltam.
-	_, _ = pool.Exec(ctx, `UPDATE ingestion_job SET status = 'done'`)
-	got, err := q.RequeuePhotoJobs(ctx, []string{"crotophaga-ani"})
+	got, err := q.RequeueJobs(ctx, ingest.SourceINaturalist, []string{"crotophaga-ani"})
 	if err != nil || fmt.Sprint(got) != "[crotophaga-ani]" {
 		t.Fatalf("só a dada: %v %v", got, err)
 	}
 	_, _ = pool.Exec(ctx, `UPDATE ingestion_job SET status = 'done'`)
 	_, _ = pool.Exec(ctx, `UPDATE ingestion_job SET status = 'running' WHERE species_id = 'pitangus-sulphuratus'`)
-	got, _ = q.RequeuePhotoJobs(ctx, nil)
+	got, _ = q.RequeueJobs(ctx, ingest.SourceINaturalist, nil)
 	slices.Sort(got)
 	if fmt.Sprint(got) != "[crotophaga-ani turdus-rufiventris]" {
 		t.Fatalf("todas menos a que está rodando: %v", got)
@@ -324,7 +324,18 @@ func TestRequeuePhotoJobs(t *testing.T) {
 	var otherSources int
 	_ = pool.QueryRow(ctx, `SELECT count(*) FROM ingestion_job WHERE source <> 'inaturalist'`).Scan(&otherSources)
 	if otherSources != 0 {
-		t.Fatalf("requeue só cria e mexe em jobs de fotos, achou %d de outras fontes", otherSources)
+		t.Fatalf("o requeue de fotos só cria e mexe em jobs de fotos, achou %d de outras fontes", otherSources)
+	}
+
+	got, err = q.RequeueJobs(ctx, ingest.SourceXenoCanto, nil)
+	slices.Sort(got)
+	if err != nil || fmt.Sprint(got) != "[crotophaga-ani pitangus-sulphuratus turdus-rufiventris]" {
+		t.Fatalf("cantos: %v %v", got, err)
+	}
+	var photosPending int
+	_ = pool.QueryRow(ctx, `SELECT count(*) FROM ingestion_job WHERE source = 'inaturalist' AND status = 'pending'`).Scan(&photosPending)
+	if photosPending != 2 {
+		t.Fatalf("o requeue de cantos não mexe nas fotos: %d pendentes", photosPending)
 	}
 }
 
@@ -347,5 +358,42 @@ func TestLatestCurationReports(t *testing.T) {
 		len(e.Report.Candidates) != 1 || e.Report.Candidates[0].Category != domain.PhotoSingleBird ||
 		len(e.Report.Flags) != 1 || e.RanAt.IsZero() {
 		t.Fatalf("entrada: %+v", e)
+	}
+}
+
+// O canto grava os picos e o detalhe os devolve; as fotos gravam a lista
+// vazia (a coluna é NOT NULL), e uma troca de fotos não quebra.
+func TestReplaceAudio_Peaks(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil))
+	q := postgres.NewIngestRepository(pool)
+	peaks := make([]float32, 64)
+	peaks[10] = 1
+	a := &domain.Audio{Key: "species/turdus-rufiventris/audio/1.aac", DurationMs: 3000, Peaks: peaks,
+		Credit: domain.Credit{Author: "A", License: "CC-BY", Source: "xeno-canto", SourceURL: "https://xeno-canto.org/1"}}
+	if err := q.ReplaceAudio(ctx, "turdus-rufiventris", a); err != nil {
+		t.Fatal(err)
+	}
+	s, err := repo.GetSpecies(ctx, "turdus-rufiventris")
+	if err != nil || s.Audio == nil || len(s.Audio.Peaks) != 64 || s.Audio.Peaks[10] != 1 {
+		t.Fatalf("err=%v audio=%+v", err, s.Audio)
+	}
+}
+
+func TestReplacePhotos_PeaksEmpty(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil))
+	q := postgres.NewIngestRepository(pool)
+	photo := domain.Photo{ThumbKey: "t.webp", MediumKey: "m.webp", LargeKey: "l.webp", Width: 10, Height: 10,
+		Credit: domain.Credit{Author: "A", License: "CC-BY", Source: "inaturalist", SourceURL: "https://x"}}
+	if err := q.ReplacePhotos(ctx, "turdus-rufiventris", []domain.Photo{photo}, domain.CurationReport{ModelVersion: "m@1"}); err != nil {
+		t.Fatal(err)
+	}
+	var n int
+	_ = pool.QueryRow(ctx, `SELECT cardinality(peaks) FROM media WHERE kind = 'photo'`).Scan(&n)
+	if n != 0 {
+		t.Fatalf("foto deveria ter picos vazios, veio %d", n)
 	}
 }

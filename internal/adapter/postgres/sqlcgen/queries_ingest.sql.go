@@ -249,8 +249,8 @@ func (q *Queries) InsertCurationReport(ctx context.Context, arg InsertCurationRe
 const insertMedia = `-- name: InsertMedia :exec
 INSERT INTO media (species_id, kind, position, thumb_key, medium_key, large_key, audio_key,
                    width, height, duration_ms, author, license, source, source_url,
-                   source_photo_id, category, score, model_version)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+                   source_photo_id, category, score, model_version, peaks)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
 `
 
 type InsertMediaParams struct {
@@ -272,10 +272,12 @@ type InsertMediaParams struct {
 	Category      pgtype.Text
 	Score         pgtype.Float4
 	ModelVersion  pgtype.Text
+	Peaks         []float32
 }
 
-// Grava uma foto ou um canto, com o crédito. Os 4 últimos campos são da
-// curadoria (só fotos; NULL no canto).
+// Grava uma foto ou um canto, com o crédito. source_photo_id, category,
+// score e model_version são da curadoria (só fotos; NULL no canto). peaks
+// são os 64 picos do canto (lista vazia nas fotos).
 func (q *Queries) InsertMedia(ctx context.Context, arg InsertMediaParams) error {
 	_, err := q.db.Exec(ctx, insertMedia,
 		arg.SpeciesID,
@@ -296,6 +298,7 @@ func (q *Queries) InsertMedia(ctx context.Context, arg InsertMediaParams) error 
 		arg.Category,
 		arg.Score,
 		arg.ModelVersion,
+		arg.Peaks,
 	)
 	return err
 }
@@ -370,21 +373,27 @@ func (q *Queries) ReopenFailedJobs(ctx context.Context) error {
 	return err
 }
 
-const requeuePhotoJobs = `-- name: RequeuePhotoJobs :many
+const requeueJobs = `-- name: RequeueJobs :many
 UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, last_error = '',
     next_run_at = now(), updated_at = now()
-WHERE source = 'inaturalist' AND status <> 'running'
-  AND (cardinality($1::text[]) = 0 OR species_id = ANY($1::text[]))
+WHERE source = $1::text AND status <> 'running'
+  AND (cardinality($2::text[]) = 0 OR species_id = ANY($2::text[]))
 RETURNING species_id
 `
 
-// Comando "worker requeue": devolve à fila, agora, os jobs de fotos das
-// espécies dadas (lista vazia = todas), sem esperar os 30 dias do refresh.
-// Zera tentativas e adiamentos. Não mexe em job 'running': outro worker
-// está com ele, e reenfileirar faria dois pegarem a mesma espécie.
+type RequeueJobsParams struct {
+	Source     string
+	SpeciesIds []string
+}
+
+// Comando "worker requeue": devolve à fila, agora, os jobs da fonte dada
+// ('inaturalist' para fotos, 'xenocanto' para cantos) das espécies dadas
+// (lista vazia = todas), sem esperar os 30 dias do refresh. Zera tentativas
+// e adiamentos. Não mexe em job 'running': outro worker está com ele, e
+// reenfileirar faria dois pegarem a mesma espécie.
 // cardinality(lista) é o tamanho da lista; "= ANY(lista)" é "está na lista".
-func (q *Queries) RequeuePhotoJobs(ctx context.Context, speciesIds []string) ([]string, error) {
-	rows, err := q.db.Query(ctx, requeuePhotoJobs, speciesIds)
+func (q *Queries) RequeueJobs(ctx context.Context, arg RequeueJobsParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, requeueJobs, arg.Source, arg.SpeciesIds)
 	if err != nil {
 		return nil, err
 	}

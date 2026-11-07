@@ -107,8 +107,9 @@ func (u IngestAudio) Run(ctx context.Context, job Job) error {
 // isSong diz se a gravação é um canto ("song"), e não um chamado ("call").
 func isSong(c AudioCandidate) bool { return strings.Contains(strings.ToLower(c.Type), "song") }
 
-// processOne baixa, converte para AAC (cortando em MaxDuration) e grava. A
-// duração gravada é limitada ao corte.
+// processOne baixa, converte para AAC (cortando em MaxDuration), calcula os
+// 64 picos do AAC final e grava. A duração gravada é limitada ao corte. Um
+// erro nos picos conta como erro da candidata, e Run tenta a próxima.
 func (u IngestAudio) processOne(ctx context.Context, job Job, a acceptedAudio) (*domain.Audio, error) {
 	data, _, err := u.Downloader.Fetch(ctx, a.cand.URL, DownloadAudio)
 	if err != nil {
@@ -118,6 +119,10 @@ func (u IngestAudio) processOne(ctx context.Context, job Job, a acceptedAudio) (
 	if err != nil {
 		return nil, err
 	}
+	peaks, err := u.Audio.Peaks(ctx, aac)
+	if err != nil {
+		return nil, fmt.Errorf("calcular os picos: %w", err)
+	}
 	key := audioKey(job.SpeciesID, a.cand.SourceID)
 	if err := u.Store.Put(ctx, key, "audio/aac", aac); err != nil {
 		return nil, fmt.Errorf("gravar no storage: %w", err)
@@ -126,6 +131,6 @@ func (u IngestAudio) processOne(ctx context.Context, job Job, a acceptedAudio) (
 	if max := int(u.MaxDuration.Milliseconds()); durationMs > max {
 		durationMs = max
 	}
-	return &domain.Audio{Key: key, DurationMs: durationMs,
+	return &domain.Audio{Key: key, DurationMs: durationMs, Peaks: peaks,
 		Credit: domain.Credit{Author: a.cand.Author, License: string(a.license), Source: "xeno-canto", SourceURL: a.cand.PageURL}}, nil
 }

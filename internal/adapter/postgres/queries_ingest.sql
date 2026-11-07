@@ -85,12 +85,13 @@ WHERE id = sqlc.arg('id');
 DELETE FROM media WHERE species_id = $1 AND kind = $2;
 
 -- name: InsertMedia :exec
--- Grava uma foto ou um canto, com o crédito. Os 4 últimos campos são da
--- curadoria (só fotos; NULL no canto).
+-- Grava uma foto ou um canto, com o crédito. source_photo_id, category,
+-- score e model_version são da curadoria (só fotos; NULL no canto). peaks
+-- são os 64 picos do canto (lista vazia nas fotos).
 INSERT INTO media (species_id, kind, position, thumb_key, medium_key, large_key, audio_key,
                    width, height, duration_ms, author, license, source, source_url,
-                   source_photo_id, category, score, model_version)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18);
+                   source_photo_id, category, score, model_version, peaks)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19);
 
 -- name: DeleteClusters :exec
 -- Apaga os grupos de avistamentos da espécie.
@@ -110,15 +111,16 @@ SELECT primary_observation_id, primary_photo_id, excluded_ids FROM photo_overrid
 INSERT INTO curation_report (species_id, model_version, primary_photo_id, candidates, flags)
 VALUES ($1, $2, $3, $4, $5);
 
--- name: RequeuePhotoJobs :many
--- Comando "worker requeue": devolve à fila, agora, os jobs de fotos das
--- espécies dadas (lista vazia = todas), sem esperar os 30 dias do refresh.
--- Zera tentativas e adiamentos. Não mexe em job 'running': outro worker
--- está com ele, e reenfileirar faria dois pegarem a mesma espécie.
+-- name: RequeueJobs :many
+-- Comando "worker requeue": devolve à fila, agora, os jobs da fonte dada
+-- ('inaturalist' para fotos, 'xenocanto' para cantos) das espécies dadas
+-- (lista vazia = todas), sem esperar os 30 dias do refresh. Zera tentativas
+-- e adiamentos. Não mexe em job 'running': outro worker está com ele, e
+-- reenfileirar faria dois pegarem a mesma espécie.
 -- cardinality(lista) é o tamanho da lista; "= ANY(lista)" é "está na lista".
 UPDATE ingestion_job SET status = 'pending', attempts = 0, deferrals = 0, last_error = '',
     next_run_at = now(), updated_at = now()
-WHERE source = 'inaturalist' AND status <> 'running'
+WHERE source = sqlc.arg('source')::text AND status <> 'running'
   AND (cardinality(sqlc.arg('species_ids')::text[]) = 0 OR species_id = ANY(sqlc.arg('species_ids')::text[]))
 RETURNING species_id;
 

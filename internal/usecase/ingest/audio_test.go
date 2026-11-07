@@ -165,3 +165,32 @@ func TestIngestAudio_SkipsUnsafeSourceID(t *testing.T) {
 		t.Fatalf("id inseguro deveria ser descartado: %v %v", err, dl.requested)
 	}
 }
+
+// O canto gravado leva os 64 picos calculados do AAC.
+func TestIngestAudio_StoresPeaks(t *testing.T) {
+	cands := []ingest.AudioCandidate{rec("1", "A", "song", 20000)}
+	uc, _, _, repo := newAudio(cands, fakeAudio{})
+	if err := uc.Run(context.Background(), sabiaAudio); err != nil {
+		t.Fatal(err)
+	}
+	if repo.audio == nil || len(repo.audio.Peaks) != 64 || repo.audio.Peaks[0] != 0.5 {
+		t.Fatalf("picos: %+v", repo.audio)
+	}
+}
+
+// Se os picos falham numa candidata, ela é tratada como a conversão que
+// falhou: o caso de uso tenta a próxima.
+func TestIngestAudio_PeaksFailureTriesNext(t *testing.T) {
+	cands := []ingest.AudioCandidate{rec("1", "A", "song", 20000), rec("2", "B", "song", 20000)}
+	bad := "aac:" + cands[0].URL // o fakeAudio.ToAAC devolve "aac:" + bytes originais (a URL)
+	uc, dl, _, repo := newAudio(cands, fakeAudio{failPeaks: map[string]bool{bad: true}})
+	if err := uc.Run(context.Background(), sabiaAudio); err != nil {
+		t.Fatal(err)
+	}
+	if len(dl.requested) != 2 {
+		t.Fatalf("deveria ter tentado as duas: %v", dl.requested)
+	}
+	if repo.audio == nil || repo.audio.Credit.SourceURL != cands[1].PageURL {
+		t.Fatalf("deveria ter ficado a segunda gravação: %+v", repo.audio)
+	}
+}

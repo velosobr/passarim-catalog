@@ -91,7 +91,7 @@ func speciesToProto(s domain.Species) *catalogv1.Species {
 			Width: toInt32(p.Width), Height: toInt32(p.Height), Credit: creditToProto(p.Credit)})
 	}
 	if s.Audio != nil {
-		out.Audio = &catalogv1.Audio{Key: s.Audio.Key, DurationMs: toInt32(s.Audio.DurationMs), Credit: creditToProto(s.Audio.Credit)}
+		out.Audio = audioToProto(*s.Audio)
 	}
 	for _, c := range s.Clusters {
 		out.Clusters = append(out.Clusters, &catalogv1.OccurrenceCluster{Lat: c.Lat, Lng: c.Lng, Count: toInt32(c.Count), Precision: c.Precision})
@@ -111,4 +111,10 @@ func kidsToProto(k *domain.KidsContent) *catalogv1.KidsContent {
 		out.Facts = append(out.Facts, &catalogv1.KidsFact{Text: f.Text, SourceFact: toInt32(f.SourceFact)})
 	}
 	return out
+}
+
+// audioToProto monta o canto com o crédito e os 64 picos (vazios num canto
+// gravado antes da frente B).
+func audioToProto(a domain.Audio) *catalogv1.Audio {
+	return &catalogv1.Audio{Key: a.Key, DurationMs: toInt32(a.DurationMs), Credit: creditToProto(a.Credit), Peaks: a.Peaks}
 }

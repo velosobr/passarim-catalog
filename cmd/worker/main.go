@@ -7,9 +7,9 @@
 // disso acontece quando o app pede uma ave: o app só lê o que o worker já
 // gravou (ADR-0005).
 //
-// Dois comandos ajudam na curadoria de fotos: "requeue [species-id...]"
-// reenfileira os jobs de fotos e "curation-report" imprime o relatório da
-// última curadoria de cada espécie.
+// Dois comandos ajudam na manutenção: "requeue [--source photos|audio]
+// [species-id...]" reenfileira os jobs de fotos (padrão) ou de cantos, e
+// "curation-report" imprime o relatório da última curadoria de cada espécie.
 package main
 
 import (
@@ -52,10 +52,10 @@ const batchTimeout = 2 * time.Minute
 
 // main escolhe o que fazer pelo primeiro argumento:
 //   - sem argumento: o laço da fila (o que o compose sobe);
-//   - "requeue [species-id...]": reenfileira as fotos das espécies dadas (ou todas);
+//   - "requeue [--source photos|audio] [species-id...]": reenfileira as fotos (padrão) ou os cantos das espécies dadas (ou de todas);
 //   - "curation-report": imprime o relatório de curadoria em Markdown.
 //
-// No compose: docker compose run --rm catalog-worker requeue crotophaga-ani
+// No compose: docker compose run --rm catalog-worker requeue --source audio crotophaga-ani
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stderr, nil))
 	var err error
@@ -99,20 +99,25 @@ func openRepo(ctx context.Context) (*postgres.IngestRepository, func(), error) {
 	return postgres.NewIngestRepository(pool), pool.Close, nil
 }
 
-// requeue reenfileira os jobs de fotos e diz quantos. Se algum id pedido não
-// voltou (não existe ou está rodando agora), sai com erro citando os ids.
-func requeue(speciesIDs []string) error {
+// requeue reenfileira os jobs de fotos ou de cantos e diz quantos. Se algum
+// id pedido não voltou (não existe ou está rodando agora), sai com erro
+// citando os ids.
+func requeue(args []string) error {
+	source, speciesIDs, err := parseRequeueArgs(args)
+	if err != nil {
+		return err
+	}
 	ctx := context.Background()
 	repo, closeDB, err := openRepo(ctx)
 	if err != nil {
 		return err
 	}
 	defer closeDB()
-	done, err := repo.RequeuePhotoJobs(ctx, speciesIDs)
+	done, err := repo.RequeueJobs(ctx, source, speciesIDs)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%d jobs de fotos reenfileirados\n", len(done))
+	fmt.Printf("%d jobs de %s reenfileirados\n", len(done), source)
 	var missing []string
 	for _, id := range speciesIDs {
 		if !slices.Contains(done, id) {

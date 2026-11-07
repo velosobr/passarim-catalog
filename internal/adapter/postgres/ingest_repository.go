@@ -142,7 +142,9 @@ func (r *IngestRepository) ReplacePhotos(ctx context.Context, speciesID string, 
 			SourcePhotoID: pgtype.Text{String: p.SourcePhotoID, Valid: p.SourcePhotoID != ""},
 			Category:      pgtype.Text{String: string(p.Category), Valid: p.Category != ""},
 			Score:         pgtype.Float4{Float32: float32(p.Score), Valid: p.Category != ""},
-			ModelVersion:  pgtype.Text{String: p.ModelVersion, Valid: p.ModelVersion != ""}}
+			ModelVersion:  pgtype.Text{String: p.ModelVersion, Valid: p.ModelVersion != ""},
+			// NOT NULL: lista vazia, nunca nil (nil viraria NULL)
+			Peaks: []float32{}}
 	}
 	candidates, err := candidatesToJSON(report.Candidates)
 	if err != nil {
@@ -186,7 +188,9 @@ func (r *IngestRepository) ReplaceAudio(ctx context.Context, speciesID string, a
 	if a != nil {
 		rows = append(rows, sqlcgen.InsertMediaParams{SpeciesID: speciesID, Kind: "audio", Position: 0,
 			AudioKey: a.Key, DurationMs: toInt32(a.DurationMs),
-			Author: a.Credit.Author, License: a.Credit.License, Source: a.Credit.Source, SourceUrl: a.Credit.SourceURL})
+			Author: a.Credit.Author, License: a.Credit.License, Source: a.Credit.Source, SourceUrl: a.Credit.SourceURL,
+			// cópia nunca nil: o canto curto demais grava a lista vazia
+			Peaks: append([]float32{}, a.Peaks...)})
 	}
 	return r.replaceMedia(ctx, speciesID, "audio", rows, nil)
 }
@@ -225,15 +229,16 @@ func (r *IngestRepository) PhotoOverride(ctx context.Context, speciesID string) 
 		PrimaryPhotoID: row.PrimaryPhotoID.String, ExcludedIDs: row.ExcludedIds}, nil
 }
 
-// RequeuePhotoJobs reenfileira os jobs de fotos das espécies dadas (nil =
-// todas). Antes cria os jobs de fotos que faltam, para o comando funcionar
-// mesmo num banco em que o worker ainda não rodou. Devolve as espécies
-// reenfileiradas; quem chama compara com as pedidas.
-func (r *IngestRepository) RequeuePhotoJobs(ctx context.Context, speciesIDs []string) ([]string, error) {
-	if err := r.q.EnqueueMissingJobs(ctx, []string{string(ingest.SourceINaturalist)}); err != nil {
+// RequeueJobs reenfileira os jobs de uma fonte (fotos ou cantos) das
+// espécies dadas (nil = todas). Antes cria os jobs dessa fonte que faltam,
+// para o comando funcionar mesmo num banco em que o worker ainda não rodou.
+// Devolve as espécies reenfileiradas; quem chama compara com as pedidas.
+func (r *IngestRepository) RequeueJobs(ctx context.Context, source ingest.Source, speciesIDs []string) ([]string, error) {
+	if err := r.q.EnqueueMissingJobs(ctx, []string{string(source)}); err != nil {
 		return nil, fmt.Errorf("enfileirar: %w", err)
 	}
-	return r.q.RequeuePhotoJobs(ctx, append([]string{}, speciesIDs...)) // nil viraria NULL, e cardinality(NULL) é NULL
+	// nil viraria NULL, e cardinality(NULL) é NULL: mandamos uma lista vazia de verdade.
+	return r.q.RequeueJobs(ctx, sqlcgen.RequeueJobsParams{Source: string(source), SpeciesIds: append([]string{}, speciesIDs...)})
 }
 
 // LatestCurationReports lê a última execução da curadoria de cada espécie.

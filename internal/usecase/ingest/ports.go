@@ -154,6 +154,9 @@ type ImageProcessor interface {
 type AudioProcessor interface {
 	// ToAAC converte para AAC mono e corta em maxDuration.
 	ToAAC(ctx context.Context, original []byte, maxDuration time.Duration) ([]byte, error)
+	// Peaks decodifica o AAC final e devolve os 64 picos da forma de onda
+	// (vazio se o áudio for curto demais).
+	Peaks(ctx context.Context, aac []byte) ([]float32, error)
 }
 
 // MediaStore é o object storage (SeaweedFS local / R2 em produção).
