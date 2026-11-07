@@ -73,6 +73,11 @@ Os comandos rodam a partir do `passarim-docs`, onde está o compose:
 - `docker compose run --rm catalog-worker curation-report > relatorio.md` imprime a última curadoria de cada espécie, com as marcadas primeiro.
 - A chave `photos:` no YAML escolhe a principal (`primary: { observation, photo }`) ou tira fotos (`exclude: [...]`).
 
+### Conteúdo Kids e "Ave do dia"
+
+- **Conteúdo Kids:** as chaves `primary_biome:` e `kids:` do YAML (frente B) vão para `species.primary_biome` e `species.kids`. Sem o bloco, a espécie não aparece no Kids (`kids_only`).
+- **"Ave do dia":** `GetFeaturedSpecies` escolhe em rodízio, sem repetir ave até todas as elegíveis aparecerem uma vez, e grava a escolha na tabela `featured_day`. Elegível = conteúdo Kids + foto principal de ave sozinha (ou do override) + canto. O dia é o de São Paulo.
+
 ## Rodando
 | Comando | O que faz |
 |---|---|

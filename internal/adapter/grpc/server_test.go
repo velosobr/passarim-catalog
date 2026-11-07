@@ -54,6 +54,17 @@ func (f *fakeFilters) Execute(_ context.Context, in usecase.ListFiltersInput) (u
 	return f.f, nil
 }
 
+type fakeFeatured struct {
+	out  usecase.FeaturedOutput
+	err  error
+	date string
+}
+
+func (f *fakeFeatured) Execute(_ context.Context, date string) (usecase.FeaturedOutput, error) {
+	f.date = date
+	return f.out, f.err
+}
+
 // dial sobe o servidor gRPC em memória (bufconn): sem rede, rápido e real.
 func dial(t *testing.T, srv catalogv1.CatalogServiceServer) catalogv1.CatalogServiceClient {
 	t.Helper()
@@ -81,7 +92,7 @@ func TestListSpecies_MapsRequestAndResponse(t *testing.T) {
 		Species:       []domain.SpeciesSummary{{ID: "a", CommonNamePt: "Ave", ScientificName: "A a", ThumbnailKey: "k", ConservationStatus: domain.StatusVU}},
 		NextPageToken: "tok",
 	}}
-	c := dial(t, grpcadapter.NewServer(list, fakeGet{}, &fakeFilters{}, quiet))
+	c := dial(t, grpcadapter.NewServer(list, fakeGet{}, &fakeFilters{}, &fakeFeatured{}, quiet))
 	resp, err := c.ListSpecies(context.Background(), &catalogv1.ListSpeciesRequest{
 		Query: "sabia", Biome: catalogv1.Biome_BIOME_PANTANAL, State: "MS", PageSize: 10, PageToken: "x"})
 	if err != nil {
@@ -98,7 +109,7 @@ func TestListSpecies_MapsRequestAndResponse(t *testing.T) {
 
 // Um número de bioma que não existe no enum vira INVALID_ARGUMENT.
 func TestListSpecies_UnknownBiomeEnumIsInvalidArgument(t *testing.T) {
-	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{}, &fakeFilters{}, quiet))
+	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{}, &fakeFilters{}, &fakeFeatured{}, quiet))
 	_, err := c.ListSpecies(context.Background(), &catalogv1.ListSpeciesRequest{Biome: catalogv1.Biome(99)})
 	if status.Code(err) != codes.InvalidArgument {
 		t.Fatalf("code = %v", status.Code(err))
@@ -117,7 +128,7 @@ func TestErrorsMapToGRPCCodes(t *testing.T) {
 		{errors.New("senha do banco: hunter2"), codes.Internal},
 	}
 	for _, tc := range cases {
-		c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{err: tc.err}, &fakeFilters{}, quiet))
+		c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{err: tc.err}, &fakeFilters{}, &fakeFeatured{}, quiet))
 		_, err := c.GetSpecies(context.Background(), &catalogv1.GetSpeciesRequest{Id: "x"})
 		if status.Code(err) != tc.code {
 			t.Errorf("%v → %v, want %v", tc.err, status.Code(err), tc.code)
@@ -142,7 +153,7 @@ func TestErrorsMapToGRPCCodes_ContextCancellationAndDeadline(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{err: tc.err}, &fakeFilters{}, quiet))
+			c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{err: tc.err}, &fakeFilters{}, &fakeFeatured{}, quiet))
 			_, err := c.GetSpecies(context.Background(), &catalogv1.GetSpeciesRequest{Id: "x"})
 			if status.Code(err) != tc.code {
 				t.Fatalf("code = %v, want %v", status.Code(err), tc.code)
@@ -169,7 +180,7 @@ func (c *levelCapture) WithGroup(string) slog.Handler      { return c }
 func TestErrorsMapToGRPCCodes_ContextCancellationLogsBelowError(t *testing.T) {
 	cap := &levelCapture{}
 	log := slog.New(cap)
-	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{err: fmt.Errorf("x: %w", context.DeadlineExceeded)}, &fakeFilters{}, log))
+	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{err: fmt.Errorf("x: %w", context.DeadlineExceeded)}, &fakeFilters{}, &fakeFeatured{}, log))
 	_, _ = c.GetSpecies(context.Background(), &catalogv1.GetSpeciesRequest{Id: "x"})
 	if len(cap.levels) != 1 || cap.levels[0] >= slog.LevelError {
 		t.Fatalf("esperava log abaixo de ERROR para deadline/cancelamento, veio %v", cap.levels)
@@ -186,7 +197,7 @@ func TestGetSpecies_MapsOptionalsAndLists(t *testing.T) {
 		Photos:   []domain.Photo{{ThumbKey: "t.webp", Width: 10, Height: 5, Credit: domain.Credit{Author: "A", License: "CC-BY"}}},
 		Clusters: []domain.OccurrenceCluster{{Lat: 1, Lng: 2, Count: 3, Precision: 0.5}},
 	}
-	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{s: s}, &fakeFilters{}, quiet))
+	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{s: s}, &fakeFilters{}, &fakeFeatured{}, quiet))
 	resp, err := c.GetSpecies(context.Background(), &catalogv1.GetSpeciesRequest{Id: "t"})
 	if err != nil {
 		t.Fatal(err)
@@ -205,7 +216,7 @@ func TestListFilters(t *testing.T) {
 	f := usecase.Filters{Biomes: []usecase.BiomeCount{{Biome: domain.BiomePampa, Count: 2}}, States: []usecase.StateCount{{State: "RS", Count: 2}},
 		PrimaryBiomes: []usecase.BiomeCount{{Biome: domain.BiomeCerrado, Count: 4}}}
 	filters := &fakeFilters{f: f}
-	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{}, filters, quiet))
+	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{}, filters, &fakeFeatured{}, quiet))
 	resp, err := c.ListFilters(context.Background(), &catalogv1.ListFiltersRequest{KidsOnly: true})
 	if err != nil {
 		t.Fatal(err)
@@ -222,7 +233,7 @@ func TestListFilters(t *testing.T) {
 // um bioma principal desconhecido é recusado.
 func TestListSpecies_KidsFilters(t *testing.T) {
 	list := &fakeList{}
-	c := dial(t, grpcadapter.NewServer(list, fakeGet{}, &fakeFilters{}, quiet))
+	c := dial(t, grpcadapter.NewServer(list, fakeGet{}, &fakeFilters{}, &fakeFeatured{}, quiet))
 	_, err := c.ListSpecies(context.Background(), &catalogv1.ListSpeciesRequest{KidsOnly: true, PrimaryBiome: catalogv1.Biome_BIOME_PAMPA})
 	if err != nil {
 		t.Fatal(err)
@@ -240,7 +251,7 @@ func TestListSpecies_KidsFilters(t *testing.T) {
 func TestGetSpecies_Kids(t *testing.T) {
 	s := domain.Species{ID: "t", PrimaryBiome: domain.BiomeCerrado,
 		Kids: &domain.KidsContent{Description: "D", DidYouKnow: "V", Facts: []domain.KidsFact{{Text: "F", SourceFact: 1}}}}
-	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{s: s}, &fakeFilters{}, quiet))
+	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{s: s}, &fakeFilters{}, &fakeFeatured{}, quiet))
 	resp, err := c.GetSpecies(context.Background(), &catalogv1.GetSpeciesRequest{Id: "t"})
 	if err != nil {
 		t.Fatal(err)
@@ -251,7 +262,7 @@ func TestGetSpecies_Kids(t *testing.T) {
 		t.Fatalf("kids: %v", resp.GetSpecies())
 	}
 	s.Kids, s.PrimaryBiome = nil, ""
-	c = dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{s: s}, &fakeFilters{}, quiet))
+	c = dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{s: s}, &fakeFilters{}, &fakeFeatured{}, quiet))
 	resp, _ = c.GetSpecies(context.Background(), &catalogv1.GetSpeciesRequest{Id: "t"})
 	if resp.GetSpecies().Kids != nil || resp.GetSpecies().GetPrimaryBiome() != catalogv1.Biome_BIOME_UNSPECIFIED {
 		t.Fatalf("sem Kids, o campo deveria ficar ausente: %v", resp.GetSpecies())
@@ -261,9 +272,46 @@ func TestGetSpecies_Kids(t *testing.T) {
 // O canto chega ao proto com os picos.
 func TestGetSpecies_AudioPeaks(t *testing.T) {
 	s := domain.Species{ID: "t", Audio: &domain.Audio{Key: "a.aac", Peaks: []float32{0, 1}}}
-	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{s: s}, &fakeFilters{}, quiet))
+	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{s: s}, &fakeFilters{}, &fakeFeatured{}, quiet))
 	resp, err := c.GetSpecies(context.Background(), &catalogv1.GetSpeciesRequest{Id: "t"})
 	if err != nil || len(resp.GetSpecies().GetAudio().GetPeaks()) != 2 || resp.GetSpecies().GetAudio().GetPeaks()[1] != 1 {
 		t.Fatalf("err=%v audio=%v", err, resp.GetSpecies().GetAudio())
+	}
+}
+
+// A ave do dia chega com o resumo e o canto; a data vai ao caso de uso.
+func TestGetFeaturedSpecies(t *testing.T) {
+	featured := &fakeFeatured{out: usecase.FeaturedOutput{
+		Species: domain.SpeciesSummary{ID: "turdus-rufiventris", ThumbnailKey: "t.webp", PrimaryBiome: domain.BiomeMataAtlantica},
+		Audio:   &domain.Audio{Key: "a.aac", Peaks: []float32{1}}}}
+	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{}, &fakeFilters{}, featured, quiet))
+	resp, err := c.GetFeaturedSpecies(context.Background(), &catalogv1.GetFeaturedSpeciesRequest{Date: "2026-11-05"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if featured.date != "2026-11-05" || resp.GetSpecies().GetId() != "turdus-rufiventris" ||
+		resp.GetSpecies().GetPrimaryBiome() != catalogv1.Biome_BIOME_MATA_ATLANTICA || resp.GetAudio().GetPeaks()[0] != 1 {
+		t.Fatalf("data=%q resposta=%v", featured.date, resp)
+	}
+}
+
+// Sem canto, o campo audio fica ausente; sem elegível, NOT_FOUND; data
+// inválida, INVALID_ARGUMENT.
+func TestGetFeaturedSpecies_Errors(t *testing.T) {
+	noAudio := &fakeFeatured{out: usecase.FeaturedOutput{Species: domain.SpeciesSummary{ID: "x"}}}
+	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{}, &fakeFilters{}, noAudio, quiet))
+	resp, err := c.GetFeaturedSpecies(context.Background(), &catalogv1.GetFeaturedSpeciesRequest{Date: "2026-11-05"})
+	if err != nil || resp.Audio != nil {
+		t.Fatalf("sem canto: err=%v audio=%v", err, resp.GetAudio())
+	}
+	for code, ucErr := range map[codes.Code]error{
+		codes.NotFound:        domain.ErrNotFound,
+		codes.InvalidArgument: &domain.InvalidArgumentError{Field: "date", Reason: "x"},
+	} {
+		c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{}, &fakeFilters{}, &fakeFeatured{err: ucErr}, quiet))
+		_, err := c.GetFeaturedSpecies(context.Background(), &catalogv1.GetFeaturedSpeciesRequest{Date: "x"})
+		if status.Code(err) != code {
+			t.Fatalf("esperava %v, veio %v", code, err)
+		}
 	}
 }
