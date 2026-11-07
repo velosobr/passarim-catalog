@@ -389,12 +389,15 @@ func (q *Queries) ListFacts(ctx context.Context, speciesID string) ([]ListFactsR
 const listFeaturedCycle = `-- name: ListFeaturedCycle :many
 SELECT day, species_id, cycle FROM featured_day
 WHERE cycle = (SELECT f.cycle FROM featured_day f WHERE f.day < $1 ORDER BY f.day DESC LIMIT 1)
+   OR day > $1
 ORDER BY day
 `
 
-// As linhas do ciclo da linha mais recente antes do dia pedido (inclusive
-// as de dias depois dele, se amanhã foi pedido antes de hoje). Sem nenhuma
-// linha antes do dia, a subconsulta dá NULL e nada volta: é o ciclo 1.
+// As linhas do ciclo da linha mais recente antes do dia pedido, mais as de
+// qualquer dia depois dele (existem quando amanhã foi pedido antes de hoje,
+// e podem já ser do ciclo seguinte, na virada). Sem nenhuma linha antes do
+// dia, a subconsulta dá NULL, "cycle = NULL" não casa com nada e só os dias
+// depois voltam: é o ciclo 1.
 func (q *Queries) ListFeaturedCycle(ctx context.Context, day pgtype.Date) ([]FeaturedDay, error) {
 	rows, err := q.db.Query(ctx, listFeaturedCycle, day)
 	if err != nil {

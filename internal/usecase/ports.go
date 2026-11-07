@@ -46,7 +46,8 @@ type ListFilter struct {
 type FeaturedRepository interface {
 	// FeaturedOn devolve a ave já gravada para o dia (found=false se não há).
 	FeaturedOn(ctx context.Context, day string) (speciesID string, found bool, err error)
-	// FeaturedCycle devolve as linhas do ciclo da linha mais recente antes do dia.
+	// FeaturedCycle devolve as linhas do ciclo da linha mais recente antes do
+	// dia, mais as dos dias depois dele (amanhã pedido antes de hoje).
 	FeaturedCycle(ctx context.Context, day string) ([]domain.FeaturedDay, error)
 	// FeaturedEligible devolve os ids das espécies que podem ser escolhidas:
 	// com conteúdo Kids, foto principal de ave sozinha (ou do override) e canto.

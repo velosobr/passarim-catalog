@@ -333,7 +333,8 @@ func (r *Repository) FeaturedOn(ctx context.Context, day string) (string, bool, 
 	return id, true, nil
 }
 
-// FeaturedCycle devolve as linhas do ciclo da linha mais recente antes do dia.
+// FeaturedCycle devolve as linhas do ciclo da linha mais recente antes do
+// dia, mais as dos dias depois dele (amanhã pedido antes de hoje).
 func (r *Repository) FeaturedCycle(ctx context.Context, day string) ([]domain.FeaturedDay, error) {
 	d, err := dateParam(day)
 	if err != nil {

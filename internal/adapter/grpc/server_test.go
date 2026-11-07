@@ -25,7 +25,7 @@ import (
 	"github.com/velosobr/passarim-catalog/internal/usecase"
 )
 
-// Os três casos de uso falsos guardam a entrada e devolvem o configurado.
+// Os quatro casos de uso falsos guardam a entrada e devolvem o configurado.
 type fakeList struct {
 	in  usecase.ListSpeciesInput
 	out usecase.ListSpeciesOutput

@@ -87,8 +87,9 @@ func TestFeaturedDayTable(t *testing.T) {
 	if err != nil || len(rows) != 1 || rows[0].Day != "2026-11-02" || rows[0].Cycle != 2 {
 		t.Fatalf("ciclo antes do dia 3: %+v %v", rows, err)
 	}
-	if rows, _ := repo.FeaturedCycle(ctx, "2026-11-01"); len(rows) != 0 {
-		t.Fatalf("antes do primeiro dia não há ciclo: %+v", rows)
+	// Antes do primeiro dia não há ciclo anterior: só voltam os dias depois.
+	if rows, _ := repo.FeaturedCycle(ctx, "2026-11-01"); len(rows) != 1 || rows[0].Day != "2026-11-02" {
+		t.Fatalf("antes do primeiro dia, só os dias depois: %+v", rows)
 	}
 }
 
@@ -127,5 +128,26 @@ func TestGetFeatured_ConcurrentCalls(t *testing.T) {
 	_ = pool.QueryRow(ctx, `SELECT count(*) FROM featured_day`).Scan(&n)
 	if n != 1 {
 		t.Fatalf("esperava 1 linha, veio %d", n)
+	}
+}
+
+// O ciclo pedido também traz os dias depois do dia pedido, mesmo de outro
+// ciclo: é o caso de amanhã pedido antes de hoje bem na virada de ciclo.
+func TestFeaturedCycle_IncludesLaterDays(t *testing.T) {
+	repo, _ := newRepo(t)
+	ctx := context.Background()
+	b := []domain.Biome{domain.BiomeCerrado}
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá", b), sp("Crotophaga ani", "Anu", b))
+	for _, d := range []domain.FeaturedDay{
+		{Day: "2026-11-01", SpeciesID: "turdus-rufiventris", Cycle: 1},
+		{Day: "2026-11-03", SpeciesID: "crotophaga-ani", Cycle: 2}, // amanhã, já no ciclo 2
+	} {
+		if err := repo.SaveFeatured(ctx, d); err != nil {
+			t.Fatal(err)
+		}
+	}
+	rows, err := repo.FeaturedCycle(ctx, "2026-11-02")
+	if err != nil || fmt.Sprint(rows) != "[{2026-11-01 turdus-rufiventris 1} {2026-11-03 crotophaga-ani 2}]" {
+		t.Fatalf("linhas: %v %v", rows, err)
 	}
 }

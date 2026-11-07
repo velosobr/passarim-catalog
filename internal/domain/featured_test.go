@@ -123,3 +123,27 @@ func TestPickFeatured_Deterministic(t *testing.T) {
 		t.Fatal("escolha vazia")
 	}
 }
+
+// "Amanhã antes de hoje" bem na virada de ciclo: o ciclo 1 acabou ontem,
+// amanhã foi pedido primeiro e abriu o ciclo 2. Hoje também é do ciclo 2 e
+// não pode repetir a ave de amanhã nem a de ontem. Vários começos de data,
+// porque a escolha depende do hash do dia.
+func TestPickFeatured_TomorrowBeforeTodayAtCycleBoundary(t *testing.T) {
+	eligible := []string{"a", "b", "c", "d", "e"}
+	for offset := range 60 {
+		var rows []domain.FeaturedDay
+		for i := range len(eligible) { // o ciclo 1 inteiro, até ontem
+			day := dayAfter(offset + i)
+			id, cycle, _ := domain.PickFeatured(day, eligible, rows)
+			rows = append(rows, domain.FeaturedDay{Day: day, SpeciesID: id, Cycle: cycle})
+		}
+		yesterday := rows[len(rows)-1]
+		today, tomorrow := dayAfter(offset+len(eligible)), dayAfter(offset+len(eligible)+1)
+		tomorrowID, cycle, _ := domain.PickFeatured(tomorrow, eligible, rows)
+		rows = append(rows, domain.FeaturedDay{Day: tomorrow, SpeciesID: tomorrowID, Cycle: cycle})
+		todayID, todayCycle, _ := domain.PickFeatured(today, eligible, rows)
+		if todayID == tomorrowID || todayID == yesterday.SpeciesID || todayCycle != 2 {
+			t.Fatalf("começo %d: ontem=%s hoje=%s (ciclo %d) amanhã=%s", offset, yesterday.SpeciesID, todayID, todayCycle, tomorrowID)
+		}
+	}
+}

@@ -22,8 +22,8 @@ type FeaturedDay struct {
 //
 //   - eligible são os ids das espécies que podem ser escolhidas hoje.
 //   - cycleRows são as linhas do ciclo da linha mais recente antes de `day`
-//     (o repositório devolve só esse ciclo; pode haver dias depois de `day`,
-//     se amanhã foi pedido antes de hoje).
+//     e as de qualquer dia depois de `day` (existem quando amanhã foi pedido
+//     antes de hoje, e podem já ser do ciclo seguinte).
 //
 // A regra:
 //  1. prev = a linha mais recente com Day < day. Sem nenhuma, é o ciclo 1.
@@ -31,8 +31,12 @@ type FeaturedDay struct {
 //     Contar também os dias depois de `day` evita repetir a ave de amanhã.
 //  3. Restantes = elegíveis menos usadas, em ordem alfabética.
 //  4. Sem restantes, começa um ciclo novo com todas as elegíveis, menos a
-//     ave de prev se houver mais de uma elegível (senão a última ave de um
-//     ciclo voltaria no primeiro dia do seguinte).
+//     ave de prev (senão a última ave de um ciclo voltaria no primeiro dia
+//     do seguinte) e menos as aves dos dias depois de `day` que já estão no
+//     ciclo novo (amanhã pedido antes de hoje, bem na virada). Se isso
+//     esvaziar a lista (catálogo com uma ou duas aves), as exclusões caem,
+//     primeiro a de amanhã e depois a de ontem: repetir é melhor que ficar
+//     sem ave.
 //  5. A escolhida é restantes[hash(day) % len(restantes)].
 //
 // ok=false quando não há nenhuma elegível.
@@ -64,9 +68,20 @@ func PickFeatured(day string, eligible []string, cycleRows []FeaturedDay) (speci
 	remaining := without(sorted, func(id string) bool { return used[id] })
 	if len(remaining) == 0 {
 		cycle++
-		remaining = sorted
-		if prev != nil && len(sorted) > 1 {
-			remaining = without(sorted, func(id string) bool { return id == prev.SpeciesID })
+		// later são as aves dos dias depois de `day` que já abriram o ciclo novo.
+		later := map[string]bool{}
+		for _, r := range cycleRows {
+			if r.Day > day && r.Cycle == cycle {
+				later[r.SpeciesID] = true
+			}
+		}
+		isPrev := func(id string) bool { return prev != nil && id == prev.SpeciesID }
+		remaining = without(sorted, func(id string) bool { return isPrev(id) || later[id] })
+		if len(remaining) == 0 {
+			remaining = without(sorted, isPrev)
+		}
+		if len(remaining) == 0 {
+			remaining = sorted
 		}
 	}
 	return remaining[dayHash(day)%uint64(len(remaining))], cycle, true
