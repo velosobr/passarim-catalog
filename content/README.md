@@ -12,3 +12,12 @@ Cada arquivo em `species/` descreve uma ave. Nome do arquivo = id (nome científ
 
 ## Formato
 Veja `species/turdus-rufiventris.yaml`.
+
+## Conteúdo Kids (`primary_biome:` e `kids:`)
+
+A linha `primary_biome:` e o bloco `kids:` são escritos pelo `cmd/kidsgen` (frente B) e revisados por uma pessoa no PR. O `go test ./content/` roda o validador em toda espécie que tem o bloco: frases (descrição de 2 a 4, fatos e "Você sabia?" com 1, até 15 palavras cada), números (todo número do Kids precisa estar no texto adulto), palavras proibidas e o `source_hash`. Sem o bloco, nada é exigido.
+
+- Gerar para as espécies que faltam: `ANTHROPIC_API_KEY=... go run ./cmd/kidsgen --missing`. A chave fica só na sua máquina.
+- Uma espécie: `--ids turdus-rufiventris`. Ver o prompt sem gastar: `--dry-run`, sem a chave.
+- Mudou a descrição, um fato ou os biomas? O `source_hash` deixa de bater, o teste falha e pede uma nova geração. Mudar só as fontes, o tamanho ou as UFs não invalida.
+- O bioma principal pode ser trocado à mão (ele não entra no `source_hash`), desde que continue entre os `biomes`.

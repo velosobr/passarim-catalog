@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/velosobr/passarim-catalog/internal/adapter/curated"
+	"github.com/velosobr/passarim-catalog/internal/kidscontent"
 )
 
 // notEvaluated lista espécies cujo conservation_status fica vazio de
@@ -48,6 +49,21 @@ func TestCuratedContent(t *testing.T) {
 			if !strings.HasPrefix(f.Source, "https://") {
 				t.Errorf("%s: fonte da curiosidade deve ser um link https: %q", s.ID, f.Source)
 			}
+		}
+	}
+}
+
+// TestKidsContent roda o validador do conteúdo Kids (internal/kidscontent)
+// em toda espécie que tem o bloco kids:. Sem o bloco, nada é exigido: o
+// catálogo cresce, e o kidsgen roda por lote (spec da frente B, seção 3.2).
+func TestKidsContent(t *testing.T) {
+	species, err := curated.LoadDir("species")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range species {
+		for _, problem := range kidscontent.Validate(s) {
+			t.Error(problem)
 		}
 	}
 }
