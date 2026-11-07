@@ -1,0 +1,20 @@
+[
+  {"text": "Ele vive dois anos.", "want": [2]},
+  {"text": "Põe vinte e cinco ovos.", "want": [25]},
+  {"text": "Voa dois mil quilômetros.", "want": [2000]},
+  {"text": "O ninho tem 2.000 gravetos.", "want": [2000]},
+  {"text": "Pesa 1,5 quilo.", "want": [1.5]},
+  {"text": "Mede meio metro.", "want": [0.5]},
+  {"text": "Uma ave canta.", "want": []},
+  {"text": "Há um milhão de aves.", "want": [1000000]},
+  {"text": "Em 2002 virou símbolo.", "want": [2002]},
+  {"text": "Choca por cento e vinte dias.", "want": [120]},
+  {"text": "Restam dois milhões e quinhentos mil.", "want": [2500000]},
+  {"text": "O filhote voa com vinte e um dias.", "want": [21]},
+  {"text": "Dorme três e meio dias.", "want": [3.5]},
+  {"text": "O tico-tico come milho.", "want": []},
+  {"text": "Bota duas ou três vezes.", "want": [2, 3]},
+  {"text": "Canta entre 13 e 14 horas.", "want": [13, 14]},
+  {"text": "Vive até mil metros de altitude.", "want": [1000]},
+  {"text": "Mede 1.5 metro.", "want": [1.5]}
+]
