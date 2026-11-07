@@ -93,7 +93,8 @@ func run(log *slog.Logger) error {
 	// Injeção de dependências "à mão": repositório → casos de uso → servidor.
 	repo := postgres.NewRepository(pool)
 	srv := grpcadapter.NewServer(
-		usecase.ListSpecies{Repo: repo}, usecase.GetSpecies{Repo: repo}, usecase.ListFilters{Repo: repo}, log)
+		usecase.ListSpecies{Repo: repo}, usecase.GetSpecies{Repo: repo}, usecase.ListFilters{Repo: repo},
+		usecase.GetFeatured{Repo: repo, Now: time.Now}, log)
 
 	// Métricas do Prometheus para cada chamada gRPC (contagem e duração por
 	// método e código de resposta).

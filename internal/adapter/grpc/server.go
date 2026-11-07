@@ -27,6 +27,9 @@ type GetSpeciesUseCase interface {
 type ListFiltersUseCase interface {
 	Execute(context.Context, usecase.ListFiltersInput) (usecase.Filters, error)
 }
+type FeaturedUseCase interface {
+	Execute(context.Context, string) (usecase.FeaturedOutput, error)
+}
 
 // Server implementa catalogv1.CatalogServiceServer.
 type Server struct {
@@ -34,15 +37,16 @@ type Server struct {
 	// for adicionado ao .proto, o servidor continua compilando (e responde
 	// "não implementado" até alguém implementar).
 	catalogv1.UnimplementedCatalogServiceServer
-	list    ListSpeciesUseCase
-	get     GetSpeciesUseCase
-	filters ListFiltersUseCase
-	log     *slog.Logger
+	list     ListSpeciesUseCase
+	get      GetSpeciesUseCase
+	filters  ListFiltersUseCase
+	featured FeaturedUseCase
+	log      *slog.Logger
 }
 
-// NewServer liga o servidor aos três casos de uso.
-func NewServer(list ListSpeciesUseCase, get GetSpeciesUseCase, filters ListFiltersUseCase, log *slog.Logger) *Server {
-	return &Server{list: list, get: get, filters: filters, log: log}
+// NewServer liga o servidor aos quatro casos de uso.
+func NewServer(list ListSpeciesUseCase, get GetSpeciesUseCase, filters ListFiltersUseCase, featured FeaturedUseCase, log *slog.Logger) *Server {
+	return &Server{list: list, get: get, filters: filters, featured: featured, log: log}
 }
 
 // ListSpecies converte o pedido gRPC na entrada do caso de uso e a saída de
@@ -100,6 +104,21 @@ func (s *Server) ListFilters(ctx context.Context, req *catalogv1.ListFiltersRequ
 	return resp, nil
 }
 
+// GetFeaturedSpecies devolve a "Ave do dia" da data pedida (AAAA-MM-DD, no
+// fuso de São Paulo, calculada pelo BFF). O canto vai junto porque o card
+// adulto tem botão de canto; sem canto, o campo fica ausente.
+func (s *Server) GetFeaturedSpecies(ctx context.Context, req *catalogv1.GetFeaturedSpeciesRequest) (*catalogv1.GetFeaturedSpeciesResponse, error) {
+	out, err := s.featured.Execute(ctx, req.GetDate())
+	if err != nil {
+		return nil, s.toStatus(ctx, err)
+	}
+	resp := &catalogv1.GetFeaturedSpeciesResponse{Species: summaryToProto(out.Species)}
+	if out.Audio != nil {
+		resp.Audio = audioToProto(*out.Audio)
+	}
+	return resp, nil
+}
+
 // toStatus traduz erros do domínio para códigos gRPC. Erros inesperados
 // viram INTERNAL com mensagem genérica: o detalhe (que pode conter dados
 // sensíveis) vai só para o log — OWASP API8.
@@ -107,7 +126,7 @@ func (s *Server) toStatus(ctx context.Context, err error) error {
 	var inv *domain.InvalidArgumentError
 	switch {
 	case errors.Is(err, domain.ErrNotFound):
-		return status.Error(codes.NotFound, "espécie não encontrada")
+		return status.Error(codes.NotFound, "não encontrado")
 	case errors.As(err, &inv):
 		return status.Error(codes.InvalidArgument, inv.Error())
 	case errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled):

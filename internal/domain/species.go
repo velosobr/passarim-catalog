@@ -194,7 +194,7 @@ type SpeciesSummary struct {
 	CommonNamePt       string
 	ThumbnailKey       string
 	ConservationStatus ConservationStatus
-	// PrimaryBiome é o "mundo" da ave no Kids ("" = ainda sem conteúdo Kids).
+	// PrimaryBiome é o "mundo" da ave no Kids ("" = ainda sem bioma principal).
 	PrimaryBiome Biome
 	// SortName é o sort_name GRAVADO no banco (não recalculado). O cursor de
 	// paginação precisa encodar exatamente o valor com o qual o SQL comparou

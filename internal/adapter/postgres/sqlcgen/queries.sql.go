@@ -180,6 +180,18 @@ func (q *Queries) DeleteStates(ctx context.Context, speciesID string) error {
 	return err
 }
 
+const getFeaturedDay = `-- name: GetFeaturedDay :one
+SELECT species_id FROM featured_day WHERE day = $1
+`
+
+// A ave já escolhida para o dia (nenhuma linha = o dia ainda não foi escolhido).
+func (q *Queries) GetFeaturedDay(ctx context.Context, day pgtype.Date) (string, error) {
+	row := q.db.QueryRow(ctx, getFeaturedDay, day)
+	var species_id string
+	err := row.Scan(&species_id)
+	return species_id, err
+}
+
 const getSpecies = `-- name: GetSpecies :one
 SELECT id, scientific_name, common_name_pt, family, size_cm, diet, conservation_status, description, description_author, description_license, description_source, description_source_url, is_curated, sort_name, search_text, created_at, updated_at, primary_biome, kids FROM species WHERE id = $1
 `
@@ -247,6 +259,23 @@ func (q *Queries) InsertFact(ctx context.Context, arg InsertFactParams) error {
 		arg.Text,
 		arg.Source,
 	)
+	return err
+}
+
+const insertFeaturedDay = `-- name: InsertFeaturedDay :exec
+INSERT INTO featured_day (day, species_id, cycle) VALUES ($1, $2, $3) ON CONFLICT (day) DO NOTHING
+`
+
+type InsertFeaturedDayParams struct {
+	Day       pgtype.Date
+	SpeciesID string
+	Cycle     int32
+}
+
+// Grava a escolha do dia. ON CONFLICT (day) DO NOTHING: se outra réplica
+// gravou primeiro, a dela fica, e quem chamou relê a linha.
+func (q *Queries) InsertFeaturedDay(ctx context.Context, arg InsertFeaturedDayParams) error {
+	_, err := q.db.Exec(ctx, insertFeaturedDay, arg.Day, arg.SpeciesID, arg.Cycle)
 	return err
 }
 
@@ -350,6 +379,76 @@ func (q *Queries) ListFacts(ctx context.Context, speciesID string) ([]ListFactsR
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFeaturedCycle = `-- name: ListFeaturedCycle :many
+SELECT day, species_id, cycle FROM featured_day
+WHERE cycle = (SELECT f.cycle FROM featured_day f WHERE f.day < $1 ORDER BY f.day DESC LIMIT 1)
+   OR day > $1
+ORDER BY day
+`
+
+// As linhas do ciclo da linha mais recente antes do dia pedido, mais as de
+// qualquer dia depois dele (existem quando amanhã foi pedido antes de hoje,
+// e podem já ser do ciclo seguinte, na virada). Sem nenhuma linha antes do
+// dia, a subconsulta dá NULL, "cycle = NULL" não casa com nada e só os dias
+// depois voltam: é o ciclo 1.
+func (q *Queries) ListFeaturedCycle(ctx context.Context, day pgtype.Date) ([]FeaturedDay, error) {
+	rows, err := q.db.Query(ctx, listFeaturedCycle, day)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FeaturedDay
+	for rows.Next() {
+		var i FeaturedDay
+		if err := rows.Scan(&i.Day, &i.SpeciesID, &i.Cycle); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFeaturedEligible = `-- name: ListFeaturedEligible :many
+SELECT s.id FROM species s
+WHERE s.kids IS NOT NULL
+  AND EXISTS (SELECT 1 FROM media a
+              WHERE a.species_id = s.id AND a.kind = 'audio' AND a.position = 0 AND a.audio_key <> '')
+  AND EXISTS (SELECT 1 FROM media p LEFT JOIN photo_override o ON o.species_id = p.species_id
+              WHERE p.species_id = s.id AND p.kind = 'photo' AND p.position = 0
+                AND (p.category = 'single_bird' OR (o.primary_photo_id IS NOT NULL AND o.primary_photo_id = p.source_photo_id)))
+ORDER BY s.id
+`
+
+// As espécies que podem ser a "Ave do dia", em ordem de id:
+//   - com conteúdo Kids;
+//   - com canto (o áudio da posição 0, com chave), porque o card tem botão de canto;
+//   - com foto principal (posição 0) de ave sozinha, ou escolhida pelo
+//     override do YAML (a palavra final da frente A, seja qual for a
+//     categoria que o curador deu). Fotos de antes da 0004 têm category
+//     NULL e não entram.
+func (q *Queries) ListFeaturedEligible(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, listFeaturedEligible)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
