@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -41,6 +42,7 @@ type Repository struct {
 
 // Garante, em tempo de compilação, que Repository cumpre a interface.
 var _ usecase.SpeciesRepository = (*Repository)(nil)
+var _ usecase.FeaturedRepository = (*Repository)(nil)
 
 // NewRepository cria o repositório sobre o pool de conexões.
 func NewRepository(pool *pgxpool.Pool) *Repository {
@@ -303,4 +305,61 @@ func (r *Repository) DeleteSpeciesNotIn(ctx context.Context, keepIDs []string) (
 		return nil, errors.New("nenhuma espécie para manter: o seed não apaga o catálogo inteiro")
 	}
 	return r.q.DeleteSpeciesNotIn(ctx, keepIDs)
+}
+
+// dateParam converte "AAAA-MM-DD" no tipo date do pgx. O caso de uso já
+// validou o formato.
+func dateParam(day string) (pgtype.Date, error) {
+	t, err := time.Parse(time.DateOnly, day)
+	if err != nil {
+		return pgtype.Date{}, err
+	}
+	return pgtype.Date{Time: t, Valid: true}, nil
+}
+
+// FeaturedOn devolve a ave já gravada para o dia.
+func (r *Repository) FeaturedOn(ctx context.Context, day string) (string, bool, error) {
+	d, err := dateParam(day)
+	if err != nil {
+		return "", false, err
+	}
+	id, err := r.q.GetFeaturedDay(ctx, d)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
+	}
+	return id, true, nil
+}
+
+// FeaturedCycle devolve as linhas do ciclo da linha mais recente antes do dia.
+func (r *Repository) FeaturedCycle(ctx context.Context, day string) ([]domain.FeaturedDay, error) {
+	d, err := dateParam(day)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.q.ListFeaturedCycle(ctx, d)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.FeaturedDay, len(rows))
+	for i, row := range rows {
+		out[i] = domain.FeaturedDay{Day: row.Day.Time.Format(time.DateOnly), SpeciesID: row.SpeciesID, Cycle: int(row.Cycle)}
+	}
+	return out, nil
+}
+
+// FeaturedEligible devolve os ids das espécies que podem ser a ave do dia.
+func (r *Repository) FeaturedEligible(ctx context.Context) ([]string, error) {
+	return r.q.ListFeaturedEligible(ctx)
+}
+
+// SaveFeatured grava a escolha do dia (um dia já gravado fica como está).
+func (r *Repository) SaveFeatured(ctx context.Context, f domain.FeaturedDay) error {
+	d, err := dateParam(f.Day)
+	if err != nil {
+		return err
+	}
+	return r.q.InsertFeaturedDay(ctx, sqlcgen.InsertFeaturedDayParams{Day: d, SpeciesID: f.SpeciesID, Cycle: toInt32(f.Cycle)})
 }

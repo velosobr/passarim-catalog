@@ -138,3 +138,37 @@ DELETE FROM photo_override WHERE species_id = $1;
 -- é "diferente de todos os da lista". As tabelas filhas (mídia, fatos, jobs,
 -- relatório) têm ON DELETE CASCADE e somem junto.
 DELETE FROM species WHERE id <> ALL(sqlc.arg('keep_ids')::text[]) RETURNING id;
+
+-- name: ListFeaturedEligible :many
+-- As espécies que podem ser a "Ave do dia", em ordem de id:
+--   - com conteúdo Kids;
+--   - com canto (o áudio da posição 0, com chave), porque o card tem botão de canto;
+--   - com foto principal (posição 0) de ave sozinha, ou escolhida pelo
+--     override do YAML (a palavra final da frente A, seja qual for a
+--     categoria que o curador deu). Fotos de antes da 0004 têm category
+--     NULL e não entram.
+SELECT s.id FROM species s
+WHERE s.kids IS NOT NULL
+  AND EXISTS (SELECT 1 FROM media a
+              WHERE a.species_id = s.id AND a.kind = 'audio' AND a.position = 0 AND a.audio_key <> '')
+  AND EXISTS (SELECT 1 FROM media p LEFT JOIN photo_override o ON o.species_id = p.species_id
+              WHERE p.species_id = s.id AND p.kind = 'photo' AND p.position = 0
+                AND (p.category = 'single_bird' OR (o.primary_photo_id IS NOT NULL AND o.primary_photo_id = p.source_photo_id)))
+ORDER BY s.id;
+
+-- name: GetFeaturedDay :one
+-- A ave já escolhida para o dia (nenhuma linha = o dia ainda não foi escolhido).
+SELECT species_id FROM featured_day WHERE day = $1;
+
+-- name: ListFeaturedCycle :many
+-- As linhas do ciclo da linha mais recente antes do dia pedido (inclusive
+-- as de dias depois dele, se amanhã foi pedido antes de hoje). Sem nenhuma
+-- linha antes do dia, a subconsulta dá NULL e nada volta: é o ciclo 1.
+SELECT day, species_id, cycle FROM featured_day
+WHERE cycle = (SELECT f.cycle FROM featured_day f WHERE f.day < $1 ORDER BY f.day DESC LIMIT 1)
+ORDER BY day;
+
+-- name: InsertFeaturedDay :exec
+-- Grava a escolha do dia. ON CONFLICT (day) DO NOTHING: se outra réplica
+-- gravou primeiro, a dela fica, e quem chamou relê a linha.
+INSERT INTO featured_day (day, species_id, cycle) VALUES ($1, $2, $3) ON CONFLICT (day) DO NOTHING;

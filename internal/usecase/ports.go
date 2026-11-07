@@ -40,3 +40,19 @@ type ListFilter struct {
 	After        *Cursor      // nil = primeira página
 	Limit        int          // quantos itens buscar
 }
+
+// FeaturedRepository é a porta da "Ave do dia": a tabela featured_day, a
+// lista das elegíveis e a leitura da espécie escolhida.
+type FeaturedRepository interface {
+	// FeaturedOn devolve a ave já gravada para o dia (found=false se não há).
+	FeaturedOn(ctx context.Context, day string) (speciesID string, found bool, err error)
+	// FeaturedCycle devolve as linhas do ciclo da linha mais recente antes do dia.
+	FeaturedCycle(ctx context.Context, day string) ([]domain.FeaturedDay, error)
+	// FeaturedEligible devolve os ids das espécies que podem ser escolhidas:
+	// com conteúdo Kids, foto principal de ave sozinha (ou do override) e canto.
+	FeaturedEligible(ctx context.Context) ([]string, error)
+	// SaveFeatured grava a escolha; um dia já gravado fica como está.
+	SaveFeatured(ctx context.Context, d domain.FeaturedDay) error
+	// GetSpecies devolve domain.ErrNotFound se o id não existir.
+	GetSpecies(ctx context.Context, id string) (domain.Species, error)
+}
