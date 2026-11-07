@@ -6,6 +6,7 @@ package media
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"image"
@@ -15,6 +16,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/velosobr/passarim-catalog/internal/domain"
 	"github.com/velosobr/passarim-catalog/internal/usecase/ingest"
 )
 
@@ -96,6 +98,27 @@ func (f *FFmpeg) webp(ctx context.Context, in []byte, width int) ([]byte, error)
 func (f *FFmpeg) ToAAC(ctx context.Context, original []byte, maxDuration time.Duration) ([]byte, error) {
 	secs := strconv.FormatFloat(maxDuration.Seconds(), 'f', 3, 64)
 	return f.run(ctx, original, "-i", "pipe:0", "-t", secs, "-ac", "1", "-c:a", "aac", "-b:a", "96k", "-f", "adts", "pipe:1")
+}
+
+// peakSampleRate é a taxa usada só para calcular os picos: 8 mil amostras
+// por segundo bastam para a forma de onda e deixam a conta leve.
+const peakSampleRate = "8000"
+
+// Peaks decodifica o AAC final (o mesmo arquivo que o app toca) para PCM e
+// calcula os picos. PCM é o som "cru": uma sequência de amostras sem
+// compressão. "-f s16le" pede amostras de 16 bits com sinal, em little
+// endian (o byte menos significativo primeiro), e "-ac 1" mistura tudo num
+// canal só (mono).
+func (f *FFmpeg) Peaks(ctx context.Context, aac []byte) ([]float32, error) {
+	pcm, err := f.run(ctx, aac, "-i", "pipe:0", "-ac", "1", "-ar", peakSampleRate, "-f", "s16le", "pipe:1")
+	if err != nil {
+		return nil, err
+	}
+	samples := make([]int16, len(pcm)/2)
+	for i := range samples {
+		samples[i] = int16(binary.LittleEndian.Uint16(pcm[2*i:])) //nolint:gosec // G115: reinterpreta os 16 bits, é o formato s16le
+	}
+	return domain.Peaks(samples), nil
 }
 
 // run executa o ffmpeg com um prazo de 60 s, mandando o arquivo pela

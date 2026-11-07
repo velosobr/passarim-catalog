@@ -349,3 +349,40 @@ func TestLatestCurationReports(t *testing.T) {
 		t.Fatalf("entrada: %+v", e)
 	}
 }
+
+// O canto grava os picos e o detalhe os devolve; as fotos gravam a lista
+// vazia (a coluna é NOT NULL), e uma troca de fotos não quebra.
+func TestReplaceAudio_Peaks(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil))
+	q := postgres.NewIngestRepository(pool)
+	peaks := make([]float32, 64)
+	peaks[10] = 1
+	a := &domain.Audio{Key: "species/turdus-rufiventris/audio/1.aac", DurationMs: 3000, Peaks: peaks,
+		Credit: domain.Credit{Author: "A", License: "CC-BY", Source: "xeno-canto", SourceURL: "https://xeno-canto.org/1"}}
+	if err := q.ReplaceAudio(ctx, "turdus-rufiventris", a); err != nil {
+		t.Fatal(err)
+	}
+	s, err := repo.GetSpecies(ctx, "turdus-rufiventris")
+	if err != nil || s.Audio == nil || len(s.Audio.Peaks) != 64 || s.Audio.Peaks[10] != 1 {
+		t.Fatalf("err=%v audio=%+v", err, s.Audio)
+	}
+}
+
+func TestReplacePhotos_PeaksEmpty(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	seed(t, repo, sp("Turdus rufiventris", "Sabiá-laranjeira", nil))
+	q := postgres.NewIngestRepository(pool)
+	photo := domain.Photo{ThumbKey: "t.webp", MediumKey: "m.webp", LargeKey: "l.webp", Width: 10, Height: 10,
+		Credit: domain.Credit{Author: "A", License: "CC-BY", Source: "inaturalist", SourceURL: "https://x"}}
+	if err := q.ReplacePhotos(ctx, "turdus-rufiventris", []domain.Photo{photo}, domain.CurationReport{ModelVersion: "m@1"}); err != nil {
+		t.Fatal(err)
+	}
+	var n int
+	_ = pool.QueryRow(ctx, `SELECT cardinality(peaks) FROM media WHERE kind = 'photo'`).Scan(&n)
+	if n != 0 {
+		t.Fatalf("foto deveria ter picos vazios, veio %d", n)
+	}
+}

@@ -101,13 +101,28 @@ func (f *fakeImages) ThumbAndLarge(_ context.Context, _ []byte) (ingest.PhotoVar
 }
 
 // fakeAudio falha para os bytes listados em failFor (para testar o fallback).
-type fakeAudio struct{ failFor map[string]bool }
+type fakeAudio struct {
+	failFor   map[string]bool // ToAAC falha para estes bytes originais
+	failPeaks map[string]bool // Peaks falha para estes bytes AAC
+}
 
 func (f fakeAudio) ToAAC(_ context.Context, orig []byte, _ time.Duration) ([]byte, error) {
 	if f.failFor[string(orig)] {
 		return nil, errors.New("conversão falhou")
 	}
 	return []byte("aac:" + string(orig)), nil
+}
+
+// Peaks devolve 64 picos fixos (0,5), ou erro para os bytes de failPeaks.
+func (f fakeAudio) Peaks(_ context.Context, aac []byte) ([]float32, error) {
+	if f.failPeaks[string(aac)] {
+		return nil, errors.New("decodificação falhou")
+	}
+	p := make([]float32, 64)
+	for i := range p {
+		p[i] = 0.5
+	}
+	return p, nil
 }
 
 // fakeStore é um object storage em memória; guarda o que foi gravado e a lista

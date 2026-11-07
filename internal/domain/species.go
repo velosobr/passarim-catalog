@@ -175,6 +175,9 @@ type Audio struct {
 	Key        string
 	DurationMs int
 	Credit     Credit
+	// Peaks são os 64 picos da forma de onda, de 0 a 1 (vazio = canto gravado
+	// antes da frente B ou curto demais).
+	Peaks []float32
 }
 
 // OccurrenceCluster agrupa avistamentos próximos num único ponto do mapa.

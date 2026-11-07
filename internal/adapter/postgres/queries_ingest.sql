@@ -85,12 +85,13 @@ WHERE id = sqlc.arg('id');
 DELETE FROM media WHERE species_id = $1 AND kind = $2;
 
 -- name: InsertMedia :exec
--- Grava uma foto ou um canto, com o crédito. Os 4 últimos campos são da
--- curadoria (só fotos; NULL no canto).
+-- Grava uma foto ou um canto, com o crédito. source_photo_id, category,
+-- score e model_version são da curadoria (só fotos; NULL no canto). peaks
+-- são os 64 picos do canto (lista vazia nas fotos).
 INSERT INTO media (species_id, kind, position, thumb_key, medium_key, large_key, audio_key,
                    width, height, duration_ms, author, license, source, source_url,
-                   source_photo_id, category, score, model_version)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18);
+                   source_photo_id, category, score, model_version, peaks)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19);
 
 -- name: DeleteClusters :exec
 -- Apaga os grupos de avistamentos da espécie.

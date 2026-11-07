@@ -257,3 +257,13 @@ func TestGetSpecies_Kids(t *testing.T) {
 		t.Fatalf("sem Kids, o campo deveria ficar ausente: %v", resp.GetSpecies())
 	}
 }
+
+// O canto chega ao proto com os picos.
+func TestGetSpecies_AudioPeaks(t *testing.T) {
+	s := domain.Species{ID: "t", Audio: &domain.Audio{Key: "a.aac", Peaks: []float32{0, 1}}}
+	c := dial(t, grpcadapter.NewServer(&fakeList{}, fakeGet{s: s}, &fakeFilters{}, quiet))
+	resp, err := c.GetSpecies(context.Background(), &catalogv1.GetSpeciesRequest{Id: "t"})
+	if err != nil || len(resp.GetSpecies().GetAudio().GetPeaks()) != 2 || resp.GetSpecies().GetAudio().GetPeaks()[1] != 1 {
+		t.Fatalf("err=%v audio=%v", err, resp.GetSpecies().GetAudio())
+	}
+}

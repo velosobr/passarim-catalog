@@ -8,14 +8,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
+	"flag"
 	"hash/crc32"
 	"image"
 	"image/color"
 	"image/png"
+	"math"
 	"math/rand/v2"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -188,5 +192,64 @@ func TestImageProcessor_ThumbAndLargeLeavesMediumOut(t *testing.T) {
 func TestImageProcessor_MediumRejectsHugeDimensions(t *testing.T) {
 	if _, err := media.NewFFmpeg("ffmpeg-que-nao-existe").Medium(context.Background(), pngHeader(100000, 100000)); !errors.Is(err, media.ErrTooLarge) {
 		t.Fatalf("esperava ErrTooLarge, veio %v", err)
+	}
+}
+
+// update regrava os golden files: go test ./internal/adapter/media/ -run TestAudioProcessor_Peaks -update
+var update = flag.Bool("update", false, "regrava os golden files em testdata/")
+
+// Um tom de 2 s cujo volume sobe e desce (o seno de 0 a π como envelope)
+// vira AAC e depois os 64 picos, comparados com o golden file com folga de
+// 0,01, para o teste não depender da versão do ffmpeg.
+func TestAudioProcessor_Peaks(t *testing.T) {
+	requireFFmpeg(t)
+	wav, err := exec.Command("ffmpeg", "-hide_banner", "-loglevel", "error", "-f", "lavfi",
+		"-i", "aevalsrc=sin(2*PI*440*t)*sin(PI*t/2):d=2:s=44100", "-f", "wav", "pipe:1").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := media.NewFFmpeg("ffmpeg")
+	aac, err := f.ToAAC(context.Background(), wav, 30*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := f.Peaks(context.Background(), aac)
+	if err != nil {
+		t.Fatal(err)
+	}
+	golden := filepath.Join("testdata", "peaks_golden.json")
+	if *update {
+		b, _ := json.MarshalIndent(got, "", " ")
+		if err := os.WriteFile(golden, b, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	raw, err := os.ReadFile(golden) //nolint:gosec // G304: caminho fixo do golden file, dentro de testdata/
+	if err != nil {
+		t.Fatalf("golden ausente (rode com -update): %v", err)
+	}
+	var want []float32
+	if err := json.Unmarshal(raw, &want); err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != len(want) {
+		t.Fatalf("len=%d, golden=%d", len(got), len(want))
+	}
+	for i := range got {
+		if math.Abs(float64(got[i]-want[i])) > 0.01 {
+			t.Fatalf("pico %d: %v, golden %v", i, got[i], want[i])
+		}
+	}
+	// O envelope sobe e desce: o meio é mais alto que as pontas.
+	if got[32] < 0.9 || got[0] > 0.2 || got[63] > 0.2 {
+		t.Fatalf("forma inesperada: início=%v meio=%v fim=%v", got[0], got[32], got[63])
+	}
+}
+
+// Bytes que não são áudio dão erro do ffmpeg.
+func TestAudioProcessor_PeaksRejectsGarbage(t *testing.T) {
+	requireFFmpeg(t)
+	if _, err := media.NewFFmpeg("ffmpeg").Peaks(context.Background(), []byte("não é áudio")); err == nil {
+		t.Fatal("esperava erro")
 	}
 }

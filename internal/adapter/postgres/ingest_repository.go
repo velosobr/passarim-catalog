@@ -142,7 +142,9 @@ func (r *IngestRepository) ReplacePhotos(ctx context.Context, speciesID string, 
 			SourcePhotoID: pgtype.Text{String: p.SourcePhotoID, Valid: p.SourcePhotoID != ""},
 			Category:      pgtype.Text{String: string(p.Category), Valid: p.Category != ""},
 			Score:         pgtype.Float4{Float32: float32(p.Score), Valid: p.Category != ""},
-			ModelVersion:  pgtype.Text{String: p.ModelVersion, Valid: p.ModelVersion != ""}}
+			ModelVersion:  pgtype.Text{String: p.ModelVersion, Valid: p.ModelVersion != ""},
+			// NOT NULL: lista vazia, nunca nil (nil viraria NULL)
+			Peaks: []float32{}}
 	}
 	candidates, err := candidatesToJSON(report.Candidates)
 	if err != nil {
@@ -186,7 +188,9 @@ func (r *IngestRepository) ReplaceAudio(ctx context.Context, speciesID string, a
 	if a != nil {
 		rows = append(rows, sqlcgen.InsertMediaParams{SpeciesID: speciesID, Kind: "audio", Position: 0,
 			AudioKey: a.Key, DurationMs: toInt32(a.DurationMs),
-			Author: a.Credit.Author, License: a.Credit.License, Source: a.Credit.Source, SourceUrl: a.Credit.SourceURL})
+			Author: a.Credit.Author, License: a.Credit.License, Source: a.Credit.Source, SourceUrl: a.Credit.SourceURL,
+			// cópia nunca nil: o canto curto demais grava a lista vazia
+			Peaks: append([]float32{}, a.Peaks...)})
 	}
 	return r.replaceMedia(ctx, speciesID, "audio", rows, nil)
 }

@@ -157,7 +157,7 @@ func (r *Repository) GetSpecies(ctx context.Context, id string) (domain.Species,
 				Score: float64(m.Score.Float32), ModelVersion: m.ModelVersion.String})
 		case "audio":
 			if s.Audio == nil { // a primeira gravação (menor position) é a escolhida
-				s.Audio = &domain.Audio{Key: m.AudioKey, DurationMs: int(m.DurationMs), Credit: credit}
+				s.Audio = &domain.Audio{Key: m.AudioKey, DurationMs: int(m.DurationMs), Credit: credit, Peaks: m.Peaks}
 			}
 		}
 	}
