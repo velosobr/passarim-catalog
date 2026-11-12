@@ -198,9 +198,21 @@ func TestImageProcessor_MediumRejectsHugeDimensions(t *testing.T) {
 // update regrava os golden files: go test ./internal/adapter/media/ -run TestAudioProcessor_Peaks -update
 var update = flag.Bool("update", false, "regrava os golden files em testdata/")
 
+// peaksTolerance é a folga, por pico, entre o que o ffmpeg calculou e o
+// golden file. O AAC é um formato com perda: o codificador joga fora parte
+// do som e o resultado muda um pouco conforme a versão do ffmpeg e até
+// conforme o processador (as contas em ponto flutuante usam instruções
+// SIMD diferentes em cada CPU). Medido em 2026-11: ffmpeg 9.0.2 (macOS arm64)
+// contra 6.1.1 (Ubuntu 24.04 amd64) diferem até 0,027, e o runner do
+// GitHub, com o mesmo 6.1.1, chegou a 0,02 de outro valor. Com 0,05 o
+// teste não depende do ambiente e ainda pega erro grosseiro na integração
+// (sem normalização, canal errado, envelope achatado); a conta exata dos
+// picos é testada sem ffmpeg em internal/domain/peaks_test.go.
+const peaksTolerance = 0.05
+
 // Um tom de 2 s cujo volume sobe e desce (o seno de 0 a π como envelope)
-// vira AAC e depois os 64 picos, comparados com o golden file com folga de
-// 0,01, para o teste não depender da versão do ffmpeg.
+// vira AAC e depois os 64 picos, comparados com o golden file com a folga
+// de peaksTolerance.
 func TestAudioProcessor_Peaks(t *testing.T) {
 	requireFFmpeg(t)
 	wav, err := exec.Command("ffmpeg", "-hide_banner", "-loglevel", "error", "-f", "lavfi",
@@ -236,7 +248,7 @@ func TestAudioProcessor_Peaks(t *testing.T) {
 		t.Fatalf("len=%d, golden=%d", len(got), len(want))
 	}
 	for i := range got {
-		if math.Abs(float64(got[i]-want[i])) > 0.01 {
+		if math.Abs(float64(got[i]-want[i])) > peaksTolerance {
 			t.Fatalf("pico %d: %v, golden %v", i, got[i], want[i])
 		}
 	}
